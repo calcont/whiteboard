@@ -1,39 +1,38 @@
-import React from 'react'
 import '../assets/styles/whiteboard.css';
-import { useState, useEffect,useRef } from 'react';
-import { RoughCanvas } from "roughjs/bin/canvas";
-import rough from "roughjs/bin/rough";
-import { debounce } from 'lodash';
+import React, { useEffect, useRef, useState } from 'react';
+import { fabric } from 'fabric';
+import {draw,create} from  "../utils/assignUtil";
 
-const Whiteboard = () => {
+
+const Whiteboard = ({tool}) => {
   const canvasRef = useRef(null);
+  let rect, isDown, origX, origY;
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    const rc = rough.canvas(canvas);
+    const canvas = new fabric.Canvas(canvasRef.current);
 
-    // Clear the canvas
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.on('mouse:down', function(o){
+      isDown = true;      
+      draw(tool);
+    });
 
-    // Draw a rectangle using rough.js
-    const rectangle = rc.rectangle(50, 50, 200, 100);
+    canvas.on('mouse:move', function(o){
+      if (!isDown) return;
+      let pointer = canvas.getPointer(o.e);
+    });
 
+    canvas.on('mouse:up', function(o){
+      isDown = false;
+    });
+
+    return () => canvas.dispose();
   }, []);
-
-  useEffect(() => {
-    
-  } , [canvasRef])
-
-  const draw = (x1,y1) => {
   
-    const rectangle = rc.rectangle(x1,y1, 200, 100);
-  }
-
-  // const 
-
-  return <canvas ref={canvasRef} width={800} height={600} />;
-
-}
+  return (
+    <div>
+      <canvas ref={canvasRef} id="c" width="800" height="600" />
+    </div>
+  );
+};
 
 export default Whiteboard;

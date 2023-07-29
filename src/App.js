@@ -1,12 +1,12 @@
 import logo from './logo.svg';
 
 import  Whiteboard  from './components/Whiteboard';
-import  Sidebar  from './components/Sidebar';
+import  Menu  from './components/Menu';
 
 function App() {
   return (
     <>
-    <Sidebar />
+    <Menu />
     <Whiteboard />
     </>
   );
