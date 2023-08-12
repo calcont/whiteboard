@@ -12,6 +12,7 @@ const Menu = () => {
   const onToolClick = (tool) => {
     setActiveTab(tool);
     setTool(tool);
+    console.log(tool);
   }
 
   return (
