@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../assets/styles/menu.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMarker, faSquare, faCircle, faArrowRight, faPalette, faFont } from '@fortawesome/free-solid-svg-icons';
+import { faMarker, faSquare, faCircle, faArrowRight, faPalette, faFont,faRedo } from '@fortawesome/free-solid-svg-icons';
 import Whiteboard from './Whiteboard';
 
 const Menu = () => {
@@ -12,7 +12,6 @@ const Menu = () => {
   const onToolClick = (tool) => {
     setActiveTab(tool);
     setTool(tool);
-    console.log(tool);
   }
 
   return (
@@ -25,6 +24,7 @@ const Menu = () => {
           <FontAwesomeIcon icon={faArrowRight} className={activeTab === "arrow" ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick('arrow')} />
           <FontAwesomeIcon icon={faPalette} className={activeTab === "bgColor" ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick('bgColor')} />
           <FontAwesomeIcon icon={faFont} className={activeTab === "font" ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick('font')} />
+          <FontAwesomeIcon icon={faRedo} className='menu-button' onClick={() => sessionStorage.clear()}/>
         </div>
       </div>
       <Whiteboard tool={tool} />

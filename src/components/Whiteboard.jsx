@@ -6,26 +6,42 @@ import { draw, create } from "../utils/assignUtil";
 
 const Whiteboard = ({ tool }) => {
   const canvasRef = useRef(null);
-  let rect, isDown, origX, origY;
+  let isSelected = false;
+  let isDown;
+
   useEffect(() => {
     const canvas = new fabric.Canvas(canvasRef.current);
 
-    canvas.on('mouse:down', function (o) {
+    // Load canvas from session storage if it exists
+    const savedCanvas = sessionStorage.getItem('canvas');
+    if (savedCanvas) {
+      canvas.loadFromJSON(savedCanvas, canvas.renderAll.bind(canvas));
+    }
+
+    canvas.on('mouse:down', function (e) {
       isDown = true;
-      draw(tool);
-      console.log(tool);
+      return isSelected ? null : create(tool, canvas, e);
     });
 
-    canvas.on('mouse:move', function (o) {
+    canvas.on('mouse:move', function (e) {
       if (!isDown) return;
-      let pointer = canvas.getPointer(o.e);
+      if (!isSelected) {
+        draw(tool, canvas, e);
+        canvas.renderAll();
+        return;
+      }
     });
 
-    canvas.on('mouse:up', function (o) {
+    canvas.on('mouse:up', function (e) {
       isDown = false;
+      isSelected = true;
     });
 
-    return () => canvas.dispose();
+    // Clean up and save to session storage
+    return () => {
+      sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
+      canvas.dispose();
+    };
   }, [tool]);
 
   return (

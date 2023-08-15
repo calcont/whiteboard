@@ -1,18 +1,22 @@
-import { createRectangle, drawRectangle } from "."
+import { createRectangle, drawRectangle, createCircle, drawCircle } from "."
 
-const create = (tool) => {
-    if (tool === "reactangle") {
-        console.log("createRectangle");
-        // createRectangle();
-    }
-}
-
-const draw = (tool) => {
+const create = (tool, canvas, event) => {
     if (tool === "rectangle") {
+        createRectangle(canvas, event);
+    }
+    else if (tool === "circle") {
+        createCircle(canvas, event);
+    }
+}
 
-        console.log("createRectangle");
+const draw = (tool, canvas, event) => {
+    if (tool === "rectangle") {
+        drawRectangle(canvas, event)
+    }
+    else if (tool === "circle") {
+        drawCircle(canvas, event);
     }
 }
 
 
-export {draw, create};
+export { draw, create };
