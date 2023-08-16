@@ -14,7 +14,9 @@ const createRectangle = (canvas, event) => {
     top: origY,
     originX: 'left',
     originY: 'top',
-    backgroundColor: 'green',
+    fill: '',
+    stroke: 'black',
+    strokeWidth: 2,
     width: pointer2.x - origX,
     height: pointer2.y - origY,
   });

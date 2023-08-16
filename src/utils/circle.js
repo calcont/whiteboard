@@ -10,8 +10,10 @@ const createCircle = (canvas, event) => {
     circle = new fabric.Circle({
         left: origX,
         top: origY,
-        radius: 1, // Start with a very small radius
-        fill: 'green',  // 'backgroundColor' is not typically used for circles
+        radius: 1,
+        fill: '',
+        stroke: 'black',
+        strokeWidth: 2,
         originX: 'center',
         originY: 'center',
     });
@@ -22,8 +24,8 @@ const createCircle = (canvas, event) => {
 const drawCircle = (canvas, event) => {
     pointer = canvas.getPointer(event.e);
     let radius = Math.sqrt(Math.pow(origX - pointer.x, 2) + Math.pow(origY - pointer.y, 2)) / 2;
-    
-    circle.set({ 
+
+    circle.set({
         radius: radius,
         left: (origX + pointer.x) / 2,
         top: (origY + pointer.y) / 2

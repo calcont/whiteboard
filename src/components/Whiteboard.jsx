@@ -4,7 +4,7 @@ import { fabric } from 'fabric';
 import { draw, create } from "../utils/assignUtil";
 
 
-const Whiteboard = ({ tool }) => {
+const Whiteboard = ({ tool, setToolCallBack }) => {
   const canvasRef = useRef(null);
   let isSelected = false;
   let isDown;
@@ -12,7 +12,6 @@ const Whiteboard = ({ tool }) => {
   useEffect(() => {
     const canvas = new fabric.Canvas(canvasRef.current);
 
-    // Load canvas from session storage if it exists
     const savedCanvas = sessionStorage.getItem('canvas');
     if (savedCanvas) {
       canvas.loadFromJSON(savedCanvas, canvas.renderAll.bind(canvas));
@@ -25,6 +24,7 @@ const Whiteboard = ({ tool }) => {
 
     canvas.on('mouse:move', function (e) {
       if (!isDown) return;
+
       if (!isSelected) {
         draw(tool, canvas, e);
         canvas.renderAll();
@@ -35,18 +35,36 @@ const Whiteboard = ({ tool }) => {
     canvas.on('mouse:up', function (e) {
       isDown = false;
       isSelected = true;
+      sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
+      setToolCallBack('cursor');
     });
 
-    // Clean up and save to session storage
+    const deleteSelected = () => {
+      const activeObject = canvas.getActiveObject();
+      if (activeObject) {
+        canvas.remove(activeObject);
+        sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
+        canvas.renderAll();
+      }
+    }
+
+    const keyManager = (e) => {
+      if (e.keyCode === 46 || e.keyCode === 8) {
+        deleteSelected();
+      }
+    }
+
+    window.addEventListener('keydown', keyManager);
+
     return () => {
-      sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
+      window.removeEventListener('keydown', keyManager); // Remove event listener on component unmount
       canvas.dispose();
     };
   }, [tool]);
 
   return (
     <div>
-      <canvas ref={canvasRef} id="c" width="800" height="600" />
+      <canvas ref={canvasRef} id="canvas" width="800" height="600" />
     </div>
   );
 };
