@@ -1,7 +1,7 @@
-import '../assets/styles/whiteboard.css';
 import React, { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
 import { draw, create } from "../utils/assignUtil";
+import '../assets/styles/whiteboard.css';
 
 
 const Whiteboard = ({ tool, setToolCallBack }) => {
@@ -11,6 +11,9 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
 
   useEffect(() => {
     const canvas = new fabric.Canvas(canvasRef.current);
+
+    canvas.setWidth(window.screen.width);
+    canvas.setHeight(window.screen.height);
 
     const savedCanvas = sessionStorage.getItem('canvas');
     if (savedCanvas) {
@@ -64,7 +67,7 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
 
   return (
     <div>
-      <canvas ref={canvasRef} id="canvas" width="800" height="600" />
+      <canvas ref={canvasRef} >Drawing canvas</canvas>
     </div>
   );
 };

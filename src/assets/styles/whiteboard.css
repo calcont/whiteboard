@@ -1,5 +1,12 @@
-canvas {
-    width: 100%;
-    overflow-x: hidden;
-    cursor: crosshair;
+/* assets/styles/whiteboard.css */
+body, html {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+
+canvas{
+    height: 100%;
+    z-index: 100;
 }
