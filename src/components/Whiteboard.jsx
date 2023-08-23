@@ -29,6 +29,7 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
       if (!isDown) return;
 
       if (!isSelected) {
+        canvas.selection = false;
         draw(tool, canvas, e);
         canvas.renderAll();
         return;
@@ -38,6 +39,7 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
     canvas.on('mouse:up', function (e) {
       isDown = false;
       isSelected = true;
+      canvas.selection = true;
       sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
       setToolCallBack('cursor');
     });
