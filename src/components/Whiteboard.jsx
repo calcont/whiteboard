@@ -42,7 +42,7 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
       canvas.selection = true;
       sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
       setToolCallBack('cursor');
-    });
+    });  
 
     const deleteSelected = () => {
       const activeObject = canvas.getActiveObject();
@@ -69,7 +69,7 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
 
   return (
     <div>
-      <canvas ref={canvasRef} >Drawing canvas</canvas>
+      <canvas ref={canvasRef} id='canvas' >Drawing canvas</canvas>
     </div>
   );
 };

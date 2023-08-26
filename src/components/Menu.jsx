@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import '../assets/styles/menu.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMarker, faSquare, faCircle, faArrowRight, faPalette, faFont, faRedo, faArrowPointer } from '@fortawesome/free-solid-svg-icons';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import Whiteboard from './Whiteboard';
 
 const Menu = () => {
@@ -15,12 +21,6 @@ const Menu = () => {
     setTool(tool);
   }
 
-  const clearCanvas = () => {
-    sessionStorage.removeItem('canvas');
-    document.getElementById('canvas').getContext('2d').clearRect(0, 0, 1000, 1000);
-
-  }
-
   return (
     <>
       <div className="menu-container">
@@ -31,8 +31,6 @@ const Menu = () => {
           <FontAwesomeIcon icon={faCircle} className={activeTab === "circle" ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick('circle')} />
           <FontAwesomeIcon icon={faArrowRight} className={activeTab === "arrow" ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick('arrow')} />
           <FontAwesomeIcon icon={faPalette} className={activeTab === "bgColor" ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick('bgColor')} />
-          <FontAwesomeIcon icon={faFont} className={activeTab === "font" ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick('font')} />
-          <FontAwesomeIcon icon={faRedo} className='menu-button' onClick={() => clearCanvas()} />
         </div>
       </div>
       <Whiteboard tool={tool} setToolCallBack={onToolClick} />
