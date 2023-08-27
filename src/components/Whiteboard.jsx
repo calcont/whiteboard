@@ -42,12 +42,15 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
       canvas.selection = true;
       sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
       setToolCallBack('cursor');
-    });  
+    });
 
     const deleteSelected = () => {
-      const activeObject = canvas.getActiveObject();
-      if (activeObject) {
-        canvas.remove(activeObject);
+      const activeObjects = canvas.getActiveObjects();
+      if (activeObjects) {
+        activeObjects.forEach((object) => {
+          canvas.discardActiveObject();
+          canvas.remove(object);
+        });
         sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
         canvas.renderAll();
       }
