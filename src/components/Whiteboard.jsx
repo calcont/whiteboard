@@ -6,6 +6,7 @@ import '../assets/styles/whiteboard.css';
 
 const Whiteboard = ({ tool, setToolCallBack }) => {
   const canvasRef = useRef(null);
+  const onMoveTools = ['marker', 'rectangle', 'circle', 'arrow'];
   let isSelected = false;
   let isDown;
 
@@ -29,8 +30,10 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
       if (!isDown) return;
 
       if (!isSelected) {
-        canvas.selection = false;
-        draw(tool, canvas, e);
+        if (onMoveTools.includes(tool)) {
+          canvas.selection = false;
+          draw(tool, canvas, e);
+        }
         canvas.renderAll();
         return;
       }
@@ -57,7 +60,7 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
     }
 
     const keyManager = (e) => {
-      if (e.keyCode === 46 || e.keyCode === 8) {
+      if (e.keyCode === 46 ) {
         deleteSelected();
       }
     }

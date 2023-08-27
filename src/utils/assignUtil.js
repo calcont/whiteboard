@@ -1,4 +1,4 @@
-import { createRectangle, drawRectangle, createCircle, drawCircle } from "."
+import { createRectangle, drawRectangle, createCircle, drawCircle, createFont } from "."
 
 const create = (tool, canvas, event) => {
     if (tool === "rectangle") {
@@ -6,6 +6,9 @@ const create = (tool, canvas, event) => {
     }
     else if (tool === "circle") {
         createCircle(canvas, event);
+    }
+    else if (tool === "font") {
+        createFont(canvas, event);
     }
 }
 
