@@ -23,28 +23,28 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
 
     canvas.on('mouse:down', function (e) {
       isDown = true;
-      return isSelected ? null : create(tool, canvas, e);
+      return tool === "marker" ? canvas.isDrawingMode = true : create(tool, canvas, e);
     });
 
     canvas.on('mouse:move', function (e) {
       if (!isDown) return;
 
-      if (!isSelected) {
         if (onMoveTools.includes(tool)) {
           canvas.selection = false;
           draw(tool, canvas, e);
         }
         canvas.renderAll();
         return;
-      }
     });
 
     canvas.on('mouse:up', function (e) {
-      isDown = false;
-      isSelected = true;
-      canvas.selection = true;
+
       sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
-      setToolCallBack('cursor');
+      if (tool !== "marker") {
+
+        isDown = false;
+        setToolCallBack('cursor');
+      }
     });
 
     const deleteSelected = () => {
@@ -60,7 +60,7 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
     }
 
     const keyManager = (e) => {
-      if (e.keyCode === 46 ) {
+      if (e.keyCode === 46) {
         deleteSelected();
       }
     }
