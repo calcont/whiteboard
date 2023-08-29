@@ -11,7 +11,9 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
   let isDown;
 
   useEffect(() => {
-    const canvas = new fabric.Canvas(canvasRef.current);
+    const canvas = tool === "marker" ? new fabric.Canvas(canvasRef.current, {
+      isDrawingMode: true,
+    }) : new fabric.Canvas(canvasRef.current);
 
     canvas.setWidth(window.screen.width);
     canvas.setHeight(window.screen.height);
@@ -23,18 +25,18 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
 
     canvas.on('mouse:down', function (e) {
       isDown = true;
-      return tool === "marker" ? canvas.isDrawingMode = true : create(tool, canvas, e);
+      return tool === "marker" ? null : create(tool, canvas, e);
     });
 
     canvas.on('mouse:move', function (e) {
       if (!isDown) return;
 
-        if (onMoveTools.includes(tool)) {
-          canvas.selection = false;
-          draw(tool, canvas, e);
-        }
-        canvas.renderAll();
-        return;
+      if (onMoveTools.includes(tool)) {
+        canvas.selection = false;
+        draw(tool, canvas, e);
+      }
+      canvas.renderAll();
+      return;
     });
 
     canvas.on('mouse:up', function (e) {
