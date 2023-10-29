@@ -21,8 +21,8 @@ const Menu = () => {
       <div className="menu-container">
         <div className="menu-inner-container ">
           {
-            tools.map((tool) => (
-              <Tooltip title={tool.title} >
+            tools.map((tool,index) => (
+              <Tooltip title={tool.title} key={index} >
                 <FontAwesomeIcon icon={tool.icon} className={activeTab === `${tool.id}` ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick(tool.id)} />
               </Tooltip>
             ))}
