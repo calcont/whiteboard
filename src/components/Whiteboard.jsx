@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
-import { draw, create } from "../utils/assignUtil";
+import { draw, create } from "../utils/";
 import { handleMouseDown, handleMouseMove, handleMouseUp, handleDeleteSelected,addImage } from '../utils';
 import '../assets/styles/whiteboard.css';
 

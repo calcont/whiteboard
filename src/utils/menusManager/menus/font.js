@@ -1,4 +1,11 @@
 import { fabric } from "fabric";
+import { Tool } from "../toolGeneric";
+
+export class Font extends Tool {
+    create(canvas, event) {
+        createFont(canvas, event);
+    }
+}
 
 const createFont = (canvas, event) => {
     let pointer = canvas.getPointer(event.e);
@@ -14,5 +21,3 @@ const createFont = (canvas, event) => {
     text.selectAll();
     canvas.renderAll();
 }
-
-export { createFont };
