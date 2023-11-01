@@ -14,7 +14,7 @@ export const addImage = (canvas) => {
                 //scale down image
                 const oImg = img.set({ left: 0, top: 0, angle: 0 }).scale(0.5);
                 canvas.add(oImg);
-                sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
+sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
             });
         };
     };

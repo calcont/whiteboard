@@ -1,8 +1,6 @@
 const handleMouseDown = (canvas, tool, onMoveTools, createFunction, e) => {
     if (onMoveTools.includes(tool)) {
         createFunction(tool, canvas, e);
-    } else {
-        createFunction(tool, canvas, e);
     }
 };
 

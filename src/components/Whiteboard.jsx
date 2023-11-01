@@ -7,10 +7,11 @@ import '../assets/styles/whiteboard.css';
 
 const Whiteboard = ({ tool, setToolCallBack }) => {
   const canvasRef = useRef(null);
-  const onMoveTools = ['marker', 'rectangle', 'circle', 'arrow'];
+  const onMoveTools = [ 'rectangle', 'circle', 'arrow'];
   let isDown;
 
   useEffect(() => {
+    console.log('tool', tool);
     const canvas = tool === "marker" ? new fabric.Canvas(canvasRef.current, {
       isDrawingMode: true,
     }) : new fabric.Canvas(canvasRef.current);
