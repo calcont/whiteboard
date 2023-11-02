@@ -1,54 +1,67 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
 import { draw, create } from "../utils/";
-import { handleMouseDown, handleMouseMove, handleMouseUp, handleDeleteSelected,addImage } from '../utils';
+import { handleMouseDown, handleMouseMove, handleMouseUp, handleDeleteSelected, addImage } from '../utils';
 import '../assets/styles/whiteboard.css';
-
 
 const Whiteboard = ({ tool, setToolCallBack }) => {
   const canvasRef = useRef(null);
-  const onMoveTools = [ 'rectangle', 'circle', 'arrow'];
-  let isDown;
+  const isDown = useRef(false);
+  const canvas = useRef(null);
+  const [canvasLoaded, setCanvasLoaded] = useState(false);
 
   useEffect(() => {
-    console.log('tool', tool);
-    const canvas = tool === "marker" ? new fabric.Canvas(canvasRef.current, {
-      isDrawingMode: true,
-    }) : new fabric.Canvas(canvasRef.current);
-
-    canvas.setWidth(window.screen.width);
-    canvas.setHeight(window.screen.height);
-
-    const savedCanvas = sessionStorage.getItem('canvas');
-    if (savedCanvas) {
-      canvas.loadFromJSON(savedCanvas, canvas.renderAll.bind(canvas));
+    if (!canvas.current) {
+      canvas.current = new fabric.Canvas(canvasRef.current, {
+        isDrawingMode: false, // Default to false, you can adjust based on your needs
+      });
+      canvas.current.setWidth(window.screen.width);
+      canvas.current.setHeight(window.screen.height);
     }
+
+    const canvasInstance = canvas.current;
+
+    if (!canvasLoaded) {
+      const savedCanvas = sessionStorage.getItem('canvas');
+      if (savedCanvas) {
+        canvasInstance.loadFromJSON(savedCanvas, canvasInstance.renderAll.bind(canvasInstance));
+        setCanvasLoaded(true);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    tool === "marker" ? canvas.current.isDrawingMode = true : canvas.current.isDrawingMode = false;
+    const canvasInstance = canvas.current;
+    canvasInstance.off('mouse:down');
+    canvasInstance.off('mouse:move');
+    canvasInstance.off('mouse:up');
 
     if (tool === "image") {
-      addImage(canvas);
+      addImage(canvasInstance);
     }
 
-    canvas.on('mouse:down', function (e) {
-      isDown = true;
-      handleMouseDown(canvas, tool, onMoveTools, create, e);
+    canvasInstance.on('mouse:down', function (e) {
+      isDown.current = true;
+      handleMouseDown(canvasInstance, tool, create, e);
       return;
     });
 
-    canvas.on('mouse:move', function (e) {
-      if (!isDown) return;
-      handleMouseMove(canvas, tool, onMoveTools, draw, e);
+    canvasInstance.on('mouse:move', function (e) {
+      if (!isDown.current) return;
+      handleMouseMove(canvasInstance, tool, draw, e);
       return;
     });
 
-    canvas.on('mouse:up', () => {
-      isDown = false;
-      handleMouseUp(canvas, tool, onMoveTools, setToolCallBack);
+    canvasInstance.on('mouse:up', () => {
+      isDown.current = false;
+      handleMouseUp(canvasInstance, tool, setToolCallBack);
       return;
     });
 
     const keyManager = (e) => {
       if (e.keyCode === 46) {
-        handleDeleteSelected(canvas);
+        handleDeleteSelected(canvasInstance);
       }
     }
 
@@ -56,13 +69,13 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
 
     return () => {
       window.removeEventListener('keydown', keyManager); // Remove event listener on component unmount
-      canvas.dispose();
+      // Don't dispose the canvas, it will be reused
     };
   }, [tool]);
 
   return (
     <div>
-      <canvas ref={canvasRef} id='canvas' >Drawing canvas</canvas>
+      <canvas ref={canvasRef} id='canvas'>Drawing canvas</canvas>
     </div>
   );
 };

@@ -1,18 +1,20 @@
-const handleMouseDown = (canvas, tool, onMoveTools, createFunction, e) => {
-    if (onMoveTools.includes(tool)) {
+import { tools } from '../../constants/tools.js';
+
+const handleMouseDown = (canvas, tool, createFunction, e) => {
+    if ( tools[tool].createOnClick ) {
         createFunction(tool, canvas, e);
     }
 };
 
-const handleMouseMove = (canvas, tool, onMoveTools, drawFunction, e) => {
-    if (onMoveTools.includes(tool)) {
+const handleMouseMove = (canvas, tool, drawFunction, e) => {
+    if ( tools[tool].onMove) {
         canvas.selection = false;
         drawFunction(tool, canvas, e);
     }
     canvas.renderAll();
 }
 
-const handleMouseUp = (canvas, tool, onMoveTools, toolCallBack) => {
+const handleMouseUp = (canvas, tool, toolCallBack) => {
     sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
     if (onMoveTools.includes(tool)) {
         canvas.selection = true;

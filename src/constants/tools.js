@@ -1,13 +1,58 @@
+export const tools = {
+    'cursor' : {
+        createOnClick: false,
+        onMove: false,
+    },
+    'marker' : {
+        createOnClick: false,
+        onMove: false,
+    },
+    'rectangle' : {
+        createOnClick: true,
+        onMove: true,
+    },
+    'circle' : {
+        createOnClick: true,
+        onMove: true,
+    },
+    'arrow' : {
+        createOnClick: true,
+        onMove: true,
+    },
+    'font' : {
+        createOnClick: true,
+        onMove: false,
+    },
+    'image' : {
+        createOnClick: false,
+        onMove: false,
+    },
+}
 
-import { faMarker, faSquare, faCircle, faArrowRight, faPalette, faFont, faImage, faArrowPointer } from '@fortawesome/free-solid-svg-icons';
-
-export const tools = [
-  { icon: faArrowPointer, title: "Select", id: "cursor" },
-  { icon: faMarker, title: "Marker", id: "marker" },
-  { icon: faSquare, title: "Rectangle", id: "rectangle" },
-  { icon: faCircle, title: "Circle", id: "circle" },
-  { icon: faArrowRight, title: "Arrow", id: "arrow" },
-  { icon: faFont, title: "Text", id: "font" },
-  { icon: faImage, title: "Image", id: "image" },
-  { icon: faPalette, title: "Background Color", id: "bgColor" },
-];
+// st tools = {
+//     MARKER : {
+//         value : 'marker',
+//         createOnClick: false,
+//         onMove: false,
+//     },
+//     RECTANGLE : {
+//         value : 'rectangle',
+//         createOnClick: true,
+//         onMove: true,
+//     },
+//     CIRCLE : {
+//         value : 'circle',
+//         createOnClick: true,
+//         onMove: true,
+//     },
+//     IMAGE : {
+//         value : 'image',
+//         createOnClick: true,
+//         onMove: true,
+//     },
+//     FONT : {
+//         value : 'font',
+//         createOnClick: true,
+//         onMove: false,
+//     },
+// }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import '../assets/styles/menu.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Tooltip } from '@mui/material';
-import { tools } from '../constants/tools'
+import { iconToolsMaps } from '../constants/IconTools'
 import Whiteboard from './Whiteboard';
 
 const Menu = () => {
@@ -21,7 +21,7 @@ const Menu = () => {
       <div className="menu-container">
         <div className="menu-inner-container ">
           {
-            tools.map((tool,index) => (
+            iconToolsMaps.map((tool,index) => (
               <Tooltip title={tool.title} key={index} >
                 <FontAwesomeIcon icon={tool.icon} className={activeTab === `${tool.id}` ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick(tool.id)} />
               </Tooltip>
