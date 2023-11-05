@@ -8,25 +8,21 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
   const canvasRef = useRef(null);
   const isDown = useRef(false);
   const canvas = useRef(null);
-  const [canvasLoaded, setCanvasLoaded] = useState(false);
 
   useEffect(() => {
     if (!canvas.current) {
       canvas.current = new fabric.Canvas(canvasRef.current, {
-        isDrawingMode: false, // Default to false, you can adjust based on your needs
+        isDrawingMode: false, 
+        selection: true,
       });
       canvas.current.setWidth(window.screen.width);
       canvas.current.setHeight(window.screen.height);
     }
-
     const canvasInstance = canvas.current;
 
-    if (!canvasLoaded) {
-      const savedCanvas = sessionStorage.getItem('canvas');
-      if (savedCanvas) {
-        canvasInstance.loadFromJSON(savedCanvas, canvasInstance.renderAll.bind(canvasInstance));
-        setCanvasLoaded(true);
-      }
+    const savedCanvas = sessionStorage.getItem('canvas');
+    if (savedCanvas) {
+      canvasInstance.loadFromJSON(savedCanvas, canvasInstance.renderAll.bind(canvasInstance));
     }
   }, []);
 
@@ -68,8 +64,7 @@ const Whiteboard = ({ tool, setToolCallBack }) => {
     window.addEventListener('keydown', keyManager);
 
     return () => {
-      window.removeEventListener('keydown', keyManager); // Remove event listener on component unmount
-      // Don't dispose the canvas, it will be reused
+      window.removeEventListener('keydown', keyManager);
     };
   }, [tool]);
 
