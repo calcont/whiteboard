@@ -9,7 +9,6 @@ const Menu = () => {
 
   const [tool, setTool] = useState('marker');
   const [activeTab, setActiveTab] = useState('marker');
-  // const tools = ['marker', 'rectangle', 'circle', 'arrow', 'font'];
 
   const onToolClick = (tool) => {
     setActiveTab(tool);

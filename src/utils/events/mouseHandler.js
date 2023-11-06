@@ -17,11 +17,17 @@ const handleMouseMove = (canvas, tool, drawFunction, e) => {
 const handleMouseUp = (canvas, tool, toolCallBack) => {
     sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
     if (tools[tool].createOnClick) {
-        canvas.setActiveObject(canvas.item(canvas.getObjects().length - 1));
-        canvas.selection = true;
+        const currentObject = canvas.item(canvas.getObjects().length - 1);
+        if (currentObject.height < 5) {
+            canvas.remove(currentObject);
+        }
+        else {
+            canvas.setActiveObject(currentObject);
+            canvas.selection = true;
+            toolCallBack('cursor');
+        }
         canvas.renderAll();
     }
-    toolCallBack('cursor');
 }
 
 export { handleMouseDown, handleMouseMove, handleMouseUp }; 
