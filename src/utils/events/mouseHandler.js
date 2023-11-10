@@ -15,7 +15,7 @@ const handleMouseMove = (canvas, tool, drawFunction, e) => {
 }
 
 const handleMouseUp = (canvas, tool, toolCallBack) => {
-    sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
+    // sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
     if (tools[tool].createOnClick) {
         const currentObject = canvas.item(canvas.getObjects().length - 1);
         if (currentObject.height < 5) {
