@@ -53,14 +53,20 @@ const Whiteboard = ({tool, setToolCallBack}) => {
         });
 
         const keyManager = (e) => {
-            if (e.keyCode === 46) {   //delete selected objects
-                handleDeleteSelected(canvasInstance);
-            } else if ((e.ctrlKey || e.metaKey) && e.key === 'd') {  //duplicate selected objects
-                e.preventDefault();
-                duplicateObjects(canvasInstance);
-            } else if ((e.ctrlKey || e.metaKey) && e.key === 'a') {  // select all objects
-                e.preventDefault();
-                selectAllObjects(canvasInstance);
+            switch (true) {
+                case e.keyCode === 46: // delete selected objects
+                    handleDeleteSelected(canvasInstance);
+                    break;
+                case (e.ctrlKey || e.metaKey) && e.key === 'd': // duplicate selected objects
+                    e.preventDefault();
+                    duplicateObjects(canvasInstance);
+                    break;
+                case (e.ctrlKey || e.metaKey) && e.key === 'a': // select all objects
+                    e.preventDefault();
+                    selectAllObjects(canvasInstance);
+                    break;
+                default:
+                    break;
             }
         };
 
