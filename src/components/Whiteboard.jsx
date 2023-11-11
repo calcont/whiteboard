@@ -32,7 +32,7 @@ const Whiteboard = ({tool, setToolCallBack}) => {
         canvasInstance.off('mouse:down');
         canvasInstance.off('mouse:move');
         canvasInstance.off('mouse:up');
-
+        handleToolsSettings(canvasInstance,tool);
         if (tool === "image") {
             addImage(canvasInstance);
         }
@@ -58,8 +58,7 @@ const Whiteboard = ({tool, setToolCallBack}) => {
             } else if ((e.ctrlKey || e.metaKey) && e.key === 'd') {  //duplicate selected objects
                 e.preventDefault();
                 duplicateObjects(canvasInstance);
-            }
-            else if ((e.ctrlKey || e.metaKey) && e.key === 'a') {  // select all objects
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'a') {  // select all objects
                 e.preventDefault();
                 selectAllObjects(canvasInstance);
             }
@@ -70,14 +69,15 @@ const Whiteboard = ({tool, setToolCallBack}) => {
         return () => {
             window.removeEventListener('keydown', keyManager);
         };
-    }, [tool]);
+}, [tool]);
 
-    return (
-        <div>
-            <canvas ref={canvasRef} id='canvas'>Drawing canvas</canvas>
-        </div>
-    );
-};
+return (
+    <div>
+        <canvas ref={canvasRef} id='canvas'>Drawing canvas</canvas>
+    </div>
+);
+}
+;
 
 const handleDeleteSelected = (canvas) => {
     const activeObjects = canvas.getActiveObjects();
@@ -98,9 +98,8 @@ const duplicateObjects = (canvas) => {
         activeObject.clone((clonedObj) => {
             canvas.discardActiveObject();
             clonedObj.set({
-                left: clonedObj.left + 10,
-                top: clonedObj.top + 10,
-                evented: true,
+                left: clonedObj.left + 20,
+                top: clonedObj.top + 20,
             });
             if (clonedObj.type === 'activeSelection') {
                 // active selection needs a reference to the canvas.
@@ -128,6 +127,26 @@ const selectAllObjects = (canvas) => {
         });
         canvas.setActiveObject(activeSelection);
         canvas.requestRenderAll();
+    }
+}
+
+const handleToolsSettings = (canvas, tool) => {
+    switch (tool) {
+        case "cursor":
+            canvas.getObjects().forEach((obj) => {
+                obj.selectable = true;
+            });
+            canvas.hoverCursor = 'move';
+            canvas.defaultCursor = 'default';
+            break;
+        default:
+            canvas.discardActiveObject(canvas.getActiveObjects()).renderAll();
+            canvas.getObjects().forEach((obj) => {
+                obj.selectable = false;
+            });
+            canvas.hoverCursor = 'cursor';
+            canvas.defaultCursor = 'crosshair';
+            break;
     }
 }
 
