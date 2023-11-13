@@ -1,12 +1,22 @@
-import { faMarker, faSquare, faCircle, faArrowRight, faPalette, faFont, faImage, faArrowPointer } from '@fortawesome/free-solid-svg-icons';
+import {
+    faMarker,
+    faSquare,
+    faCircle,
+    faArrowRight,
+    faPalette,
+    faFont,
+    faImage,
+    faArrowPointer
+} from '@fortawesome/free-solid-svg-icons';
+import {TOOL_CONSTANTS} from "./tools";
 
 export const iconToolsMaps = [
-  { icon: faArrowPointer, title: "Select", id: "cursor" },
-  { icon: faMarker, title: "Marker", id: "marker" },
-  { icon: faSquare, title: "Rectangle", id: "rectangle" },
-  { icon: faCircle, title: "Circle", id: "circle" },
-  { icon: faArrowRight, title: "Arrow", id: "arrow" },
-  { icon: faFont, title: "Text", id: "font" },
-  { icon: faImage, title: "Image", id: "image" },
-  { icon: faPalette, title: "Background Color", id: "bgColor" },
+    {icon: faArrowPointer, title: "Select", id: TOOL_CONSTANTS.CURSOR},
+    {icon: faMarker, title: "Marker", id: TOOL_CONSTANTS.MARKER},
+    {icon: faSquare, title: "Rectangle", id: TOOL_CONSTANTS.RECTANGLE},
+    {icon: faCircle, title: "Circle", id: TOOL_CONSTANTS.CIRCLE},
+    {icon: faArrowRight, title: "Arrow", id: TOOL_CONSTANTS.ARROW},
+    {icon: faFont, title: "Text", id: TOOL_CONSTANTS.FONT},
+    {icon: faImage, title: "Image", id: TOOL_CONSTANTS.IMAGE},
+    {icon: faPalette, title: "Background Color", id: TOOL_CONSTANTS.BACKGROUND_COLOR},
 ];

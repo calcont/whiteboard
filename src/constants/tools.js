@@ -1,58 +1,41 @@
-export const tools = {
-    'cursor' : {
-        createOnClick: false,
-        onMove: false,
-    },
-    'marker' : {
-        createOnClick: false,
-        onMove: false,
-    },
-    'rectangle' : {
-        createOnClick: true,
-        onMove: true,
-    },
-    'circle' : {
-        createOnClick: true,
-        onMove: true,
-    },
-    'arrow' : {
-        createOnClick: true,
-        onMove: true,
-    },
-    'font' : {
-        createOnClick: true,
-        onMove: false,
-    },
-    'image' : {
-        createOnClick: false,
-        onMove: false,
-    },
-}
+export const TOOL_CONSTANTS = {
+    CURSOR: 'cursor',
+    MARKER: 'marker',
+    RECTANGLE: 'rectangle',
+    CIRCLE: 'circle',
+    ARROW: 'arrow',
+    FONT: 'font',
+    IMAGE: 'image',
+    BACKGROUND_COLOR: 'bgColors',
+};
 
-// st tools = {
-//     MARKER : {
-//         value : 'marker',
-//         createOnClick: false,
-//         onMove: false,
-//     },
-//     RECTANGLE : {
-//         value : 'rectangle',
-//         createOnClick: true,
-//         onMove: true,
-//     },
-//     CIRCLE : {
-//         value : 'circle',
-//         createOnClick: true,
-//         onMove: true,
-//     },
-//     IMAGE : {
-//         value : 'image',
-//         createOnClick: true,
-//         onMove: true,
-//     },
-//     FONT : {
-//         value : 'font',
-//         createOnClick: true,
-//         onMove: false,
-//     },
-// }
+export const TOOL_FUNCTIONS = {
+    [TOOL_CONSTANTS.CURSOR]: {
+        createOnClick: false,
+        onMove: false,
+    },
+    [TOOL_CONSTANTS.MARKER]: {
+        createOnClick: false,
+        onMove: false,
+    },
+    [TOOL_CONSTANTS.RECTANGLE]: {
+        createOnClick: true,
+        onMove: true,
+    },
+    [TOOL_CONSTANTS.CIRCLE]: {
+        createOnClick: true,
+        onMove: true,
+    },
+    [TOOL_CONSTANTS.ARROW]: {
+        createOnClick: true,
+        onMove: true,
+    },
+    [TOOL_CONSTANTS.FONT]: {
+        createOnClick: true,
+        onMove: false,
+    },
+    [TOOL_CONSTANTS.IMAGE]: {
+        createOnClick: false,
+        onMove: false,
+    },
+};
