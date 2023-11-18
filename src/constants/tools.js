@@ -7,6 +7,7 @@ export const TOOL_CONSTANTS = {
     FONT: 'font',
     IMAGE: 'image',
     BACKGROUND_COLOR: 'bgColors',
+    DIAMOND: 'diamond',
 };
 
 export const TOOL_FUNCTIONS = {
@@ -36,6 +37,14 @@ export const TOOL_FUNCTIONS = {
     },
     [TOOL_CONSTANTS.IMAGE]: {
         createOnClick: false,
+        onMove: false,
+    },
+    [TOOL_CONSTANTS.BACKGROUND_COLOR]: {
+        createOnClick: false,
+        onMove: false,
+    },
+    [TOOL_CONSTANTS.DIAMOND]: {
+        createOnClick: true,
         onMove: false,
     },
 };

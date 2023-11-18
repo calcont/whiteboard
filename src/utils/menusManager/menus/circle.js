@@ -29,9 +29,12 @@ export class Circle extends Tool {
     }
 
     draw(canvas, event) {
+        if (!this.circle) {
+            return;
+        }
         this.pointer = canvas.getPointer(event.e);
+        // radius = distance between origin and pointer (i.e diameter) / 2
         let radius = Math.sqrt(Math.pow(this.origX - this.pointer.x, 2) + Math.pow(this.origY - this.pointer.y, 2)) / 2;
-
         this.circle.set({
             radius: radius,
             left: (this.origX + this.pointer.x) / 2,

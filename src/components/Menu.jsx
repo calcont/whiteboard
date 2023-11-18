@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import '../assets/styles/menu.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Tooltip } from '@mui/material';
-import { iconToolsMaps } from '../constants/IconTools'
+import { iconToolsMaps } from '../constants/IconTools';
+import { TOOL_CONSTANTS } from '../constants/tools';
 import Whiteboard from './Whiteboard';
 
 const Menu = () => {
 
-  const [tool, setTool] = useState('marker');
-  const [activeTab, setActiveTab] = useState('marker');
+  const [tool, setTool] = useState(TOOL_CONSTANTS.MARKER);
+  const [activeTab, setActiveTab] = useState(TOOL_CONSTANTS.MARKER);
 
   const onToolClick = (tool) => {
     setActiveTab(tool);
