@@ -9,7 +9,6 @@ export class Diamond extends Tool {
         this.origY = null;
         this.pointer = null;
         this.diamond = null;
-        this.sides = 4;
         this.offset = 50;
     }
 
@@ -18,14 +17,14 @@ export class Diamond extends Tool {
         this.origX = this.pointer.x;
         this.origY = this.pointer.y;
         this.diamond = new fabric.Polygon([
-            { x: this.origX, y: this.origY },
-            { x: this.origX + this.offset, y: this.origY + this.offset },
-            { x: this.origX, y: this.origY + this.offset * 2 },
-            { x: this.origX - this.offset, y: this.origY + this.offset },
+            {x: this.origX, y: this.origY},
+            {x: this.origX + this.offset, y: this.origY + this.offset},
+            {x: this.origX, y: this.origY + this.offset * 2},
+            {x: this.origX - this.offset, y: this.origY + this.offset},
         ], {
             fill: '',
             stroke: 'black',
-            strokeWidth: 2,
+            strokeWidth: 1,
             originX: 'center',
             originY: 'center',
             objectCaching: false, // Recalculate bounding box dynamically
@@ -44,28 +43,24 @@ export class Diamond extends Tool {
         const deltaX = this.pointer.x - this.origX;
         const deltaY = this.pointer.y - this.origY;
 
+        // Calculate new pathOffset
+        const newOffsetX = this.origX + deltaX / 2;
+        const newOffsetY = this.origY + deltaY / 2;
+
         // Update the polygon's points based on the new dimensions
         this.diamond.set({
-            points: this.calcPolygonPoints(this.sides, Math.abs( this.origX - this.pointer.x ) / 2 ),
+            points: [
+                {x: this.origX, y: this.origY},
+                {x: this.origX + deltaX, y: this.origY + deltaY},
+                {x: this.origX, y: this.origY + deltaY * 2},
+                {x: this.origX - deltaX, y: this.origY + deltaY},
+            ],
+            pathOffset: {x: newOffsetX, y: newOffsetY}, // Set the new pathOffset
             hasControls: true,
             hasBorders: true,
         });
+
         this.diamond._calcDimensions();
-        this.diamond.setCoords();
         canvas.requestRenderAll();
-    }
-
-    calcPolygonPoints = (sideCount, radius) => {
-        let sweep = Math.PI * 2 / sideCount;
-        let cx = radius;
-        let cy = radius;
-        let points = []
-
-        for (let i = 0; i < sideCount; i++) {
-            let x = cx + radius * Math.cos(i * sweep)
-            let y = cy + radius * Math.sin(i * sweep)
-            points.push({x: x, y: y})
-        }
-        return (points)
     }
 }

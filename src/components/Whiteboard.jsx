@@ -1,13 +1,16 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {fabric} from 'fabric';
 import {draw, create} from "../utils/";
 import {handleMouseDown, handleMouseMove, handleMouseUp, addImage} from '../utils';
+import {TOOL_CONSTANTS} from "../constants/tools";
+import BackgroundColor from "./BackgroundColor";
 import '../assets/styles/whiteboard.css';
 
 const Whiteboard = ({tool, setToolCallBack}) => {
     const canvasRef = useRef(null);
     const isDown = useRef(false);
     const canvas = useRef(null);
+    const [isOpenBackground, setIsOpenBackground] = useState(false);
 
     useEffect(() => {
         if (!canvas.current) {
@@ -32,10 +35,7 @@ const Whiteboard = ({tool, setToolCallBack}) => {
         canvasInstance.off('mouse:down');
         canvasInstance.off('mouse:move');
         canvasInstance.off('mouse:up');
-        handleToolsSettings(canvasInstance,tool);
-        if (tool === "image") {
-            addImage(canvasInstance);
-        }
+        handleToolsSettings(canvasInstance,tool, (openState) => setIsOpenBackground(openState));
 
         canvasInstance.on('mouse:down', function (e) {
             isDown.current = true;
@@ -69,9 +69,7 @@ const Whiteboard = ({tool, setToolCallBack}) => {
                     break;
             }
         };
-
         window.addEventListener('keydown', keyManager);
-
         return () => {
             window.removeEventListener('keydown', keyManager);
         };
@@ -136,14 +134,22 @@ const selectAllObjects = (canvas) => {
     }
 }
 
-const handleToolsSettings = (canvas, tool) => {
+const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
     switch (tool) {
-        case "cursor":
+        case TOOL_CONSTANTS.CURSOR:
             canvas.getObjects().forEach((obj) => {
                 obj.selectable = true;
             });
             canvas.hoverCursor = 'move';
             canvas.defaultCursor = 'default';
+            break;
+        case TOOL_CONSTANTS.IMAGE:
+            addImage(canvas);
+            break;
+        case TOOL_CONSTANTS.BACKGROUND_COLOR:
+            // document.getElementById('canvas').style.backgroundColor = '#555';
+            setOpenBgPanel(true);
+            BackgroundColor()
             break;
         default:
             canvas.discardActiveObject(canvas.getActiveObjects()).renderAll();
