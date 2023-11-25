@@ -10,10 +10,12 @@ const Menu = () => {
 
   const [tool, setTool] = useState(TOOL_CONSTANTS.MARKER);
   const [activeTab, setActiveTab] = useState(TOOL_CONSTANTS.MARKER);
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  const onToolClick = (tool) => {
+  const onToolClick = (tool,event) => {
     setActiveTab(tool);
     setTool(tool);
+    setAnchorEl(event?.currentTarget);
   }
 
   return (
@@ -23,12 +25,12 @@ const Menu = () => {
           {
             iconToolsMaps.map((tool,index) => (
               <Tooltip title={tool.title} key={index} >
-                <FontAwesomeIcon icon={tool.icon} className={activeTab === `${tool.id}` ? 'menu-button active' : 'menu-button'} onClick={() => onToolClick(tool.id)} />
+                <FontAwesomeIcon icon={tool.icon} className={activeTab === `${tool.id}` ? 'menu-button active' : 'menu-button'} onClick={(event) => onToolClick(tool.id,event)} />
               </Tooltip>
             ))}
         </div>
       </div>
-      <Whiteboard tool={tool} setToolCallBack={onToolClick} />
+      <Whiteboard tool={tool} anchor={anchorEl} setToolCallBack={onToolClick} />
     </>
   )
 }

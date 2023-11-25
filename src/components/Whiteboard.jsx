@@ -6,81 +6,86 @@ import {TOOL_CONSTANTS} from "../constants/tools";
 import BackgroundColor from "./BackgroundColor";
 import '../assets/styles/whiteboard.css';
 
-const Whiteboard = ({tool, setToolCallBack}) => {
-    const canvasRef = useRef(null);
-    const isDown = useRef(false);
-    const canvas = useRef(null);
-    const [isOpenBackground, setIsOpenBackground] = useState(false);
+const Whiteboard = ({tool, setToolCallBack, anchor}) => {
+        const canvasRef = useRef(null);
+        const isDown = useRef(false);
+        const canvas = useRef(null);
+        const [isOpenBackground, setIsOpenBackground] = useState(false);
 
-    useEffect(() => {
-        if (!canvas.current) {
-            canvas.current = new fabric.Canvas(canvasRef.current, {
-                isDrawingMode: false,
-                selection: true,
-            });
-            canvas.current.setWidth(window.screen.width);
-            canvas.current.setHeight(window.screen.height);
-        }
-        const canvasInstance = canvas.current;
-
-        const savedCanvas = sessionStorage.getItem('canvas');
-        if (savedCanvas) {
-            canvasInstance.loadFromJSON(savedCanvas, canvasInstance.renderAll.bind(canvasInstance));
-        }
-    }, []);
-
-    useEffect(() => {
-        tool === "marker" ? canvas.current.isDrawingMode = true : canvas.current.isDrawingMode = false;
-        const canvasInstance = canvas.current;
-        canvasInstance.off('mouse:down');
-        canvasInstance.off('mouse:move');
-        canvasInstance.off('mouse:up');
-        handleToolsSettings(canvasInstance,tool, (openState) => setIsOpenBackground(openState));
-
-        canvasInstance.on('mouse:down', function (e) {
-            isDown.current = true;
-            handleMouseDown(canvasInstance, tool, create, e);
-        });
-
-        canvasInstance.on('mouse:move', function (e) {
-            if (!isDown.current) return;
-            handleMouseMove(canvasInstance, tool, draw, e);
-        });
-
-        canvasInstance.on('mouse:up', () => {
-            isDown.current = false;
-            handleMouseUp(canvasInstance, tool, setToolCallBack);
-        });
-
-        const keyManager = (e) => {
-            switch (true) {
-                case e.keyCode === 46: // delete selected objects
-                    handleDeleteSelected(canvasInstance);
-                    break;
-                case (e.ctrlKey || e.metaKey) && e.key === 'd': // duplicate selected objects
-                    e.preventDefault();
-                    duplicateObjects(canvasInstance);
-                    break;
-                case (e.ctrlKey || e.metaKey) && e.key === 'a': // select all objects
-                    e.preventDefault();
-                    selectAllObjects(canvasInstance);
-                    break;
-                default:
-                    break;
+        useEffect(() => {
+            if (!canvas.current) {
+                canvas.current = new fabric.Canvas(canvasRef.current, {
+                    isDrawingMode: false,
+                    selection: true,
+                });
+                canvas.current.setWidth(window.screen.width);
+                canvas.current.setHeight(window.screen.height);
             }
-        };
-        window.addEventListener('keydown', keyManager);
-        return () => {
-            window.removeEventListener('keydown', keyManager);
-        };
-}, [tool]);
+            const canvasInstance = canvas.current;
 
-return (
-    <div>
-        <canvas ref={canvasRef} id='canvas'>Drawing canvas</canvas>
-    </div>
-);
-}
+            const savedCanvas = sessionStorage.getItem('canvas');
+            if (savedCanvas) {
+                canvasInstance.loadFromJSON(savedCanvas, canvasInstance.renderAll.bind(canvasInstance));
+            }
+        }, []);
+
+        useEffect(() => {
+            tool === "marker" ? canvas.current.isDrawingMode = true : canvas.current.isDrawingMode = false;
+            const canvasInstance = canvas.current;
+            canvasInstance.off('mouse:down');
+            canvasInstance.off('mouse:move');
+            canvasInstance.off('mouse:up');
+            setIsOpenBackground(false)
+            handleToolsSettings(canvasInstance, tool, () => setIsOpenBackground(true));
+
+            canvasInstance.on('mouse:down', function (e) {
+                isDown.current = true;
+                handleMouseDown(canvasInstance, tool, create, e);
+            });
+
+            canvasInstance.on('mouse:move', function (e) {
+                if (!isDown.current) return;
+                handleMouseMove(canvasInstance, tool, draw, e);
+            });
+
+            canvasInstance.on('mouse:up', () => {
+                isDown.current = false;
+                handleMouseUp(canvasInstance, tool, setToolCallBack);
+            });
+
+            const keyManager = (e) => {
+                switch (true) {
+                    case e.keyCode === 46: // delete selected objects
+                        handleDeleteSelected(canvasInstance);
+                        break;
+                    case (e.ctrlKey || e.metaKey) && e.key === 'd': // duplicate selected objects
+                        e.preventDefault();
+                        duplicateObjects(canvasInstance);
+                        break;
+                    case (e.ctrlKey || e.metaKey) && e.key === 'a': // select all objects
+                        e.preventDefault();
+                        selectAllObjects(canvasInstance);
+                        break;
+                    default:
+                        break;
+                }
+            };
+            window.addEventListener('keydown', keyManager);
+            return () => {
+                window.removeEventListener('keydown', keyManager);
+            };
+        }, [tool]);
+
+        return (
+            <div>
+                <BackgroundColor open={isOpenBackground} anchorEl={anchor} onClose={() => {
+                    setIsOpenBackground(false);
+                    setToolCallBack(TOOL_CONSTANTS.CURSOR);
+                }}/>
+                <canvas ref={canvasRef} id='canvas'>Drawing canvas</canvas>
+            </div>
+        );
+    }
 ;
 
 const handleDeleteSelected = (canvas) => {
@@ -148,8 +153,7 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
             break;
         case TOOL_CONSTANTS.BACKGROUND_COLOR:
             // document.getElementById('canvas').style.backgroundColor = '#555';
-            setOpenBgPanel(true);
-            BackgroundColor()
+            setOpenBgPanel();
             break;
         default:
             canvas.discardActiveObject(canvas.getActiveObjects()).renderAll();
