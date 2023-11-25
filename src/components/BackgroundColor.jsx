@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import Grid from '@mui/material/Grid';
@@ -16,8 +16,16 @@ const BackgroundColor = ({open, anchorEl, onClose}) => {
         onClose();
     };
 
+    useEffect(() => {
+        const backgroundColor = localStorage.getItem('backgroundColor');
+        if (backgroundColor) {
+            document.getElementsByTagName('body')[0].style.backgroundColor = backgroundColor;
+        }
+    }, []);
+
     const handleColorSelect = (color) => {
         document.getElementsByTagName('body')[0].style.backgroundColor = color;
+        localStorage.setItem('backgroundColor', color);
         handleClose();
     };
 
