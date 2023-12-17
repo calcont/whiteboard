@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {fabric} from 'fabric';
-import {draw, create} from "../utils/";
+import {draw, create, done} from "../utils/";
 import {handleMouseDown, handleMouseMove, handleMouseUp, addImage} from '../utils';
 import {TOOL_CONSTANTS} from "../constants/tools";
 import BackgroundColor from "./BackgroundColor";
@@ -50,7 +50,7 @@ const Whiteboard = ({tool, setToolCallBack, anchor}) => {
 
             canvasInstance.on('mouse:up', () => {
                 isDown.current = false;
-                handleMouseUp(canvasInstance, tool, setToolCallBack);
+                handleMouseUp(canvasInstance, tool, done, setToolCallBack);
             });
 
             const keyManager = (e) => {

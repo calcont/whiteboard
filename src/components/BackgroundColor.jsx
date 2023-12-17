@@ -22,7 +22,7 @@ const BackgroundColor = ({open, anchorEl, onClose}) => {
             document.getElementsByTagName('body')[0].style.backgroundColor = backgroundColor;
         }
     }, []);
-
+    
     const handleColorSelect = (color) => {
         document.getElementsByTagName('body')[0].style.backgroundColor = color;
         localStorage.setItem('backgroundColor', color);

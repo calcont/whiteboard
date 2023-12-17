@@ -21,5 +21,9 @@ const draw = (tool, canvas, event) => {
     toolFactory[tool].draw(canvas, event);
 }
 
+const done = (tool, canvas) => {
+    toolFactory[tool].done(canvas);
+}
 
-export {draw, create};
+
+export {draw, create, done};
