@@ -92,11 +92,17 @@ const handleDeleteSelected = (canvas) => {
     const activeObjects = canvas.getActiveObjects();
     if (activeObjects) {
         activeObjects.forEach((object) => {
+            if (object._objects) {
+                object._objects.forEach((obj) => {
+                    canvas.discardActiveObject();
+                    canvas.remove(obj);
+                });
+            }
             canvas.discardActiveObject();
             canvas.remove(object);
         });
         // sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
-        canvas.renderAll();
+        canvas.requestRenderAll();
     }
 };
 
