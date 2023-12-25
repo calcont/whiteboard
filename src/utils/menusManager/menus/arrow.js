@@ -11,7 +11,7 @@ export class Arrow extends Tool {
         this.line = null;
         this.arrowHead = null;
         this.arrow = null;
-        this.deleteOffset = 25;
+        this.deleteOffset = 20;
     }
 
     create(canvas, event) {
@@ -73,6 +73,7 @@ export class Arrow extends Tool {
         this.arrow = new fabric.Group([this.line, this.arrowHead], {
             objectCaching: false,
         })
+        canvas.remove(this.line, this.arrowHead);
         canvas.add(this.arrow);
         canvas.requestRenderAll();
     }
