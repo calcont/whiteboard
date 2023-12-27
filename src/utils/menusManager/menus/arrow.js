@@ -25,8 +25,6 @@ export class Arrow extends Tool {
             stroke: 'black',
             strokeWidth: 2,
             fill: 'black',
-            originX: 'center',
-            originY: 'center',
             objectCaching: false,
             hasControls: false,
             hasBorders: false,
