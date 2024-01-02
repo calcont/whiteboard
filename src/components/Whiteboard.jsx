@@ -6,7 +6,7 @@ import {TOOL_CONSTANTS} from "../constants/tools";
 import BackgroundColor from "./BackgroundColor";
 import '../assets/styles/whiteboard.css';
 
-const Whiteboard = ({tool, setToolCallBack, anchor}) => {
+const Whiteboard = ({tool, setToolCallBack, anchor, lockStatus}) => {
         const canvasRef = useRef(null);
         const isDown = useRef(false);
         const canvas = useRef(null);
@@ -17,6 +17,7 @@ const Whiteboard = ({tool, setToolCallBack, anchor}) => {
                 canvas.current = new fabric.Canvas(canvasRef.current, {
                     isDrawingMode: false,
                     selection: true,
+                    lockUniScaling: true,
                 });
                 canvas.current.setWidth(window.screen.width);
                 canvas.current.setHeight(window.screen.height);
@@ -50,7 +51,7 @@ const Whiteboard = ({tool, setToolCallBack, anchor}) => {
 
             canvasInstance.on('mouse:up', () => {
                 isDown.current = false;
-                handleMouseUp(canvasInstance, tool, done, setToolCallBack);
+                handleMouseUp(canvasInstance, tool, done, setToolCallBack, lockStatus);
             });
 
             const keyManager = (e) => {
@@ -74,7 +75,7 @@ const Whiteboard = ({tool, setToolCallBack, anchor}) => {
             return () => {
                 window.removeEventListener('keydown', keyManager);
             };
-        }, [tool]);
+        }, [tool, lockStatus]);
 
         return (
             <div>

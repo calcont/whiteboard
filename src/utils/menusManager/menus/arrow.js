@@ -11,7 +11,7 @@ export class Arrow extends Tool {
         this.line = null;
         this.arrowHead = null;
         this.arrow = null;
-        this.deleteOffset = 20;
+        this.deleteOffset = 10;
     }
 
     create(canvas, event) {

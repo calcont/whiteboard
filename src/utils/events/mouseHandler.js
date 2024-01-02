@@ -1,4 +1,4 @@
-import {TOOL_FUNCTIONS} from '../../constants/tools.js';
+import {TOOL_CONSTANTS, TOOL_FUNCTIONS} from '../../constants/tools.js';
 
 const handleMouseDown = (canvas, tool, createFunction, e) => {
     if (TOOL_FUNCTIONS[tool].createOnClick) {
@@ -14,15 +14,16 @@ const handleMouseMove = (canvas, tool, drawFunction, e) => {
     canvas.renderAll();
 }
 
-const handleMouseUp = (canvas, tool, doneFunction, toolCallBack) => {
+const handleMouseUp = (canvas, tool, doneFunction, toolCallBack, lockStatus) => {
     // sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
     if (TOOL_FUNCTIONS[tool].createOnClick) {
         doneFunction(tool, canvas);
         const currentObject = canvas.item(canvas.getObjects().length - 1);
         if (currentObject && (!currentObject.height < 5 || !currentObject.points)) {
-            canvas.setActiveObject(currentObject);
             canvas.selection = true;
-            toolCallBack('cursor');
+            if (lockStatus) return;
+            canvas.setActiveObject(currentObject);
+            toolCallBack(TOOL_CONSTANTS.CURSOR);
         } else {
             canvas.remove(currentObject);
         }

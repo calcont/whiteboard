@@ -27,6 +27,13 @@
     background-color: #f5f5f5;
 }
 
+.menu-divider {
+    width: 1px;
+    height: 1.5rem;
+    align-self: center;
+    background-color: black;
+}
+
 .active {
     background-color: #e6e6e6;
     border-radius: 2px;
