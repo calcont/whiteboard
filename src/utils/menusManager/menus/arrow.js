@@ -18,14 +18,13 @@ export class Arrow extends Tool {
         this.pointer = canvas.getPointer(event.e);
         this.origX = this.pointer.x;
         this.origY = this.pointer.y;
-        let linePath = `M ${this.origX} ${this.origY} L ${this.origX} ${this.origY}`;
         let arrowHeadPath = "M 0 0 L 20 10 L 0 20 Z";
 
-        this.line = new fabric.Path(linePath, {
+        this.line = new fabric.Line([this.origX, this.origY, this.origX, this.origY], {
             stroke: 'black',
             strokeWidth: 2,
-            fill: 'black',
-            objectCaching: false,
+            originX: 'center',
+            originY: 'center',
             hasControls: false,
             hasBorders: false,
             selectable: false,
@@ -44,7 +43,6 @@ export class Arrow extends Tool {
             selectable: false,
         })
         canvas.add(this.line, this.arrowHead);
-        canvas.requestRenderAll();
     }
 
     draw(canvas, event) {
@@ -52,8 +50,7 @@ export class Arrow extends Tool {
             return;
         }
         this.pointer = canvas.getPointer(event.e);
-        this.line.path[1][1] = this.pointer.x;
-        this.line.path[1][2] = this.pointer.y;
+        this.line.set({x2: this.pointer.x, y2: this.pointer.y});
         this.line.setCoords();
         this.arrowHead.left = this.pointer.x;
         this.arrowHead.top = this.pointer.y;
