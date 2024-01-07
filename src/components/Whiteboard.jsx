@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {fabric} from 'fabric';
 import {draw, create, done} from "../utils/";
 import {handleMouseDown, handleMouseMove, handleMouseUp, addImage} from '../utils';
-import {TOOL_CONSTANTS} from "../constants/tools";
+import {TOOL_CONSTANTS} from "../constants/";
 import BackgroundColor from "./BackgroundColor";
 import '../assets/styles/whiteboard.css';
 
@@ -17,7 +17,6 @@ const Whiteboard = ({tool, setToolCallBack, anchor, lockStatus}) => {
                 canvas.current = new fabric.Canvas(canvasRef.current, {
                     isDrawingMode: false,
                     selection: true,
-                    lockUniScaling: true,
                 });
                 canvas.current.setWidth(window.screen.width);
                 canvas.current.setHeight(window.screen.height);
@@ -31,7 +30,11 @@ const Whiteboard = ({tool, setToolCallBack, anchor, lockStatus}) => {
         }, []);
 
         useEffect(() => {
-            tool === "marker" ? canvas.current.isDrawingMode = true : canvas.current.isDrawingMode = false;
+            if (tool === TOOL_CONSTANTS.MARKER) {
+                canvas.current.isDrawingMode = true;
+                canvas.current.freeDrawingBrush.width = 3   ;
+            }
+            else canvas.current.isDrawingMode = false;
             const canvasInstance = canvas.current;
             canvasInstance.off('mouse:down');
             canvasInstance.off('mouse:move');
@@ -163,7 +166,11 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
             setOpenBgPanel();
             break;
         default:
-            canvas.discardActiveObject(canvas.getActiveObjects()).renderAll();
+            const lastObject = canvas.getObjects()[canvas.getObjects().length - 1];
+            if (lastObject && lastObject.type === 'i-text' && lastObject.text === '') {
+                canvas.remove(lastObject);
+            }
+            canvas.discardActiveObject();
             canvas.getObjects().forEach((obj) => {
                 obj.selectable = false;
             });

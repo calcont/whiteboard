@@ -3,7 +3,7 @@ import {Circle} from "./menus/circle";
 import {Font} from "./menus/font";
 import {Diamond} from "./menus/diamond";
 import {Arrow} from "./menus/arrow";
-import {TOOL_CONSTANTS} from "../../constants/tools";
+import {TOOL_CONSTANTS} from "../../constants/";
 
 const toolFactory = {
     [TOOL_CONSTANTS.RECTANGLE]: new Rectangle(),

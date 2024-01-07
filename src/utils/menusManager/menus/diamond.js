@@ -63,4 +63,9 @@ export class Diamond extends Tool {
         this.diamond._calcDimensions();
         canvas.requestRenderAll();
     }
+
+    // done(canvas) {
+    //     canvas.setActiveObject(this.diamond);
+    //     canvas.renderAll();
+    // }
 }

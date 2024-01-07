@@ -6,8 +6,8 @@ import Fade from '@mui/material/Fade';
 
 const colorOptions = [
     {name: 'White', color: 'white'},
-    {name: 'Black', color: 'black'},
-    {name: 'Blue', color: '#add8e6'},
+    // {name: 'Black', color: 'black'},
+    {name: 'Blue', color: '#f5faff'},
     {name: 'Grey', color: '#333333'},
 ];
 
@@ -49,7 +49,7 @@ const BackgroundColor = ({open, anchorEl, onClose}) => {
                 orientation: 'horizontal',
             }}
         >
-            <Grid container spacing={1}>
+            <Grid container spacing={0.2}>
                 {colorOptions.map((option,index) => (
                     <Grid item key={option.color}>
                         <MenuItem onClick={() => handleColorSelect(option.color)} selected={index === 0}>
@@ -57,7 +57,7 @@ const BackgroundColor = ({open, anchorEl, onClose}) => {
                                 style={{
                                     width: '24px',
                                     height: '24px',
-                                    borderRadius: '50%',
+                                    borderRadius: '10%',
                                     backgroundColor: option.color,
                                     border: '0.1px solid #000',
                                 }}

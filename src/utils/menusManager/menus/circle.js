@@ -1,5 +1,5 @@
-import { fabric } from 'fabric';
-import { Tool } from '../toolGeneric';
+import {fabric} from 'fabric';
+import {Tool} from '../toolGeneric';
 
 export class Circle extends Tool {
     constructor() {
@@ -42,6 +42,12 @@ export class Circle extends Tool {
         });
 
         canvas.renderAll();
+    }
+
+    done(canvas) {
+        if (this.circle.radius < 5) {
+            canvas.remove(this.circle);
+        }
     }
 }
 

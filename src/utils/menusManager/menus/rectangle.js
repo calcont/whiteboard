@@ -45,4 +45,10 @@ export class Rectangle extends Tool {
         this.rect.set({width: Math.abs(this.origX - this.pointer.x)});
         this.rect.set({height: Math.abs(this.origY - this.pointer.y)});
     }
+
+    done(canvas) {
+        if (this.rect.height < 5) {
+            canvas.remove(this.rect);
+        }
+    }
 }
