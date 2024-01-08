@@ -2,9 +2,9 @@ import React, {useState} from 'react';
 import '../assets/styles/menu.css';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {Tooltip} from '@mui/material';
-import {iconToolsMaps} from '../constants/IconTools';
-import {TOOL_CONSTANTS} from '../constants/tools';
-import {faLock, faLockOpen} from '@fortawesome/free-solid-svg-icons';
+import {iconToolsMaps} from '../constants/';
+import {TOOL_CONSTANTS} from '../constants/';
+import {faLock, faLockOpen, faTrash} from '@fortawesome/free-solid-svg-icons';
 import Whiteboard from './Whiteboard';
 
 const Menu = () => {
@@ -38,6 +38,10 @@ const Menu = () => {
                                 <FontAwesomeIcon icon={tool.icon} className={activeTab === `${tool.id}` ? 'menu-button active' : 'menu-button'} onClick={(event) => onToolClick(tool.id, event)}/>
                             </Tooltip>
                         ))}
+                    <div className="menu-divider"></div>
+                    <Tooltip title={'Delete entire canvas'}>
+                        <FontAwesomeIcon icon={faTrash} className='menu-button' />
+                    </Tooltip>
                 </div>
             </div>
             <Whiteboard tool={tool} anchor={anchorEl} setToolCallBack={onToolClick} lockStatus={isLocked}/>

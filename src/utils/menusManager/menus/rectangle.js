@@ -24,7 +24,7 @@ export class Rectangle extends Tool {
             originY: 'top',
             fill: 'transparent',
             stroke: 'black',
-            strokeWidth: 2,
+            strokeWidth: 3,
             width: this.pointer2.x - this.origX,
             height: this.pointer2.y - this.origY,
         });

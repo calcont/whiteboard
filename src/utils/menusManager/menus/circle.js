@@ -20,7 +20,7 @@ export class Circle extends Tool {
             radius: 1,
             fill: '',
             stroke: 'black',
-            strokeWidth: 2,
+            strokeWidth: 3,
             originX: 'center',
             originY: 'center',
         });

@@ -168,7 +168,7 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
         default:
             const lastObject = canvas.getObjects()[canvas.getObjects().length - 1];
             if (lastObject && lastObject.type === 'i-text' && lastObject.text === '') {
-                canvas.remove(lastObject);
+                canvas.remove(lastObject)
             }
             canvas.discardActiveObject();
             canvas.getObjects().forEach((obj) => {
@@ -176,6 +176,7 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
             });
             canvas.hoverCursor = 'cursor';
             canvas.defaultCursor = 'crosshair';
+            canvas.renderAll();
             break;
     }
 }

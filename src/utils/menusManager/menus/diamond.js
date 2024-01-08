@@ -24,7 +24,7 @@ export class Diamond extends Tool {
         ], {
             fill: '',
             stroke: 'black',
-            strokeWidth: 1,
+            strokeWidth: 3,
             originX: 'center',
             originY: 'center',
             objectCaching: false, // Recalculate bounding box dynamically

@@ -24,6 +24,9 @@ const createFont = (canvas, event) => {
             canvas.remove(text);
         }
     });
+    text.on("editing:entered", () => {
+       canvas.selection = false;
+    });
     canvas.add(text);
     text.enterEditing();
     text.selectAll();

@@ -7,7 +7,8 @@ import {
     faFont,
     faImage,
     faArrowPointer,
-    faDiamond
+    faDiamond,
+    faEraser
 } from '@fortawesome/free-solid-svg-icons';
 import {TOOL_CONSTANTS} from "./tools";
 
@@ -21,4 +22,5 @@ export const iconToolsMaps = [
     {icon: faFont, title: "Text", id: TOOL_CONSTANTS.FONT},
     {icon: faImage, title: "Image", id: TOOL_CONSTANTS.IMAGE},
     {icon: faPalette, title: "Background Color", id: TOOL_CONSTANTS.BACKGROUND_COLOR},
+    {icon: faEraser, title: "Eraser", id: TOOL_CONSTANTS.ERASER},
 ];
