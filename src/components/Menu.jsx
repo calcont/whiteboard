@@ -7,7 +7,7 @@ import {faLock, faLockOpen, faTrash} from '@fortawesome/free-solid-svg-icons';
 import Whiteboard from './Whiteboard';
 import GenericDialog from "./Dialog";
 
-const Menu = () => {
+const Menu = ({canvas}) => {
 
     const [tool, setTool] = useState(TOOL_CONSTANTS.MARKER);
     const [activeTab, setActiveTab] = useState(TOOL_CONSTANTS.MARKER);
@@ -49,13 +49,15 @@ const Menu = () => {
                         ))}
                     <div className="menu-divider"></div>
                     <Tooltip title={'Delete entire canvas'}>
-                        <FontAwesomeIcon icon={faTrash} className='menu-button' onClick={()=>setIsDeleteDialogOpen(true)}/>
+                        <FontAwesomeIcon icon={faTrash} className='menu-button'
+                                         onClick={() => setIsDeleteDialogOpen(true)}/>
                     </Tooltip>
                 </div>
             </div>
             <GenericDialog open={isDeleteDialogOpen} handleClose={() => setIsDeleteDialogOpen(false)}
-                    handleDelete={handleDelete}/>
-            <Whiteboard tool={tool} anchor={anchorEl} setToolCallBack={onToolClick} lockStatus={isLocked}/>
+                           handleDelete={handleDelete}/>
+            <Whiteboard tool={tool} anchor={anchorEl} setToolCallBack={onToolClick} lockStatus={isLocked}
+                        canvas={canvas}/>
         </>
     )
 }

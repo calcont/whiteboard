@@ -31,7 +31,7 @@ export default function GenericDialog({open, handleClose, handleDelete}) {
                     <Button variant="contained" color="error" onClick={handleDelete}>
                         Yes
                     </Button>
-                    <Button onClick={handleClose} autoFocus>
+                    <Button onClick={handleClose} >
                         No
                     </Button>
                 </DialogActions>

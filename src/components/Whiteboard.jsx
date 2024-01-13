@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState} from 'react';
 import {fabric} from 'fabric';
 import {draw, create, done} from "../utils/";
 import {handleMouseDown, handleMouseMove, handleMouseUp, addImage} from '../utils';
@@ -6,69 +6,52 @@ import {TOOL_CONSTANTS} from "../constants/";
 import BackgroundColor from "./BackgroundColor";
 import '../assets/styles/whiteboard.css';
 
-const Whiteboard = ({tool, setToolCallBack, anchor, lockStatus}) => {
-    const canvasRef = useRef(null);
+const Whiteboard = ({tool, setToolCallBack, anchor, lockStatus, canvas}) => {
     const isDown = useRef(false);
-    const canvas = useRef(null);
     const [isOpenBackground, setIsOpenBackground] = useState(false);
 
     useEffect(() => {
-        if (!canvas.current) {
-            canvas.current = new fabric.Canvas(canvasRef.current, {
-                isDrawingMode: false,
-                selection: true,
-            });
-            window.canvasI = canvas.current;
-            canvas.current.setWidth(window.screen.width);
-            canvas.current.setHeight(window.screen.height);
-        }
-        const canvasInstance = canvas.current;
-
         const savedCanvas = sessionStorage.getItem('canvas');
         if (savedCanvas) {
-            canvasInstance.loadFromJSON(savedCanvas, canvasInstance.renderAll.bind(canvasInstance));
+            canvas.loadFromJSON(savedCanvas, canvas.renderAll.bind(canvas));
         }
     }, []);
 
     useEffect(() => {
         if (tool === TOOL_CONSTANTS.MARKER) {
-            canvas.current.isDrawingMode = true;
-            canvas.current.freeDrawingBrush.width = 3;
-        } else canvas.current.isDrawingMode = false;
-        const canvasInstance = canvas.current;
-        canvasInstance.off('mouse:down');
-        canvasInstance.off('mouse:move');
-        canvasInstance.off('mouse:up');
+            canvas.isDrawingMode = true;
+            canvas.freeDrawingBrush.width = 3;
+        } else canvas.isDrawingMode = false;
         setIsOpenBackground(false)
-        handleToolsSettings(canvasInstance, tool, () => setIsOpenBackground(true));
+        handleToolsSettings(canvas, tool, () => setIsOpenBackground(true));
 
-        canvasInstance.on('mouse:down', function (e) {
+        canvas.on('mouse:down', function (e) {
             isDown.current = true;
-            handleMouseDown(canvasInstance, tool, create, e);
+            handleMouseDown(canvas, tool, create, e);
         });
 
-        canvasInstance.on('mouse:move', function (e) {
+        canvas.on('mouse:move', function (e) {
             if (!isDown.current) return;
-            handleMouseMove(canvasInstance, tool, draw, e);
+            handleMouseMove(canvas, tool, draw, e);
         });
 
-        canvasInstance.on('mouse:up', () => {
+        canvas.on('mouse:up', () => {
             isDown.current = false;
-            handleMouseUp(canvasInstance, tool, done, setToolCallBack, lockStatus);
+            handleMouseUp(canvas, tool, done, setToolCallBack, lockStatus);
         });
 
         const keyManager = (e) => {
             switch (true) {
                 case e.keyCode === 46: // delete selected objects
-                    handleDeleteSelected(canvasInstance);
+                    handleDeleteSelected(canvas);
                     break;
                 case (e.ctrlKey || e.metaKey) && e.key === 'd': // duplicate selected objects
                     e.preventDefault();
-                    duplicateObjects(canvasInstance);
+                    duplicateObjects(canvas);
                     break;
                 case (e.ctrlKey || e.metaKey) && e.key === 'a': // select all objects
                     e.preventDefault();
-                    selectAllObjects(canvasInstance);
+                    selectAllObjects(canvas);
                     break;
                 default:
                     break;
@@ -86,7 +69,6 @@ const Whiteboard = ({tool, setToolCallBack, anchor, lockStatus}) => {
                 setIsOpenBackground(false);
                 setToolCallBack(TOOL_CONSTANTS.CURSOR);
             }}/>
-            <canvas ref={canvasRef} id='canvas'>Drawing canvas</canvas>
         </div>
     );
     }
@@ -166,12 +148,12 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
             break;
         default:
             const allObjects = canvas.getObjects();
-            const lastObject = canvas.item(allObjects.length - 1);
-            ;
-            if (lastObject && lastObject.type === 'i-text' && lastObject.text === '') {
-                lastObject.enterEditing();
-                canvas.remove(lastObject);
-            }
+            // const lastObject = canvas.item(allObjects.length - 1);
+            // ;
+            // if (lastObject && lastObject.type === 'i-text' && lastObject.text === '') {
+            //     lastObject.enterEditing();
+            //     canvas.remove(lastObject);
+            // }
             canvas.discardActiveObject();
             allObjects.forEach((obj) => {
                 obj.selectable = false;
