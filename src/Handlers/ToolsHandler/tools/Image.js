@@ -1,7 +1,7 @@
 import { fabric } from 'fabric';
 
 const AUTO_SCALE = 0.25;
-export const addImage = (canvas) => {
+export const Image = (canvas) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';

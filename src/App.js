@@ -1,10 +1,15 @@
-import Menu from './components/Menu';
+import React from "react";
+import './App.css';
+import {CanvasEditor} from "./components/CanvasEditor";
+import {CanvasProvider, MenuProvider} from "./contexts";
 
 function App() {
     return (
-        <>
-            <Menu/>
-        </>
+        <CanvasProvider>
+            <MenuProvider>
+                <CanvasEditor/>
+            </MenuProvider>
+        </CanvasProvider>
     );
 }
 

@@ -1,9 +1,9 @@
-import {Rectangle} from "./menus/rectangle";
-import {Circle} from "./menus/circle";
-import {Font} from "./menus/font";
-import {Diamond} from "./menus/diamond";
-import {Arrow} from "./menus/arrow";
-import {TOOL_CONSTANTS} from "../../constants/";
+import {Rectangle} from "./tools/rectangle";
+import {Circle} from "./tools/circle";
+import {Font} from "./tools/font";
+import {Diamond} from "./tools/diamond";
+import {Arrow} from "./tools/arrow";
+import {TOOL_CONSTANTS} from "../../constants";
 
 const toolFactory = {
     [TOOL_CONSTANTS.RECTANGLE]: new Rectangle(),
