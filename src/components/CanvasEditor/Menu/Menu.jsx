@@ -8,6 +8,8 @@ import GenericDialog from "../../Dialog/Dialog";
 import BackgroundColor from "../BackgroundColor";
 import {Image} from "../../../Handlers/ToolsHandler";
 import {useMenuContext, useCanvasContext} from "../../../hooks";
+import removeCursor from "../../../assets/icons/circle.svg";
+import {fabric} from "fabric";
 
 const Menu = () => {
     const {activeTool, setActiveTool, lockStatus, setLockStatus} = useMenuContext();
@@ -85,14 +87,23 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
             canvas.getObjects().forEach((obj) => {
                 obj.selectable = true;
             });
+            canvas.selection = true;
             canvas.hoverCursor = 'move';
-            canvas.defaultCursor  = 'default';
+            canvas.defaultCursor = 'default';
             break;
         case TOOL_CONSTANTS.IMAGE:
             Image(canvas);
             break;
         case TOOL_CONSTANTS.BACKGROUND_COLOR:
             setOpenBgPanel();
+            break;
+        case TOOL_CONSTANTS.ERASER:
+            fabric.Object.prototype.selectable = false;
+            canvas.isDrawingMode = false;
+            canvas.hoverCursor = `url(${removeCursor}), auto`;
+            canvas.defaultCursor = `url(${removeCursor}), auto`;
+            canvas.discardActiveObject();
+            canvas.renderAll();
             break;
         default:
             const allObjects = canvas.getObjects();

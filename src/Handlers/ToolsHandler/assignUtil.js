@@ -1,8 +1,4 @@
-import {Rectangle} from "./tools/rectangle";
-import {Circle} from "./tools/circle";
-import {Font} from "./tools/font";
-import {Diamond} from "./tools/diamond";
-import {Arrow} from "./tools/arrow";
+import {Rectangle, Circle, Font, Diamond, Arrow, Eraser} from "./tools"
 import {TOOL_CONSTANTS} from "../../constants";
 
 const toolFactory = {
@@ -11,6 +7,7 @@ const toolFactory = {
     [TOOL_CONSTANTS.FONT]: new Font(),
     [TOOL_CONSTANTS.DIAMOND]: new Diamond(),
     [TOOL_CONSTANTS.ARROW]: new Arrow(),
+    [TOOL_CONSTANTS.ERASER]: new Eraser(),
 };
 
 const create = (tool, canvas, event) => {

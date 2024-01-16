@@ -49,7 +49,7 @@ export const TOOL_FUNCTIONS = {
         onMove: false,
     },
     [TOOL_CONSTANTS.ERASER]: {
-        createOnClick: false,
-        onMove: false,
+        createOnClick: true,
+        onMove: true,
     },
 };

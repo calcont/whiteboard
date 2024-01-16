@@ -25,6 +25,7 @@ export class Rectangle extends Tool {
             fill: 'transparent',
             stroke: 'black',
             strokeWidth: 3,
+            selectable:true,
             width: this.pointer2.x - this.origX,
             height: this.pointer2.y - this.origY,
         });

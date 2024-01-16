@@ -16,7 +16,7 @@ const createFont = (canvas, event) => {
         left: pointer.x,
         top: pointer.y,
         fill: "black",
-        fontSize: 30,
+        fontSize: 20,
         fontFamily: "Arial",
     });
     text.on("editing:exited", () => {

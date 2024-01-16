@@ -10,6 +10,7 @@ function MouseHandler() {
 
     const handleMouseDown = (e) => {
         if (TOOL_FUNCTIONS[activeTool].createOnClick) {
+            canvas.selection = false;
             canvas.discardActiveObject();
             create(activeTool, canvas, e);
         }
@@ -27,9 +28,8 @@ function MouseHandler() {
         // sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
         if (TOOL_FUNCTIONS[activeTool].createOnClick) {
             done(activeTool, canvas);
-            canvas.selection = true;
             const currentDrawnObject = canvas.item(canvas.getObjects().length - 1);
-            if (currentDrawnObject) {
+            if (currentDrawnObject && activeTool !== TOOL_CONSTANTS.ERASER) {
                 if (!lockStatus) {
                     canvas.setActiveObject(currentDrawnObject);
                     setActiveTool(TOOL_CONSTANTS.CURSOR);
