@@ -14,17 +14,14 @@ export class Circle extends Tool {
         this.pointer = canvas.getPointer(event.e);
         this.origX = this.pointer.x;
         this.origY = this.pointer.y;
-        this.circle = new fabric.Circle({
+        this.circle = new fabric.Ellipse({
             left: this.origX,
             top: this.origY,
             radius: 1,
             fill: '',
             stroke: 'black',
-            strokeWidth: 3,
-            originX: 'center',
-            originY: 'center',
+            strokeWidth: 3
         });
-
         canvas.add(this.circle);
     }
 
@@ -33,19 +30,22 @@ export class Circle extends Tool {
             return;
         }
         this.pointer = canvas.getPointer(event.e);
-        // radius = distance between origin and pointer (i.e diameter) / 2
-        let radius = Math.sqrt(Math.pow(this.origX - this.pointer.x, 2) + Math.pow(this.origY - this.pointer.y, 2)) / 2;
+        if (this.pointer.x < this.origX) {
+            this.circle.set('left', this.pointer.x);
+        }
+        if (this.pointer.y < this.origY) {
+            this.circle.set('top', this.pointer.y);
+        }
         this.circle.set({
-            radius: radius,
-            left: (this.origX + this.pointer.x) / 2,
-            top: (this.origY + this.pointer.y) / 2
+            rx: Math.abs(this.pointer.x - this.origX) / 2,
+            ry: Math.abs(this.pointer.y - this.origY) / 2,
         });
-
+        this.circle.setCoords();
         canvas.renderAll();
     }
 
     done(canvas) {
-        if (this.circle.radius < 5) {
+        if (this.circle.height < 5) {
             canvas.remove(this.circle);
         }
     }
