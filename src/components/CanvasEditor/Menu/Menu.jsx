@@ -75,7 +75,6 @@ const Menu = () => {
                     />
                 </div>
             </div>
-
         </>
     )
 }
@@ -85,7 +84,7 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
     switch (tool) {
         case TOOL_CONSTANTS.CURSOR:
             canvas.getObjects().forEach((obj) => {
-                obj.selectable = true;
+                obj.set({ selectable: true })
             });
             canvas.selection = true;
             canvas.hoverCursor = 'move';
@@ -98,7 +97,9 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
             setOpenBgPanel();
             break;
         case TOOL_CONSTANTS.ERASER:
-            fabric.Object.prototype.selectable = false;
+            canvas.getObjects().forEach((obj) => {
+                obj.selectable = false;
+            });
             canvas.isDrawingMode = false;
             canvas.hoverCursor = `url(${removeCursor}), auto`;
             canvas.defaultCursor = `url(${removeCursor}), auto`;
@@ -106,16 +107,9 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
             canvas.renderAll();
             break;
         default:
-            const allObjects = canvas.getObjects();
-            // const lastObject = canvas.item(allObjects.length - 1);
-            // ;
-            // if (lastObject && lastObject.type === 'i-text' && lastObject.text === '') {
-            //     lastObject.enterEditing();
-            //     canvas.remove(lastObject);
-            // }
             canvas.discardActiveObject();
-            allObjects.forEach((obj) => {
-                obj.selectable = false;
+            canvas.getObjects().forEach((obj) => {
+                obj.set({ selectable: false })
             });
             canvas.hoverCursor = 'cursor';
             canvas.defaultCursor = 'crosshair';

@@ -4,13 +4,15 @@ import {useCanvasContext} from "../../hooks/";
 import {
     MouseHandler,
     KeyBoardHandler,
-    SelectionHandler
+    SelectionHandler,
+    TextEventHandler
 } from "../../Handlers/EventHandlers";
 
 function Canvas() {
     MouseHandler();
     KeyBoardHandler();
     SelectionHandler();
+    TextEventHandler();
     const canvasRef = useRef(null);
     const {setCanvas} = useCanvasContext();
 

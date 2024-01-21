@@ -47,7 +47,9 @@ export class Circle extends Tool {
     done(canvas) {
         if (this.circle.height < 5) {
             canvas.remove(this.circle);
+            return;
         }
+        this.circle.setCoords();
     }
 }
 

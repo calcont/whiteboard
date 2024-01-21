@@ -64,8 +64,7 @@ export class Diamond extends Tool {
         canvas.requestRenderAll();
     }
 
-    // done(canvas) {
-    //     canvas.setActiveObject(this.diamond);
-    //     canvas.renderAll();
-    // }
+    done(canvas) {
+        this.diamond.setCoords();
+    }
 }

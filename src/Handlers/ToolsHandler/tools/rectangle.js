@@ -50,6 +50,8 @@ export class Rectangle extends Tool {
     done(canvas) {
         if (this.rect.height < 5) {
             canvas.remove(this.rect);
+            return
         }
+        this.rect.setCoords();
     }
 }

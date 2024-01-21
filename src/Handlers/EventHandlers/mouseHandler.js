@@ -33,8 +33,8 @@ function MouseHandler() {
                 if (!lockStatus) {
                     canvas.setActiveObject(currentDrawnObject);
                     setActiveTool(TOOL_CONSTANTS.CURSOR);
-                } else {
-                    currentDrawnObject.set({selectable: false});
+                }else {
+                    currentDrawnObject.selectable = false;
                 }
             }
             canvas.renderAll();
@@ -56,6 +56,7 @@ function MouseHandler() {
                 isDown.current = false;
                 handleMouseUp();
             });
+
         }
         return () => {
             if (canvas) {

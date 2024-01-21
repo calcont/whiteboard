@@ -19,14 +19,6 @@ const createFont = (canvas, event) => {
         fontSize: 20,
         fontFamily: "Arial",
     });
-    text.on("editing:exited", () => {
-        if (text.text === "") {
-            canvas.remove(text);
-        }
-    });
-    text.on("editing:entered", () => {
-       canvas.selection = false;
-    });
     canvas.add(text);
     text.enterEditing();
     text.selectAll();

@@ -69,6 +69,7 @@ export class Arrow extends Tool {
             objectCaching: false,
         })
         canvas.remove(this.line, this.arrowHead);
+        this.arrow.setCoords();
         canvas.add(this.arrow);
         canvas.requestRenderAll();
     }
