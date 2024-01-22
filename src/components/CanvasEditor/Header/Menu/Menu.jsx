@@ -2,13 +2,13 @@ import React, {useEffect, useState} from 'react';
 import './menu.css';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {Tooltip} from '@mui/material';
-import {iconToolsMaps, TOOL_CONSTANTS} from '../../../constants';
+import {iconToolsMaps, TOOL_CONSTANTS} from '../../../../constants';
 import {faLock, faLockOpen, faTrash} from '@fortawesome/free-solid-svg-icons';
-import GenericDialog from "../../Dialog/Dialog";
-import BackgroundColor from "../BackgroundColor";
-import {Image} from "../../../Handlers/ToolsHandler";
-import {useMenuContext, useCanvasContext} from "../../../hooks";
-import removeCursor from "../../../assets/icons/circle.svg";
+import GenericDialog from "../../../Dialog/Dialog";
+import BackgroundColor from "../../BackgroundColor";
+import {Image} from "../../../../Handlers/ToolsHandler";
+import {useMenuContext, useCanvasContext} from "../../../../hooks";
+import removeCursor from "../../../../assets/icons/circle.svg";
 import {fabric} from "fabric";
 
 const Menu = () => {

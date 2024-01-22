@@ -1,10 +1,8 @@
 /* menu.css */
 .menu-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
-    padding: 5px;
-    z-index: 2;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .menu-inner-container {

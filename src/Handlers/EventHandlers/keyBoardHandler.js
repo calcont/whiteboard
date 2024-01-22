@@ -1,10 +1,11 @@
 import {useCanvasContext} from "../../hooks";
-import {useEffect,useCallback} from "react";
+import {useEffect, useCallback} from "react";
 import {fabric} from "fabric";
-import {isCtrlShiftZ, isArrow, isCtrlA, isCtrlD, isCtrlZ} from "../../utils/Shortcuts";
+import {isCtrlShiftZ, isArrow, isCtrlA, isCtrlD, isCtrlZ, isCtrlMinus, isCtrlPlus} from "../../utils/Shortcuts";
+import {handleZoomUtil} from "../../utils/Zoom";
 
 function KeyBoardHandler() {
-    const {canvas,  activeObject} = useCanvasContext();
+    const {canvas, activeObject, zoomRatio, setZoomRatio} = useCanvasContext();
 
     const handleDeleteSelected = () => {
         if (activeObject) {
@@ -119,6 +120,14 @@ function KeyBoardHandler() {
                     break;
                 case isCtrlShiftZ(e): // redo
                     redo();
+                    e.preventDefault();
+                    break;
+                case isCtrlPlus(e): // zoom in
+                    setZoomRatio(handleZoomUtil(1, canvas));
+                    e.preventDefault();
+                    break;
+                case isCtrlMinus(e): // zoom out
+                    setZoomRatio(handleZoomUtil(-1, canvas));
                     e.preventDefault();
                     break;
                 case isArrow(e):

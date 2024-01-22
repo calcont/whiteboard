@@ -13,6 +13,14 @@ export const isCtrlA = e => {
     return e.ctrlKey && !e.shiftKey && e.code === 'KeyA'
 }
 
+export const isCtrlPlus = e => {
+    return e.ctrlKey && !e.shiftKey && e.code === 'Equal'
+}
+
+export const isCtrlMinus = e => {
+    return e.ctrlKey && !e.shiftKey && e.code === 'Minus'
+}
+
 export const isArrow = e => {
     return ['ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp'].includes(e.code)
 }

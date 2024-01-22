@@ -4,6 +4,9 @@ body, html {
     overflow: hidden;
 }
 
+.canvas-container {
+    z-index: 0;
+}
 
 canvas {
     height: 100%;

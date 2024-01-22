@@ -5,7 +5,8 @@ import {
     MouseHandler,
     KeyBoardHandler,
     SelectionHandler,
-    TextEventHandler
+    TextEventHandler,
+    ZoomHandler
 } from "../../Handlers/EventHandlers";
 
 function Canvas() {
@@ -13,6 +14,7 @@ function Canvas() {
     KeyBoardHandler();
     SelectionHandler();
     TextEventHandler();
+    ZoomHandler();
     const canvasRef = useRef(null);
     const {setCanvas} = useCanvasContext();
 

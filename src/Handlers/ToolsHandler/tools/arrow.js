@@ -62,7 +62,6 @@ export class Arrow extends Tool {
         let width = Math.abs(this.pointer.x - this.origX);
         if (width < this.deleteOffset) {
             canvas.remove(this.line, this.arrowHead);
-            canvas.requestRenderAll();
             return;
         }
         this.arrow = new fabric.Group([this.line, this.arrowHead], {
@@ -71,7 +70,6 @@ export class Arrow extends Tool {
         canvas.remove(this.line, this.arrowHead);
         this.arrow.setCoords();
         canvas.add(this.arrow);
-        canvas.requestRenderAll();
     }
 
     calcArrowAngle(pointer, origX, origY) {

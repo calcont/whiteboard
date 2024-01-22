@@ -1,10 +1,10 @@
 import {TOOL_CONSTANTS, TOOL_FUNCTIONS} from '../../constants';
 import {useCanvasContext, useMenuContext} from "../../hooks";
-import {useEffect, useRef} from "react";
+import {useCallback, useEffect, useRef} from "react";
 import {create, draw, done} from "../ToolsHandler";
 
 function MouseHandler() {
-    const {canvas} = useCanvasContext();
+    const {canvas, setZoomRatio} = useCanvasContext();
     const {lockStatus, activeTool, setActiveTool} = useMenuContext();
     const isDown = useRef(false);
 
@@ -33,13 +33,27 @@ function MouseHandler() {
                 if (!lockStatus) {
                     canvas.setActiveObject(currentDrawnObject);
                     setActiveTool(TOOL_CONSTANTS.CURSOR);
-                }else {
+                } else {
                     currentDrawnObject.selectable = false;
                 }
             }
             canvas.renderAll();
         }
     }
+
+    const onMouseWheel = useCallback((event) => {
+        if (canvas && event.e.ctrlKey) {
+            const delta = event.e.deltaY;
+            let zoom = canvas.getZoom();
+            zoom *= 0.999 ** delta
+            if (zoom > 20) zoom = 20;
+            if (zoom < 0.01) zoom = 0.01;
+            setZoomRatio(zoom);
+        }
+        event.e.preventDefault()
+        event.e.stopPropagation()
+    }, [canvas]);
+
     useEffect(() => {
         if (canvas) {
             canvas.on('mouse:down', function (e) {
@@ -57,12 +71,15 @@ function MouseHandler() {
                 handleMouseUp();
             });
 
+            canvas.on("mouse:wheel", onMouseWheel);
+
         }
         return () => {
             if (canvas) {
                 canvas.off("mouse:down");
                 canvas.off("mouse:move");
                 canvas.off("mouse:up");
+                canvas.off("mouse:wheel");
             }
         }
 
