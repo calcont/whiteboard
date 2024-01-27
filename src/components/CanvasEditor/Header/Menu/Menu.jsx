@@ -84,7 +84,7 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
     switch (tool) {
         case TOOL_CONSTANTS.CURSOR:
             canvas.getObjects().forEach((obj) => {
-                obj.set({ selectable: true })
+                obj.set({selectable: true})
             });
             canvas.selection = true;
             canvas.hoverCursor = 'move';
@@ -109,7 +109,7 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
         default:
             canvas.discardActiveObject();
             canvas.getObjects().forEach((obj) => {
-                obj.set({ selectable: false })
+                obj.set({selectable: false})
             });
             canvas.hoverCursor = 'cursor';
             canvas.defaultCursor = 'crosshair';

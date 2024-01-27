@@ -1,13 +1,14 @@
 import Menu from "./Menu/Menu";
-import LeftMenu from "./LeftMenu/LeftMenu";
-import Grid from "@mui/material/Grid";
+import LeftMenu_social from "./LeftMenu/LeftMenu_social";
+import SaveImage from "./RightMenu/Save";
 import "./Header.css";
 
 const Header = () => {
     return (
         <div className="header">
-            <LeftMenu/>
+            {/*<LeftMenu_social/>*/}
             <Menu/>
+            <SaveImage/>
         </div>
     )
 }

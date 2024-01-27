@@ -1,8 +1,6 @@
 import * as React from 'react';
-import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
+import {Alert} from "@mui/material";
 
 export default function SimpleSnackbar({isOpen, message, messageType, closeFn}) {
 
@@ -15,7 +13,7 @@ export default function SimpleSnackbar({isOpen, message, messageType, closeFn}) 
 
     return (
         <div>
-            <Snackbar open={isOpen} autoHideDuration={6000} onClose={handleClose}>
+            <Snackbar open={isOpen} autoHideDuration={4000} onClose={handleClose}>
                 <Alert onClose={handleClose} severity={messageType} sx={{width: '100%'}}>
                     {message}
                 </Alert>

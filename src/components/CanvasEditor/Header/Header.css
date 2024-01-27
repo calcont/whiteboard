@@ -3,6 +3,6 @@
     position: relative;
     justify-content: center;
     align-items: center;
-    margin: 35px 0 0 20px;
+    margin: 35px 20px 0 20px;
     z-index: 2; /* Set maximum z-index */
 }

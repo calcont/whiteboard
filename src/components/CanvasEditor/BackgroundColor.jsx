@@ -3,6 +3,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import Grid from '@mui/material/Grid';
 import Fade from '@mui/material/Fade';
+import {useCanvasContext} from "../../hooks";
 
 const colorOptions = [
     {name: 'White', color: 'white'},
@@ -12,20 +13,17 @@ const colorOptions = [
 ];
 
 const BackgroundColor = ({open, anchorEl, onClose}) => {
+    const {canvas} = useCanvasContext();
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
     const handleClose = () => {
         onClose();
     };
 
-    useEffect(() => {
-        const backgroundColor = localStorage.getItem('backgroundColor');
-        if (backgroundColor) {
-            document.getElementsByTagName('body')[0].style.backgroundColor = backgroundColor;
-        }
-    }, []);
-    
-    const handleColorSelect = (color) => {
+    const handleColorSelect = (color, index) => {
         document.getElementsByTagName('body')[0].style.backgroundColor = color;
-        localStorage.setItem('backgroundColor', color);
+        canvas.backgroundColor = color;
+        canvas.renderAll();
+        setSelectedIndex(index);
         handleClose();
     };
 
@@ -50,9 +48,10 @@ const BackgroundColor = ({open, anchorEl, onClose}) => {
             }}
         >
             <Grid container spacing={0.2}>
-                {colorOptions.map((option,index) => (
+                {colorOptions.map((option, index) => (
                     <Grid item key={option.color}>
-                        <MenuItem onClick={() => handleColorSelect(option.color)} selected={index === 0}>
+                        <MenuItem onClick={() => handleColorSelect(option.color, index)}
+                                  selected={selectedIndex === index}>
                             <div
                                 style={{
                                     width: '24px',

@@ -30,9 +30,6 @@ const ZoomPanel = () => {
     return (
         <div className="zoom-panel-container">
             <div className="zoom-panel-inner-container">
-                {/*<div className="zoom-panel-button" onClick={handleZoomOut}><FontAwesomeIcon icon={faMinus}/></div>*/}
-                {/*<div className="zoom-panel-button" onClick={handleZoomReset}>{zoomRatioPercent}%</div>*/}
-                {/*<div className="zoom-panel-button" onClick={handleZoomIn}><FontAwesomeIcon icon={faPlus}/></div>*/}
                 <Tooltip title={'Zoom Out'}>
                     <FontAwesomeIcon icon={faMinus} className='zoom-panel-button' onClick={handleZoomOut}/>
                 </Tooltip>
