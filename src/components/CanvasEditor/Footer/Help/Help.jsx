@@ -12,9 +12,9 @@ import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Divider from '@mui/material/Divider';
 import Grid from "@mui/material/Grid";
-import {Box, Container, Typography} from "@mui/material";
+import {Container, Typography} from "@mui/material";
 import Button from "@mui/material/Button";
-import {SHORCUTS} from "../../../../constants";
+import {SHORCUTS,HELP_LINKS} from "../../../../constants";
 import './Help.scss';
 
 function Help() {
@@ -54,12 +54,12 @@ function HelpDialog({open, onClose}) {
                         <Divider/>
                         <Grid container spacing={2} sx={{mt: 2}}>
                             <Grid item>
-                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small">
+                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_CONTRIBUTING,"_blank")}>
                                     Want to Contribute?
                                 </Button>
                             </Grid>
                             <Grid item>
-                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small">
+                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_ISSUES,"_blank")}>
                                     Found an issue?
                                 </Button>
                             </Grid>
