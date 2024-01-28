@@ -4,5 +4,5 @@
     justify-content: center;
     align-items: center;
     margin: 0 20px 35px 0;
-    z-index: 2; /* Set maximum z-index */
+    z-index: 2;
 }

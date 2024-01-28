@@ -16,7 +16,7 @@ function TextEventHandler() {
         });
 
         canvas.on('text:editing:exited', function (e) {
-            if (e.target) {
+            if (e.target.text === "") {
                 canvas.remove(e.target);
                 canvas.renderAll();
             }
@@ -25,6 +25,7 @@ function TextEventHandler() {
         return () => {
             if (!canvas) return;
             canvas.off('text:editing:entered');
+            canvas.off('text:editing:exited');
         }
     }, [canvas]);
 }

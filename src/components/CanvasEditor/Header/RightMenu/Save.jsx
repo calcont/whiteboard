@@ -4,7 +4,7 @@ import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import {Collections, Image, FileCopy, Panorama} from '@mui/icons-material'; // Import icons you need
+import {Collections, Image, FileCopy, Panorama} from '@mui/icons-material';
 import Fade from '@mui/material/Fade';
 import ListItemIcon from "@mui/material/ListItemIcon";
 import SimpleSnackbar from "../../../Feedback/snackbar";
@@ -24,8 +24,6 @@ function SaveImage() {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const {canvas} = useCanvasContext();
     const [openCopyBar, setOpenCopyBar] = React.useState(false);
-    const [message, setMessage] = React.useState("Copied to Clipboard");
-    const [messageType, setMessageType] = React.useState(MESSAGE_TYPE.INFO);
     const open = Boolean(anchorEl);
 
     const handleClick = (event) => {
