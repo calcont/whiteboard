@@ -13,6 +13,9 @@ function SelectionHandler() {
                 setActiveObject(null);
             }
         }
+        else{
+            setActiveObject(null);
+        }
     }
 
     useEffect(() => {
