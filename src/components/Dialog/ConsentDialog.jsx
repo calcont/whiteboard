@@ -10,7 +10,7 @@ import {useTheme} from '@mui/material/styles';
 export default function GenericDialog({open, handleClose, handleDelete}) {
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
-
+    // TODO: Text can be passed as props
     return (
         <>
             <Dialog

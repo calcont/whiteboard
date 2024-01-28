@@ -10,7 +10,7 @@ import {grey} from "@mui/material/colors";
 import MenuIcon from "@mui/icons-material/Menu";
 import {Help, Delete, GitHub, Twitter, FileDownload} from "@mui/icons-material";
 import {SOCIAL_MEDIA_LINKS} from "../../../../constants";
-import GenericDialog from "../../../Dialog/Dialog";
+import GenericDialog from "../../../Dialog/ConsentDialog";
 import {useCanvasContext} from "../../../../hooks";
 import "./Leftmenu.css";
 

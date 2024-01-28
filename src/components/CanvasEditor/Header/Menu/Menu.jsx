@@ -4,12 +4,12 @@ import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {Tooltip} from '@mui/material';
 import {iconToolsMaps, TOOL_CONSTANTS} from '../../../../constants';
 import {faLock, faLockOpen, faTrash} from '@fortawesome/free-solid-svg-icons';
-import GenericDialog from "../../../Dialog/Dialog";
+import Divider from "@mui/material/Divider";
+import GenericDialog from "../../../Dialog/ConsentDialog";
 import BackgroundColor from "../../BackgroundColor";
 import {Image} from "../../../../Handlers/ToolsHandler";
 import {useMenuContext, useCanvasContext} from "../../../../hooks";
 import removeCursor from "../../../../assets/icons/circle.svg";
-import {fabric} from "fabric";
 
 const Menu = () => {
     const {activeTool, setActiveTool, lockStatus, setLockStatus} = useMenuContext();
@@ -54,7 +54,7 @@ const Menu = () => {
                         <FontAwesomeIcon icon={lockStatus ? faLock : faLockOpen} className='menu-button'
                                          onClick={handleLock}/>
                     </Tooltip>
-                    <div className="menu-divider"></div>
+                    <Divider orientation="vertical" flexItem/>
                     {
                         iconToolsMaps.map((tool, index) => (
                             <Tooltip title={tool.title} key={index}>
@@ -64,7 +64,7 @@ const Menu = () => {
                             </Tooltip>
                         ))
                     }
-                    <div className="menu-divider"></div>
+                    <Divider orientation="vertical" flexItem/>
                     <Tooltip title={'Delete entire canvas'}>
                         <FontAwesomeIcon icon={faTrash} className='menu-button'
                                          onClick={() => setIsDeleteDialogOpen(true)}/>
