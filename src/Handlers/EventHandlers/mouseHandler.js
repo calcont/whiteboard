@@ -10,7 +10,6 @@ function MouseHandler() {
 
     const handleMouseDown = (e) => {
         if (TOOL_FUNCTIONS[activeTool].createOnClick) {
-            canvas.selection = false;
             canvas.discardActiveObject();
             create(activeTool, canvas, e);
         }

@@ -1,26 +1,26 @@
-.zoom-panel-container {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-}
+.zoom-panel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 
-.zoom-panel-inner-container {
+  &__inner-container {
     display: flex;
     background-color: white;
     border-radius: 10px;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
     width: 100%;
-}
+  }
 
-.zoom-panel-button {
+  &__button {
     margin: auto 5px 0 5px;
     padding: 10px;
     border: none;
     color: black;
     user-select: none;
     cursor: pointer;
-}
 
-.zoom-panel-button:hover {
-    background-color: #f5f5f5;
+    &:hover {
+      background-color: #f5f5f5;
+    }
+  }
 }

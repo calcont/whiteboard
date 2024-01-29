@@ -10,7 +10,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import SimpleSnackbar from "../../../Feedback/snackbar";
 import {useCanvasContext} from "../../../../hooks";
 import {MESSAGE_TYPE} from "../../../../constants";
-import "./Save.css";
+import "./Save.scss";
 
 // Styled Button
 const StyledButton = styled(Button)({

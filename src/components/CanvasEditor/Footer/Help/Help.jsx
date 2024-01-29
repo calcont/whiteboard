@@ -32,7 +32,7 @@ function Help() {
         <>
             <HelpDialog open={open} onClose={handleClose}/>
             <div className="help">
-                <div className="help-icon">
+                <div className="help__icon">
                     <Tooltip title="Shortcuts">
                         <IconButton aria-label="help" onClick={handleOpen}>
                             <HelpOutlineRoundedIcon fontSize="small"/>

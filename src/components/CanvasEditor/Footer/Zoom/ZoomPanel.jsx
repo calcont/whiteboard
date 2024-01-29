@@ -1,5 +1,5 @@
 import {useCanvasContext} from "../../../../hooks";
-import "./ZoomPanel.css";
+import "./ZoomPanel.scss";
 import {faPlus, faMinus} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {handleZoomUtil as handleZoom} from "../../../../utils/Zoom";
@@ -28,16 +28,16 @@ const ZoomPanel = () => {
     }
 
     return (
-        <div className="zoom-panel-container">
-            <div className="zoom-panel-inner-container">
+        <div className="zoom-panel">
+            <div className="zoom-panel__inner-container">
                 <Tooltip title={'Zoom Out'}>
-                    <FontAwesomeIcon icon={faMinus} className='zoom-panel-button' onClick={handleZoomOut}/>
+                    <FontAwesomeIcon icon={faMinus} className='zoom-panel__button' onClick={handleZoomOut}/>
                 </Tooltip>
                 <Tooltip title={'Reset Zoom'}>
-                    <div className="zoom-panel-button" onClick={handleZoomReset}>{zoomRatioPercent}%</div>
+                    <div className="zoom-panel__button" onClick={handleZoomReset}>{zoomRatioPercent}%</div>
                 </Tooltip>
                 <Tooltip title={'Zoom In'}>
-                    <FontAwesomeIcon icon={faPlus} className='zoom-panel-button' onClick={handleZoomIn}/>
+                    <FontAwesomeIcon icon={faPlus} className='zoom-panel__button' onClick={handleZoomIn}/>
                 </Tooltip>
             </div>
         </div>

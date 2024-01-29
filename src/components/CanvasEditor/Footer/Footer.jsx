@@ -1,5 +1,5 @@
 import ZoomPanel from "./Zoom/ZoomPanel";
-import "./Footer.css";
+import "./Footer.scss";
 import Help from "./Help/Help";
 
 const Footer = () => {

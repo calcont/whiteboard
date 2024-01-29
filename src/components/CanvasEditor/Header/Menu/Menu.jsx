@@ -1,15 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import './menu.css';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {Tooltip} from '@mui/material';
-import {iconToolsMaps, TOOL_CONSTANTS} from '../../../../constants';
 import {faLock, faLockOpen, faTrash} from '@fortawesome/free-solid-svg-icons';
 import Divider from "@mui/material/Divider";
+import removeCursor from "../../../../assets/icons/circle.svg";
 import GenericDialog from "../../../Dialog/ConsentDialog";
 import BackgroundColor from "../../BackgroundColor";
 import {Image} from "../../../../Handlers/ToolsHandler";
 import {useMenuContext, useCanvasContext} from "../../../../hooks";
-import removeCursor from "../../../../assets/icons/circle.svg";
+import {iconToolsMaps, TOOL_CONSTANTS} from '../../../../constants';
+import './menu.scss';
 
 const Menu = () => {
     const {activeTool, setActiveTool, lockStatus, setLockStatus} = useMenuContext();
@@ -49,9 +49,9 @@ const Menu = () => {
     return (
         <>
             <div className="menu-container">
-                <div className="menu-inner-container ">
+                <div className="menu-container__inner-container ">
                     <Tooltip title={'Keep selected tool active after drawing'}>
-                        <FontAwesomeIcon icon={lockStatus ? faLock : faLockOpen} className='menu-button'
+                        <FontAwesomeIcon icon={lockStatus ? faLock : faLockOpen} className='menu-container__button'
                                          onClick={handleLock}/>
                     </Tooltip>
                     <Divider orientation="vertical" flexItem/>
@@ -59,14 +59,14 @@ const Menu = () => {
                         iconToolsMaps.map((tool, index) => (
                             <Tooltip title={tool.title} key={index}>
                                 <FontAwesomeIcon icon={tool.icon}
-                                                 className={activeTool === `${tool.id}` ? 'menu-button active' : 'menu-button'}
+                                                 className={activeTool === `${tool.id}` ? 'menu-container__button active' : 'menu-container__button'}
                                                  onClick={(event) => onToolClick(tool.id, event)}/>
                             </Tooltip>
                         ))
                     }
                     <Divider orientation="vertical" flexItem/>
                     <Tooltip title={'Delete entire canvas'}>
-                        <FontAwesomeIcon icon={faTrash} className='menu-button'
+                        <FontAwesomeIcon icon={faTrash} className='menu-container__button'
                                          onClick={() => setIsDeleteDialogOpen(true)}/>
                     </Tooltip>
                     <GenericDialog open={isDeleteDialogOpen} handleClose={() => setIsDeleteDialogOpen(false)}
@@ -89,6 +89,7 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
             canvas.selection = true;
             canvas.hoverCursor = 'move';
             canvas.defaultCursor = 'default';
+            canvas.renderAll();
             break;
         case TOOL_CONSTANTS.IMAGE:
             Image(canvas);

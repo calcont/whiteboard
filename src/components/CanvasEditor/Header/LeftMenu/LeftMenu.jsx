@@ -12,7 +12,7 @@ import {Help, Delete, GitHub, Twitter, FileDownload} from "@mui/icons-material";
 import {SOCIAL_MEDIA_LINKS} from "../../../../constants";
 import GenericDialog from "../../../Dialog/ConsentDialog";
 import {useCanvasContext} from "../../../../hooks";
-import "./Leftmenu.css";
+import "./Leftmenu.scss";
 
 const menuItemTextStyle = {
     fontSize: "14px",

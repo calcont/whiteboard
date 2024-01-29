@@ -1,7 +1,7 @@
 import Menu from "./Menu/Menu";
 import LeftMenu_social from "./LeftMenu/LeftMenu_social";
 import SaveImage from "./RightMenu/Save";
-import "./Header.css";
+import "./Header.scss";
 
 const Header = () => {
     return (
