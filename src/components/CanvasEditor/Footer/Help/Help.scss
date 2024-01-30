@@ -1,11 +1,13 @@
+@import "src/css/variables.scss";
+
 .help {
   position: absolute;
   right: 0;
   &__icon {
     display: flex;
     background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    border-radius: var(--default-border-radius);
+    box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
     width: 100%;
   }
 }
@@ -15,27 +17,27 @@
     width: 100%;
     text-transform: none;
     font-weight: bold;
-    font-size: 12px;
+    font-size: var(--default-font-size);
     color: #000;
     padding: 5px 20px;
-    background-color: #F3F8FF;
-    border: 1px solid #dbeaff;
+    background-color: var(--default-theme-color);
+    border: 1px solid var(--button-borderColor);
 
     &:hover {
-      background-color: #d2e2f9;
+      background-color: var(--default-theme-hoverColor);
     }
   }
 
   &__shortcuts {
-    border: 1px solid #ebebeb;
-    border-radius: 5px;
+    border: 1px solid var(--light-border-color);
+    border-radius: var(--default-border-radius);
 
     &-title {
       margin: 15px 0;
     }
 
     &-shortcut {
-      border-bottom: 1px solid #ebebeb;
+      border-bottom: 1px solid var(--light-border-color);
 
       &:last-child {
         border-bottom: none;
@@ -43,7 +45,7 @@
     }
 
     &-shortcut-key {
-      background-color: #F3F8FF;
+      background-color: var(--default-theme-color);
       margin: 0 5px;
       padding: 5px 5px;
     }

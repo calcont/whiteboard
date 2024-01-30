@@ -1,3 +1,5 @@
+@import "src/css/variables.scss";
+
 .zoom-panel {
   position: absolute;
   left: 50%;
@@ -6,8 +8,8 @@
   &__inner-container {
     display: flex;
     background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    border-radius: var(--default-border-radius);
+    box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
     width: 100%;
   }
 
@@ -20,7 +22,7 @@
     cursor: pointer;
 
     &:hover {
-      background-color: #f5f5f5;
+      background-color: var(--default-theme-color);
     }
   }
 }

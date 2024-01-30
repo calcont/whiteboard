@@ -54,7 +54,7 @@ function HelpDialog({open, onClose}) {
                         <Divider/>
                         <Grid container spacing={2} sx={{mt: 2}}>
                             <Grid item>
-                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_CONTRIBUTING,"_blank")}>
+                                <Button classes="help-dialog__button" endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_CONTRIBUTING,"_blank")}>
                                     Want to Contribute?
                                 </Button>
                             </Grid>
