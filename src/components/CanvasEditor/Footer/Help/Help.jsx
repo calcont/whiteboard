@@ -17,20 +17,6 @@ import Button from "@mui/material/Button";
 import {SHORCUTS,HELP_LINKS} from "../../../../constants";
 import './Help.scss';
 
-const HelpButtonStyle = {
-    width: '100%',
-    textTransform: 'none',
-    fontWeight: 'bold',
-    fontSize: 'var(--default-font-size)',
-    color: '#000',
-    padding: '5px 20px',
-    backgroundColor: 'var(--default-theme-color)',
-    border: '1px solid var(--button-borderColor)',
-    '&:hover': {
-        backgroundColor: 'var(--default-theme-hoverColor)',
-    },
-}
-
 function Help() {
     const [open, setOpen] = useState(false);
 
@@ -68,12 +54,12 @@ function HelpDialog({open, onClose}) {
                         <Divider/>
                         <Grid container spacing={2} sx={{mt: 2}}>
                             <Grid item>
-                                <Button style={HelpButtonStyle} endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_CONTRIBUTING,"_blank")}>
+                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_CONTRIBUTING,"_blank")}>
                                     Want to Contribute?
                                 </Button>
                             </Grid>
                             <Grid item>
-                                <Button style={HelpButtonStyle} endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_ISSUES,"_blank")}>
+                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_ISSUES,"_blank")}>
                                     Found an issue?
                                 </Button>
                             </Grid>

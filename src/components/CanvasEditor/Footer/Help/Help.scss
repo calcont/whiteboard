@@ -10,10 +10,28 @@
     border-radius: var(--default-border-radius);
     box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
     width: 100%;
+    &:hover {
+      background-color: var(--default-theme-color);
+    }
   }
 }
 
 .help-dialog {
+  &__button {
+    width: 100%;
+    text-transform: none;
+    font-weight: bold;
+    font-size: var(--default-font-size);
+    color: #000;
+    padding: 5px 20px;
+    background-color: var(--default-theme-color);
+    border: 1px solid var(--button-borderColor);
+
+    &:hover {
+      background-color: var(--default-theme-hoverColor);
+    }
+  }
+
   &__shortcuts {
     border: 1px solid var(--light-border-color);
     border-radius: var(--default-border-radius);

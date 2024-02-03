@@ -6,8 +6,22 @@
 
   &__icon {
     border-radius: 5px;
-    background-color: var(--default-menu-bg-color);
     box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
+
+    &-button {
+      background-color: #fff;
+      border: 1px solid #fff;
+      text-transform: none;
+      font-size: var(--secondary-font-size);
+      box-shadow: none;
+      color: #000;
+
+      &:hover {
+        background-color: var(--default-theme-color);
+        border: 1px solid #fff;
+        box-shadow: none;
+      }
+    }
   }
 
   &__menu-text {
@@ -15,4 +29,5 @@
     padding: 0;
     font-size: var(--secondary-font-size);
   }
+
 }

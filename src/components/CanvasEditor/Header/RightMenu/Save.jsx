@@ -10,22 +10,6 @@ import {useCanvasContext} from "../../../../hooks";
 import {MESSAGE_TYPE,IMAGE_FORMAT} from "../../../../constants";
 import "./Save.scss";
 
-// Styled Button
-const StyledButton = styled(Button)({
-    backgroundColor: "#fff",
-    border: "1px solid #fff",
-    textTransform: "none",
-    fontSize: "var(--secondary-font-size)",
-    boxShadow: "none",
-    color: "#000",
-    "&:hover": {
-        backgroundColor: "var(--default-theme-color)",
-        border: "1px solid #fff",
-        boxShadow: "none",
-
-    }
-});
-
 function SaveImage() {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const {canvas} = useCanvasContext();
@@ -76,13 +60,14 @@ function SaveImage() {
                             closeFn={() => setOpenCopyBar(false)}/>
             <div className="save-image">
                 <div className="save-image__icon">
-                    <StyledButton
+                    <Button
+                        className="save-image__icon-button"
                         variant="contained"
                         onClick={handleClick}
                         endIcon={<KeyboardArrowDownIcon/>}
                     >
                         Export as
-                    </StyledButton>
+                    </Button>
                 </div>
                 <Menu
                     id="fade-menu"
