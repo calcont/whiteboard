@@ -4,20 +4,26 @@ import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import {Collections, Image, FileCopy, Panorama} from '@mui/icons-material';
 import Fade from '@mui/material/Fade';
-import ListItemIcon from "@mui/material/ListItemIcon";
 import SimpleSnackbar from "../../../Feedback/snackbar";
 import {useCanvasContext} from "../../../../hooks";
-import {MESSAGE_TYPE} from "../../../../constants";
+import {MESSAGE_TYPE,IMAGE_FORMAT} from "../../../../constants";
 import "./Save.scss";
 
 // Styled Button
 const StyledButton = styled(Button)({
     backgroundColor: "#fff",
     border: "1px solid #fff",
-    fontSize: "14px",
+    textTransform: "none",
+    fontSize: "var(--secondary-font-size)",
+    boxShadow: "none",
     color: "#000",
+    "&:hover": {
+        backgroundColor: "var(--default-theme-color)",
+        border: "1px solid #fff",
+        boxShadow: "none",
+
+    }
 });
 
 function SaveImage() {
@@ -71,16 +77,11 @@ function SaveImage() {
             <div className="save-image">
                 <div className="save-image__icon">
                     <StyledButton
-                        id="demo-customized-button"
-                        className="save-image__icon-button"
-                        aria-controls={open ? 'demo-customized-menu' : undefined}
-                        aria-haspopup="true"
-                        aria-expanded={open ? 'true' : undefined}
-                        variant="outlined"
+                        variant="contained"
                         onClick={handleClick}
                         endIcon={<KeyboardArrowDownIcon/>}
                     >
-                        Export
+                        Export as
                     </StyledButton>
                 </div>
                 <Menu
@@ -88,35 +89,23 @@ function SaveImage() {
                     MenuListProps={{
                         'aria-labelledby': 'fade-button',
                     }}
-                    sx={{mt: 1}}
+                    sx={{mt: 0.5}}
                     anchorEl={anchorEl}
                     open={open}
                     onClose={handleClose}
                     TransitionComponent={Fade}
                 >
-                    <MenuItem onClick={() => saveImage("jpg")}>
-                        <ListItemIcon>
-                            <Image fontSize="small"/>
-                        </ListItemIcon>
-                        JPG
+                    <MenuItem onClick={() => saveImage(IMAGE_FORMAT.JPG)}>
+                        <p className="save-image__menu-text">JPG</p>
                     </MenuItem>
-                    <MenuItem onClick={() => saveImage("png")}>
-                        <ListItemIcon>
-                            <Collections fontSize="small"/>
-                        </ListItemIcon>
-                        PNG
+                    <MenuItem onClick={() => saveImage(IMAGE_FORMAT.PNG)}>
+                        <p className="save-image__menu-text">PNG</p>
                     </MenuItem>
-                    <MenuItem onClick={() => saveImage("svg")}>
-                        <ListItemIcon>
-                            <Panorama fontSize="small"/>
-                        </ListItemIcon>
-                        SVG
+                    <MenuItem onClick={() => saveImage(IMAGE_FORMAT.SVG)}>
+                        <p className="save-image__menu-text">SVG</p>
                     </MenuItem>
                     <MenuItem onClick={handleCopy}>
-                        <ListItemIcon>
-                            <FileCopy fontSize="small"/>
-                        </ListItemIcon>
-                        Copy to Clipboard
+                        <p className="save-image__menu-text">Copy to Clipboard</p>
                     </MenuItem>
                 </Menu>
             </div>

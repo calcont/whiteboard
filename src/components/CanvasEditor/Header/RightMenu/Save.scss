@@ -1,14 +1,18 @@
+@import "src/css/variables.scss";
+
 .save-image {
   position: absolute;
   right: 0;
 
   &__icon {
     border-radius: 5px;
-    background-color: #f5f5f5;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+    background-color: var(--default-menu-bg-color);
+    box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
+  }
 
-    &-button {
-      color: black;
-    }
+  &__menu-text {
+    margin: 2px;
+    padding: 0;
+    font-size: var(--secondary-font-size);
   }
 }

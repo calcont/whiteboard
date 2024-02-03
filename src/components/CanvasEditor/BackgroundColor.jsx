@@ -10,18 +10,20 @@ import {useCanvasContext} from "../../hooks";
 import {Tooltip} from "@mui/material";
 
 const colorOptions = [
-    {name: 'White', color: 'white'},
+    {name: 'White', color: '#ffffff'},
     {name: 'Blue', color: '#f5faff'},
     {name: 'Grey', color: '#fdf8f6'},
 ];
 
 const generateColorBoxStyle = (color) => ({
-    width: '24px',
-    height: '24px',
+    width: '20px',
+    height: '20px',
     borderRadius: '10%',
     backgroundColor: color,
     border: '0.1px solid #000',
 });
+
+const hexReg = /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i;
 
 const BackgroundColor = ({open, anchorEl, onClose}) => {
     const {canvas} = useCanvasContext();
@@ -35,8 +37,7 @@ const BackgroundColor = ({open, anchorEl, onClose}) => {
     };
 
     const handleColorSelect = (color, index) => {
-        let isValid = /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(color);
-        if (!isValid) {
+        if (!hexReg.test(color)) {
             return;
         }
         if (index === -1) {
