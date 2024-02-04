@@ -6,6 +6,6 @@ export const SHORCUTS = [
     {name: "Move the objects", key: "Arrow keys"},
     {name: "Zoom in", key: "Ctrl & +"},
     {name: "Zoom out", key: "Ctrl & -"},
-    {name: "Undo", key: "Ctrl & Z"},
-    {name: "Redo", key: "Ctrl & Shift & Z"},
+    {name: "Undo", key: "Ctrl & Z", release: "Beta"},
+    {name: "Redo", key: "Ctrl & Shift & Z", release: "Beta"},
 ]

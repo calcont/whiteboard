@@ -12,9 +12,9 @@ import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Divider from '@mui/material/Divider';
 import Grid from "@mui/material/Grid";
-import {Container, Typography} from "@mui/material";
+import {Chip, Container, Typography} from "@mui/material";
 import Button from "@mui/material/Button";
-import {SHORCUTS,HELP_LINKS} from "../../../../constants";
+import {SHORCUTS, HELP_LINKS} from "../../../../constants";
 import './Help.scss';
 
 function Help() {
@@ -54,23 +54,32 @@ function HelpDialog({open, onClose}) {
                         <Divider/>
                         <Grid container spacing={2} sx={{mt: 2}}>
                             <Grid item>
-                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_CONTRIBUTING,"_blank")}>
+                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small"
+                                        onClick={() => window.open(HELP_LINKS.GITHUB_CONTRIBUTING, "_blank")}>
                                     Want to Contribute?
                                 </Button>
                             </Grid>
                             <Grid item>
-                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small" onClick={()=>window.open(HELP_LINKS.GITHUB_ISSUES,"_blank")}>
+                                <Button className="help-dialog__button" endIcon={<OpenInNew/>} size="small"
+                                        onClick={() => window.open(HELP_LINKS.GITHUB_ISSUES, "_blank")}>
                                     Found an issue?
                                 </Button>
                             </Grid>
                         </Grid>
-                        <Typography variant="subtitle1" sx={{my:2}} className="help-dialog__shortcuts-title" fontWeight="bold">Keyboard
+                        <Typography variant="subtitle1" sx={{my: 2}} className="help-dialog__shortcuts-title"
+                                    fontWeight="bold">Keyboard
                             shortcuts</Typography>
                         <div className="help-dialog__shortcuts">
                             <List>
                                 {SHORCUTS.map((shortcut, index) => (
                                     <ListItem key={index} className="help-dialog__shortcuts-shortcut">
-                                        <ListItemText primaryTypographyProps={{fontSize:"14px"}} primary={shortcut.name}/>
+                                        <ListItemText primaryTypographyProps={{fontSize: "14px"}}
+                                                      primary={shortcut.name}/>
+                                        {shortcut.release &&
+                                                <Chip label={shortcut.release}
+                                                      className="help-dialog__shortcuts-chip" variant="outlined"
+                                                      size="small" color="primary"/>
+                                        }
                                         <ListItemIcon>
                                             {shortcut.key.split('&').map((key, index) => (
                                                 <kbd className="help-dialog__shortcuts-shortcut-key"
@@ -85,7 +94,8 @@ function HelpDialog({open, onClose}) {
                 </Container>
             </Dialog>
         </div>
-    );
+    )
+        ;
 }
 
 export default Help;

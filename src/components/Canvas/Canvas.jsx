@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from "react";
 import {fabric} from "fabric";
+import 'fabric-history';
 import {useCanvasContext} from "../../hooks/";
 import {
     MouseHandler,
@@ -25,6 +26,7 @@ function Canvas() {
             height: window.screen.height,
             width: window.screen.width,
         });
+        canvas._historyInit();
         setCanvas(canvas);
         return () => {
             canvas.dispose();
