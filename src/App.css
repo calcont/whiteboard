@@ -4,11 +4,11 @@ body, html {
     overflow: hidden;
 }
 
-.canvas-container {
-    z-index: 0;
-}
-
 canvas {
     height: 100%;
-    z-index: 100;
+    z-index: 1;
+}
+
+.upper {
+    z-index: 2;
 }
