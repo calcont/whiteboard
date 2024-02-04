@@ -1,6 +1,4 @@
-import {fabric} from 'fabric';
 import {Tool} from '../toolGeneric';
-import canvas from "../../../components/Canvas/Canvas";
 
 export class Eraser extends Tool {
     constructor() {
@@ -27,7 +25,7 @@ export class Eraser extends Tool {
         }
     }
 
-    done(canvas, event) {
+    done(canvas) {
         this.targets.forEach(target => {
             canvas.remove(target);
         });

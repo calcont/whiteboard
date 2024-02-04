@@ -1,5 +1,5 @@
 // used & as a separator between keys
-export const SHORCUTS = [
+export const SHORTCUTS = [
     {name: "Select all the objects", key: "Ctrl & A"},
     {name: "Duplicate the objects", key: "Ctrl & D"},
     {name: "Delete the objects", key: "Delete"},

@@ -5,9 +5,6 @@ export class Font extends Tool {
     create(canvas, event) {
         createFont(canvas, event);
     }
-    done(canvas, event) {
-        // super.done(canvas, event);
-    }
 }
 
 const createFont = (canvas, event) => {

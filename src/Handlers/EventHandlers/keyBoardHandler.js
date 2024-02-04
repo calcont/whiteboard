@@ -5,7 +5,7 @@ import {isCtrlShiftZ, isArrow, isCtrlA, isCtrlD, isCtrlZ, isCtrlMinus, isCtrlPlu
 import {handleZoomUtil} from "../../utils/Zoom";
 
 function KeyBoardHandler() {
-    const {canvas, activeObject, zoomRatio, setZoomRatio} = useCanvasContext();
+    const {canvas, activeObject, setZoomRatio} = useCanvasContext();
 
     const handleDeleteSelected = () => {
         if (activeObject) {

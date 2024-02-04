@@ -30,7 +30,7 @@ const BackgroundColor = ({open, anchorEl, onClose}) => {
     const [selectedIndex, setSelectedIndex] = React.useState(0);
     const [customColor, setCustomColor] = useState("#ffffff");
     const [isCustomDialogOpen, setCustomDialogOpen] = useState(false);
-    const [canchorEl, cSetAnchorEl] = React.useState(null);
+    const [cAnchorEl, cSetAnchorEl] = React.useState(null);
 
     const handleClose = () => {
         onClose();
@@ -102,7 +102,7 @@ const BackgroundColor = ({open, anchorEl, onClose}) => {
                     </Tooltip>
                 </Grid>
             </Menu>
-            <CustomColorInput anchor={canchorEl} open={isCustomDialogOpen} onClose={handleCustomDialogClose}
+            <CustomColorInput anchor={cAnchorEl} open={isCustomDialogOpen} onClose={handleCustomDialogClose}
                               customColor={customColor} setCustomColor={handleColorSelect}/>
         </>
     );

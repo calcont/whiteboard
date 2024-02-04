@@ -14,7 +14,7 @@ import Divider from '@mui/material/Divider';
 import Grid from "@mui/material/Grid";
 import {Chip, Container, Typography} from "@mui/material";
 import Button from "@mui/material/Button";
-import {SHORCUTS, HELP_LINKS} from "../../../../constants";
+import {SHORTCUTS, HELP_LINKS} from "../../../../constants";
 import './Help.scss';
 
 function Help() {
@@ -71,7 +71,7 @@ function HelpDialog({open, onClose}) {
                             shortcuts</Typography>
                         <div className="help-dialog__shortcuts">
                             <List>
-                                {SHORCUTS.map((shortcut, index) => (
+                                {SHORTCUTS.map((shortcut, index) => (
                                     <ListItem key={index} className="help-dialog__shortcuts-shortcut">
                                         <ListItemText primaryTypographyProps={{fontSize: "14px"}}
                                                       primary={shortcut.name}/>

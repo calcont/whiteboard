@@ -73,7 +73,6 @@ export class Arrow extends Tool {
     }
 
     calcArrowAngle(pointer, origX, origY) {
-        let angle = Math.atan2(pointer.y - origY, pointer.x - origX) * 180 / Math.PI;
-        return angle;
+        return Math.atan2(pointer.y - origY, pointer.x - origX) * 180 / Math.PI;
     }
 }

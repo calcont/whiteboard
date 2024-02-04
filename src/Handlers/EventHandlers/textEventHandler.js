@@ -1,11 +1,10 @@
-import {useCanvasContext, useMenuContext} from "../../hooks";
-import {useEffect, useRef} from "react";
+import {useCanvasContext} from "../../hooks";
+import {useEffect} from "react";
 
 
 function TextEventHandler() {
 
     const {canvas} = useCanvasContext();
-    const {lockStatus, activeTool, setActiveTool} = useMenuContext();
 
     useEffect(() => {
         if (!canvas) return;
