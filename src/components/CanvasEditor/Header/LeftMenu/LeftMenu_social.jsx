@@ -8,7 +8,7 @@ import "./LeftMenu_social.scss";
 const LeftMenuSocial = () => {
     return (
         <>
-            <div className="social">
+            <div className="social upper">
                 <Grid container spacing={1}>
                     <Grid item>
                         <IconButton className="social-button" href={SOCIAL_MEDIA_LINKS.GITHUB} target="_blank"

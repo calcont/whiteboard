@@ -28,7 +28,7 @@ const ZoomPanel = () => {
     }
 
     return (
-        <div className="zoom-panel">
+        <div className="zoom-panel upper">
             <div className="zoom-panel__inner-container">
                 <Tooltip title={'Zoom Out'}>
                     <FontAwesomeIcon icon={faMinus} className='zoom-panel__button' onClick={handleZoomOut}/>

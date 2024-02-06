@@ -4,7 +4,7 @@ import Help from "./Help/Help";
 
 const Footer = () => {
     return (
-        <div className="footer upper">
+        <div className="footer">
             <ZoomPanel/>
             <Help/>
         </div>

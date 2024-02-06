@@ -31,7 +31,7 @@ function Help() {
     return (
         <>
             <HelpDialog open={open} onClose={handleClose}/>
-            <div className="help">
+            <div className="help upper">
                 <div className="help__icon">
                     <Tooltip title="Shortcuts">
                         <IconButton aria-label="help" onClick={handleOpen}>

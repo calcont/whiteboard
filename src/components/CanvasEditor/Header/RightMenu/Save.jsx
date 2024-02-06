@@ -57,7 +57,7 @@ function SaveImage() {
         <>
             <SimpleSnackbar isOpen={openCopyBar} message={"Copied to Clipboard"} messageType={MESSAGE_TYPE.INFO}
                             closeFn={() => setOpenCopyBar(false)}/>
-            <div className="save-image">
+            <div className="save-image upper">
                 <div className="save-image__icon">
                     <Button
                         className="save-image__icon-button"

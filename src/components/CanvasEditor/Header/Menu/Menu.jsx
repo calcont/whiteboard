@@ -48,7 +48,7 @@ const Menu = () => {
 
     return (
         <>
-            <div className="menu-container">
+            <div className="menu-container upper">
                 <div className="menu-container__inner-container ">
                     <Tooltip title={'Keep selected tool active after drawing'}>
                         <FontAwesomeIcon icon={lockStatus ? faLock : faLockOpen} className='menu-container__button'
