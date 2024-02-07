@@ -28,5 +28,5 @@ I have built various projects explored game developement, Augmented reality but 
 ## Contribution 🤝
 
 -  Suggest something or found a issue ? [Report here](https://github.com/calcont/whiteboard/issues)
--  Want to contribute ? but don't know how to start ? [Contribution guide](https://github.com/calcont/whiteboard/CONTRIBUTION.md)
+-  Want to contribute ? but don't know how to start ? [Contribution guide](https://github.com/calcont/whiteboard/blob/master/CONTRIBUTION.md)
 
