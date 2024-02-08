@@ -14,10 +14,9 @@ function KeyBoardHandler() {
                     canvas.discardActiveObject();
                     canvas.remove(obj);
                 });
-            } else {
-                canvas.discardActiveObject();
-                canvas.remove(activeObject);
             }
+            canvas.discardActiveObject();
+            canvas.remove(activeObject);
             // sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
             canvas.requestRenderAll();
         }

@@ -10,6 +10,6 @@ export const SOCIAL_MEDIA_LINKS = {
 }
 
 export const HELP_LINKS = {
-    GITHUB_CONTRIBUTING: "https://github.com/calcont/whiteboard/pulls",
+    GITHUB_CONTRIBUTING: "https://github.com/calcont/whiteboard/blob/master/CONTRIBUTION.md",
     GITHUB_ISSUES: "https://github.com/calcont/whiteboard/issues",
 }
