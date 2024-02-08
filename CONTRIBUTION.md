@@ -2,6 +2,7 @@
 
 Welcome to Calcont Whiteboard !
  We're thrilled that you're considering contributing to our project. Whether you're a seasoned developer or just starting out, there are plenty of opportunities to get involved. 
+ I have setup a [roadmap](https://github.com/orgs/calcont/projects/1) to manage task status so if you are new to this project I"ll strongly suggest to go through that.  
  Pull requests are open to everyone, and we encourage newbies to start with **good-first** issues.
 
 ## Setup Guide
