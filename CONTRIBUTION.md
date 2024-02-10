@@ -34,12 +34,12 @@ That's it! You're now ready to start contributing.🚀
 
 ## Pull Request Guidelines
 
-When submitting a pull request, please follow these guidelines:
+When submitting a pull request, make sure your title starts with following prefix
 
-- **Feature**: Use the feat label for new features.
-- **Bug Fix**: Use the bug label for bug fixes.
-- **Refactor**: Use the refactor label for code refactoring.
-- **Style**: Use the style label for styling changes.
+- **Feature**: A new feature.
+- **Bug Fix**: A bug fix.
+- **Refactor**: A code change that neither fixes a bug nor adds a feature.
+- **Style**: A scss/css or design changes.
   
 ## Technologies Used
 Calcont Whiteboard is primarily built on React.js. To simplify canvas implementation, we use Fabric.js. You can find the documentation for Fabric.js [here](http://fabricjs.com/docs/) .
