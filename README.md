@@ -1,6 +1,6 @@
 # Calcont Whiteboard 🎨
 
-Welcome to Calcont Whiteboard! 
+Welcome to Calcont Whiteboard!
 
 This web app, deployed on [draw.calcont.in](https://draw.calcont.in) , is your go-to online whiteboard with a various features and more to come in the future. Whether you're sketching out a flow diagram, designing an architecture, or creating a schema, this app has got you covered. Let's dive into the features of version 1.0.0:
 
@@ -27,6 +27,5 @@ I have built various projects explored game developement, Augmented reality but 
 
 ## Contribution 🤝
 
--  Suggest something or found a issue ? [Report here](https://github.com/calcont/whiteboard/issues)
--  Want to contribute ? but don't know how to start ? [Contribution guide](https://github.com/calcont/whiteboard/blob/master/CONTRIBUTION.md)
-
+- Suggest something or found a issue ? [Report here](https://github.com/calcont/whiteboard/issues)
+- Want to contribute ? but don't know how to start ? [Contribution guide](https://github.com/calcont/whiteboard/blob/master/CONTRIBUTION.md)

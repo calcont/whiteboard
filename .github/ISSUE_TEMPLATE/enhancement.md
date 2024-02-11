@@ -2,9 +2,8 @@
 name: Enhancement
 about: Suggest if we can enhance something
 title: Enhancement
-labels: ''
-assignees: ''
-
+labels: ""
+assignees: ""
 ---
 
 **Is your suggestion related to a problem? Please describe.**

@@ -1,7 +1,7 @@
 export class Tool {
-    create(canvas, event) {}
+  create() {}
 
-    draw(canvas, event) {}
+  draw() {}
 
-    done(canvas, event) {}
+  done() {}
 }

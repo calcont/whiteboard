@@ -1,14 +1,15 @@
-body, html {
-    margin: 0;
-    height: 100%;
-    overflow: hidden;
+body,
+html {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 canvas {
-    height: 100%;
-    z-index: 1;
+  height: 100%;
+  z-index: 1;
 }
 
 .upper {
-    z-index: 2;
+  z-index: 2;
 }

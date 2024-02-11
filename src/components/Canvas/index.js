@@ -1,1 +1,1 @@
-export {CanvasProvider} from "../../contexts/CanvasContext";
+export { CanvasProvider } from "../../contexts/CanvasContext";

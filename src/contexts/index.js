@@ -1,2 +1,2 @@
-export {CanvasProvider,CanvasContext} from './CanvasContext';
-export {MenuProvider,MenuContext} from './MenuContext';
+export { CanvasProvider, CanvasContext } from "./CanvasContext";
+export { MenuProvider, MenuContext } from "./MenuContext";
