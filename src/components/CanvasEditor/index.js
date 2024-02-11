@@ -1,1 +1,1 @@
-export {CanvasEditor} from "./CanvasEditor";
+export { CanvasEditor } from "./CanvasEditor";
