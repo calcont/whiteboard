@@ -23,11 +23,11 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scrip ts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "test:code": "eslint --max-warnings=0 --ext .js,.jsx .",
-    "test:format": "prettier \"**/*.{css,scss,json,md,html,ym,js}\" --ignore-path=.eslintignore --check",
+    "test:format": "prettier \"**/*.{css,scss,json,md,html,ym,js,jsx}\" --ignore-path=.eslintignore --check",
     "test:all": "npm run test:code && npm run test:format",
     "fix:code": "npm run test:code -- --fix",
     "fix:format": "npm run test:format -- --write",

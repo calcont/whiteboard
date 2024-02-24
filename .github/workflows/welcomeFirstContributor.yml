@@ -1,6 +1,10 @@
-name: Welcome first-time-contributor !
+name: Welcome first-time-contributor
 
-on: [pull_request, issues]
+on:
+  pull_request:
+    types: [opened]
+  issues:
+    types: [opened]
 
 jobs:
   greeting:

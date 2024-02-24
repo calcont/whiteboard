@@ -1,9 +1,7 @@
 import Canvas from "../../Canvas/Canvas";
 
 function CanvasArea() {
-    return (
-        <Canvas/>
-    )
+  return <Canvas />;
 }
 
-export default CanvasArea
+export default CanvasArea;
