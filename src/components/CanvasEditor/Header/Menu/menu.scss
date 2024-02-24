@@ -19,8 +19,9 @@
   }
 
   &__button {
-    margin: 0 8px;
-    padding: 10px;
+    width: var(--default-icon-size);
+    margin: 0 5px;
+    padding: 8px 10px;
     border: none;
     color: black;
     cursor: pointer;
