@@ -1,0 +1,13 @@
+name: Welcome first-time-contributor !
+
+on: [pull_request, issues]
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/first-interaction@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        issue-message: 'Thanks for investing your time to identify this issue, this can really help us to improve !'
+        pr-message: 'Congrats on making your first pull request 🎉. Thanks for investing your time to improve draw.calont.in !'
