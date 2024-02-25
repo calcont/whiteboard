@@ -4,16 +4,15 @@ import SaveImage from "./RightMenu/Save";
 import "./Header.scss";
 
 const Header = () => {
-    return (
-        <div>
-
-            <div className="header">
-                <LeftMenu_social/>
-                <Menu/>
-                <SaveImage/>
-            </div>
-        </div>
-    )
-}
+  return (
+    <div>
+      <div className="header">
+        <LeftMenu_social />
+        <Menu />
+        <SaveImage />
+      </div>
+    </div>
+  );
+};
 
 export default Header;

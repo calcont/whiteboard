@@ -3,6 +3,7 @@ export const TOOL_CONSTANTS = {
   MARKER: "marker",
   RECTANGLE: "rectangle",
   CIRCLE: "circle",
+  LINE: "line",
   ARROW: "arrow",
   FONT: "font",
   IMAGE: "image",
@@ -25,6 +26,10 @@ export const TOOL_FUNCTIONS = {
     onMove: true,
   },
   [TOOL_CONSTANTS.CIRCLE]: {
+    createOnClick: true,
+    onMove: true,
+  },
+  [TOOL_CONSTANTS.LINE]: {
     createOnClick: true,
     onMove: true,
   },
