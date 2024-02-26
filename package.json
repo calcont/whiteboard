@@ -10,6 +10,8 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@mui/icons-material": "^5.14.6",
     "@mui/material": "^5.14.6",
+    "@sentry/cli": "^2.28.6",
+    "@sentry/react": "^7.102.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -23,7 +25,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && npm run sentry:sourcemaps",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "test:code": "eslint --max-warnings=0 --ext .js,.jsx .",
@@ -31,7 +33,8 @@
     "test:all": "npm run test:code && npm run test:format",
     "fix:code": "npm run test:code -- --fix",
     "fix:format": "npm run test:format -- --write",
-    "fix": "npm run fix:code && npm run fix:format"
+    "fix": "npm run fix:code && npm run fix:format",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org calcont --project javascript-react ./build && sentry-cli sourcemaps upload --org calcont --project javascript-react ./build"
   },
   "eslintConfig": {
     "extends": [
