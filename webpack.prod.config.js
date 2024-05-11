@@ -1,9 +1,11 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { sentryWebpackPlugin } = require("@sentry/webpack-plugin");
 const path = require("path");
 
 module.exports = {
   entry: "./src/index.js",
   mode: "production",
+  devtool: "source-map",
   performance: {
     hints: false,
     maxEntrypointSize: 512000,
@@ -15,6 +17,11 @@ module.exports = {
       favicon: "./public/favicon.ico",
       filename: "index.html",
       manifest: "./public/manifest.json",
+    }),
+    sentryWebpackPlugin({
+      org: "calcont",
+      project: "javascript-react",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
     }),
   ],
   module: {
