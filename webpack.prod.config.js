@@ -1,5 +1,7 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { sentryWebpackPlugin } = require("@sentry/webpack-plugin");
+const webpack = require("webpack");
+const dotenv = require("dotenv");
 const path = require("path");
 
 module.exports = {
@@ -22,6 +24,9 @@ module.exports = {
       org: "calcont",
       project: "javascript-react",
       authToken: process.env.SENTRY_AUTH_TOKEN,
+    }),
+    new webpack.DefinePlugin({
+      "process.env": JSON.stringify(dotenv.config().parsed),
     }),
   ],
   module: {
