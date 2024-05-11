@@ -25,7 +25,7 @@
   },
   "scripts": {
     "start": "webpack serve --open --config webpack.dev.config.js",
-    "build": "webpack --config webpack.prod.config.js --mode production",
+    "build": "webpack --config webpack.prod.config.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "test:code": "eslint --max-warnings=0 --ext .js,.jsx .",

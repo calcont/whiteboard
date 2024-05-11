@@ -1,5 +1,16 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
+const webpack = require("webpack");
+const dotenv = require("dotenv");
+
+const env = dotenv.config().parsed;
+
+function parseEnv() {
+  return Object.keys(env).reduce((acc, key) => {
+    acc[key] = JSON.stringify(env[key]);
+    return acc;
+  }, {});
+}
 
 module.exports = {
   entry: "./src/index.js",
@@ -14,6 +25,9 @@ module.exports = {
       favicon: "./public/favicon.ico",
       filename: "index.html",
       manifest: "./public/manifest.json",
+    }),
+    new webpack.DefinePlugin({
+      "process.env": parseEnv(),
     }),
   ],
   module: {
