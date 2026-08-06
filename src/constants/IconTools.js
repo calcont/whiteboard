@@ -1,32 +1,30 @@
-import {
-  faMarker,
-  faSquare,
-  faCircle,
-  faArrowRight,
-  faMinus,
-  faPalette,
-  faFont,
-  faImage,
-  faArrowPointer,
-  faDiamond,
-  faEraser,
-} from "@fortawesome/free-solid-svg-icons";
+import NearMeIcon from "@mui/icons-material/NearMe";
+import BrushIcon from "@mui/icons-material/Brush";
+import CropSquareIcon from "@mui/icons-material/CropSquare";
+import CircleIcon from "@mui/icons-material/Circle";
+import DiamondIcon from "@mui/icons-material/Diamond";
+import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
+import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
+import TextFieldsIcon from "@mui/icons-material/TextFields";
+import ImageIcon from "@mui/icons-material/Image";
+import PaletteIcon from "@mui/icons-material/Palette";
+import AutoFixNormalIcon from "@mui/icons-material/AutoFixNormal";
 import { TOOL_CONSTANTS } from "./tools";
 
 export const iconToolsMaps = [
-  { icon: faArrowPointer, title: "Select", id: TOOL_CONSTANTS.CURSOR },
-  { icon: faMarker, title: "Marker", id: TOOL_CONSTANTS.MARKER },
-  { icon: faSquare, title: "Rectangle", id: TOOL_CONSTANTS.RECTANGLE },
-  { icon: faCircle, title: "Circle", id: TOOL_CONSTANTS.CIRCLE },
-  { icon: faDiamond, title: "Diamond", id: TOOL_CONSTANTS.DIAMOND },
-  { icon: faMinus, title: "Line", id: TOOL_CONSTANTS.LINE },
-  { icon: faArrowRight, title: "Arrow", id: TOOL_CONSTANTS.ARROW },
-  { icon: faFont, title: "Text", id: TOOL_CONSTANTS.FONT },
-  { icon: faImage, title: "Image", id: TOOL_CONSTANTS.IMAGE },
+  { icon: NearMeIcon, title: "Select", id: TOOL_CONSTANTS.CURSOR },
+  { icon: BrushIcon, title: "Marker", id: TOOL_CONSTANTS.MARKER },
+  { icon: CropSquareIcon, title: "Rectangle", id: TOOL_CONSTANTS.RECTANGLE },
+  { icon: CircleIcon, title: "Circle", id: TOOL_CONSTANTS.CIRCLE },
+  { icon: DiamondIcon, title: "Diamond", id: TOOL_CONSTANTS.DIAMOND },
+  { icon: HorizontalRuleIcon, title: "Line", id: TOOL_CONSTANTS.LINE },
+  { icon: ArrowRightAltIcon, title: "Arrow", id: TOOL_CONSTANTS.ARROW },
+  { icon: TextFieldsIcon, title: "Text", id: TOOL_CONSTANTS.FONT },
+  { icon: ImageIcon, title: "Image", id: TOOL_CONSTANTS.IMAGE },
   {
-    icon: faPalette,
+    icon: PaletteIcon,
     title: "Background Color",
     id: TOOL_CONSTANTS.BACKGROUND_COLOR,
   },
-  { icon: faEraser, title: "Eraser", id: TOOL_CONSTANTS.ERASER },
+  { icon: AutoFixNormalIcon, title: "Eraser", id: TOOL_CONSTANTS.ERASER },
 ];
