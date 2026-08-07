@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Tooltip } from "@mui/material";
-import LockIcon from "@mui/icons-material/Lock";
-import LockOpenIcon from "@mui/icons-material/LockOpen";
-import DeleteIcon from "@mui/icons-material/Delete";
 import Divider from "@mui/material/Divider";
+import { Lock, Unlock, Trash2 } from "lucide-react";
 import removeCursor from "../../../../assets/icons/circle.svg";
 import GenericDialog from "../../../Dialog/ConsentDialog";
 import BackgroundColor from "../../BackgroundColor";
@@ -11,6 +9,8 @@ import { Image } from "../../../../Handlers/ToolsHandler";
 import { useMenuContext, useCanvasContext } from "../../../../hooks";
 import { iconToolsMaps, TOOL_CONSTANTS } from "../../../../constants";
 import "./menu.scss";
+
+const ICON_SIZE = 18;
 
 const Menu = () => {
   const { activeTool, setActiveTool, lockStatus, setLockStatus } =
@@ -48,7 +48,7 @@ const Menu = () => {
     setActiveTool(TOOL_CONSTANTS.CURSOR);
   };
 
-  const LockToggleIcon = lockStatus ? LockIcon : LockOpenIcon;
+  const LockToggleIcon = lockStatus ? Lock : Unlock;
 
   return (
     <>
@@ -57,7 +57,7 @@ const Menu = () => {
           <Tooltip title={"Keep selected tool active after drawing"}>
             <LockToggleIcon
               className="menu-container__button"
-              sx={{ fontSize: "var(--default-icon-size)" }}
+              size={ICON_SIZE}
               onClick={handleLock}
             />
           </Tooltip>
@@ -72,7 +72,7 @@ const Menu = () => {
                       ? "menu-container__button active"
                       : "menu-container__button"
                   }
-                  sx={{ fontSize: "var(--default-icon-size)" }}
+                  size={ICON_SIZE}
                   onClick={(event) => onToolClick(tool.id, event)}
                 />
               </Tooltip>
@@ -80,9 +80,9 @@ const Menu = () => {
           })}
           <Divider orientation="vertical" flexItem />
           <Tooltip title={"Delete entire canvas"}>
-            <DeleteIcon
+            <Trash2
               className="menu-container__button"
-              sx={{ fontSize: "var(--default-icon-size)" }}
+              size={ICON_SIZE}
               onClick={() => setIsDeleteDialogOpen(true)}
             />
           </Tooltip>

@@ -47,7 +47,7 @@ When submitting a pull request, make sure your title starts with following prefi
 ## Technologies Used
 
 Calcont Whiteboard is primarily built on React.js. To simplify canvas implementation, we use Fabric.js. You can find the documentation for Fabric.js [here](http://fabricjs.com/docs/) .
-Additionally, we use Material-UI for UI components and icons. You can find its link below:
+Additionally, we use Material-UI for UI components and lucide-react for icons. You can find their links below:
 
 - Material-UI: [Documentation](https://mui.com/material-ui/getting-started/)
-- Material-UI Icons: [Link](https://mui.com/material-ui/material-icons/)
+- lucide-react (icons): [Link](https://lucide.dev/icons/)

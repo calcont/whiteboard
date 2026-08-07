@@ -1,10 +1,11 @@
 import { useCanvasContext } from "../../../../hooks";
 import "./ZoomPanel.scss";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
+import { Plus, Minus } from "lucide-react";
 import { handleZoomUtil as handleZoom } from "../../../../utils/Zoom";
 import { Tooltip } from "@mui/material";
 import { useEffect, useState } from "react";
+
+const ICON_SIZE = 18;
 
 const ZoomPanel = () => {
   const { canvas, zoomRatio, setZoomRatio } = useCanvasContext();
@@ -30,9 +31,9 @@ const ZoomPanel = () => {
     <div className="zoom-panel upper">
       <div className="zoom-panel__inner-container">
         <Tooltip title={"Zoom Out"}>
-          <RemoveIcon
+          <Minus
             className="zoom-panel__button"
-            sx={{ fontSize: "var(--default-icon-size)" }}
+            size={ICON_SIZE}
             onClick={handleZoomOut}
           />
         </Tooltip>
@@ -42,9 +43,9 @@ const ZoomPanel = () => {
           </div>
         </Tooltip>
         <Tooltip title={"Zoom In"}>
-          <AddIcon
+          <Plus
             className="zoom-panel__button"
-            sx={{ fontSize: "var(--default-icon-size)" }}
+            size={ICON_SIZE}
             onClick={handleZoomIn}
           />
         </Tooltip>
