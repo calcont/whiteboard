@@ -3,6 +3,9 @@ html {
   margin: 0;
   height: 100%;
   overflow: hidden;
+  /* Explicit light canvas so the board doesn't inherit the OS/browser theme
+     (which left shapes invisible on a dark-mode default). */
+  background: #ffffff;
 }
 
 canvas {

@@ -21,7 +21,12 @@ const STYLEABLE_TOOLS = new Set([
   TOOL_CONSTANTS.POLYGON,
   TOOL_CONSTANTS.LINE,
   TOOL_CONSTANTS.ARROW,
+  TOOL_CONSTANTS.FONT,
 ]);
+
+const isText = (obj) =>
+  obj &&
+  (obj.type === "i-text" || obj.type === "text" || obj.type === "textbox");
 
 // Best-effort reverse of strokeDashArray -> friendly style name.
 const dashToStyle = (dash, width) => {
@@ -51,19 +56,28 @@ const PropertiesPanel = () => {
     }
   }, [canvas, style]);
 
-  // When an object is selected, load its style into the panel.
+  // When an object is selected, load its style into the panel. Groups (e.g.
+  // arrows) and multi-selections are skipped so they don't clobber the chosen
+  // defaults with a group's own (often empty) stroke/fill.
   useEffect(() => {
-    if (!activeObject || activeObject.type === "activeSelection") return;
+    if (!activeObject) return;
+    const t = activeObject.type;
+    if (t === "activeSelection" || t === "group") return;
+    const text = isText(activeObject);
     setStyle((prev) => ({
       ...prev,
-      stroke: activeObject.stroke || prev.stroke,
+      // Text colour is stored in fill; map it onto the colour (stroke) control.
+      stroke: text
+        ? activeObject.fill || prev.stroke
+        : activeObject.stroke || prev.stroke,
       strokeWidth: activeObject.strokeWidth || prev.strokeWidth,
       strokeStyle: dashToStyle(
         activeObject.strokeDashArray,
         activeObject.strokeWidth || prev.strokeWidth,
       ),
-      fill:
-        activeObject.fill === "" || activeObject.fill == null
+      fill: text
+        ? prev.fill
+        : activeObject.fill === "" || activeObject.fill == null
           ? "transparent"
           : activeObject.fill,
     }));
@@ -77,7 +91,12 @@ const PropertiesPanel = () => {
       activeObject.type === "activeSelection"
         ? activeObject.getObjects()
         : [activeObject];
-    targets.forEach((obj) => obj.set(fab));
+    targets.forEach((obj) => {
+      // For text the colour control drives the text colour (fill); other
+      // controls don't meaningfully apply.
+      if (isText(obj)) obj.set({ fill: nextStyle.stroke });
+      else obj.set(fab);
+    });
     canvas.requestRenderAll();
     // Record a single history entry for the style change.
     canvas.fire("object:modified", { target: activeObject });

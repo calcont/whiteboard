@@ -4,7 +4,7 @@
 // time so new shapes pick up the chosen stroke/fill/width/style.
 
 export const DEFAULT_STYLE = {
-  stroke: "#ffffff", // white reads well on the dark canvas
+  stroke: "#1e1e1e", // dark reads well on the white canvas
   strokeWidth: 3,
   strokeStyle: "solid", // solid | dashed | dotted
   fill: "transparent",
@@ -19,22 +19,22 @@ export const STROKE_WIDTHS = [
 export const STROKE_STYLES = ["solid", "dashed", "dotted"];
 
 export const STROKE_SWATCHES = [
-  "#ffffff",
   "#1e1e1e",
   "#e03131",
   "#2f9e44",
   "#1971c2",
   "#f08c00",
+  "#ae3ec9",
 ];
 
 // "transparent" (no fill) plus a few soft fills.
 export const FILL_SWATCHES = [
   "transparent",
-  "#ffffff",
   "#ffc9c9",
   "#b2f2bb",
   "#a5d8ff",
   "#ffec99",
+  "#eebefa",
 ];
 
 // Map the friendly stroke style to a fabric strokeDashArray, scaled by width.
