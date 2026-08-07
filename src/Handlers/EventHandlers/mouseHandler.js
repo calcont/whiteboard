@@ -7,9 +7,38 @@ function MouseHandler() {
   const { canvas, setZoomRatio } = useCanvasContext();
   const { lockStatus, activeTool, setActiveTool } = useMenuContext();
   const isDown = useRef(false);
+  const historyBatching = useRef(false);
+  const opStartCount = useRef(0);
+
+  // A single draw gesture can add/remove several fabric objects internally
+  // (e.g. the arrow adds a line + head, then swaps them for a group; the
+  // eraser removes many). fabric-history records one snapshot per event, so
+  // those show up as several undo steps. Batch the whole gesture into one:
+  // suppress per-object snapshots between mouse-down and mouse-up, then record
+  // a single entry if the canvas actually changed.
+  const beginHistoryBatch = () => {
+    if (typeof canvas._historySaveAction !== "function") return;
+    opStartCount.current = canvas.getObjects().length;
+    canvas.historyProcessing = true;
+    historyBatching.current = true;
+  };
+
+  const endHistoryBatch = () => {
+    if (!historyBatching.current) return;
+    historyBatching.current = false;
+    canvas.historyProcessing = false;
+    if (canvas.getObjects().length !== opStartCount.current) {
+      canvas._historySaveAction();
+    } else {
+      // Nothing net-changed (e.g. an accidental click was discarded); keep the
+      // baseline in sync so the next real action records correctly.
+      canvas.historyNextState = canvas._historyNext();
+    }
+  };
 
   const handleMouseDown = (e) => {
     if (TOOL_FUNCTIONS[activeTool].createOnClick) {
+      beginHistoryBatch();
       canvas.discardActiveObject();
       create(activeTool, canvas, e);
     }
@@ -36,6 +65,7 @@ function MouseHandler() {
           currentDrawnObject.selectable = false;
         }
       }
+      endHistoryBatch();
       canvas.renderAll();
     }
   };
