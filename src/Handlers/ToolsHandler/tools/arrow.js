@@ -1,5 +1,6 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
+import { resolveToolStyle } from "../toolStyle";
 
 export class Arrow extends Tool {
   constructor() {
@@ -18,12 +19,14 @@ export class Arrow extends Tool {
     this.origX = this.pointer.x;
     this.origY = this.pointer.y;
     let arrowHeadPath = "M 0 0 L 20 10 L 0 20 Z";
+    const style = resolveToolStyle(canvas);
 
     this.line = new fabric.Line(
       [this.origX, this.origY, this.origX, this.origY],
       {
-        stroke: "black",
-        strokeWidth: 2,
+        stroke: style.stroke,
+        strokeWidth: style.strokeWidth,
+        strokeDashArray: style.strokeDashArray,
         originX: "center",
         originY: "center",
         hasControls: false,
@@ -35,7 +38,7 @@ export class Arrow extends Tool {
     this.arrowHead = new fabric.Path(arrowHeadPath, {
       stroke: "",
       strokeWidth: 0,
-      fill: "black",
+      fill: style.stroke,
       originX: "center",
       originY: "center",
       hasControls: false,

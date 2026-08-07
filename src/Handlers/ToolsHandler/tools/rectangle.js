@@ -1,5 +1,6 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
+import { resolveToolStyle } from "../toolStyle";
 
 export class Rectangle extends Tool {
   constructor() {
@@ -21,9 +22,7 @@ export class Rectangle extends Tool {
       top: this.origY,
       originX: "left",
       originY: "top",
-      fill: "transparent",
-      stroke: "black",
-      strokeWidth: 3,
+      ...resolveToolStyle(canvas),
       selectable: true,
       width: this.pointer2.x - this.origX,
       height: this.pointer2.y - this.origY,
