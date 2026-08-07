@@ -1,4 +1,13 @@
-import { Rectangle, Circle, Font, Diamond, Arrow, Line, Eraser } from "./tools";
+import {
+  Rectangle,
+  Circle,
+  Font,
+  Diamond,
+  Polygon,
+  Arrow,
+  Line,
+  Eraser,
+} from "./tools";
 import { TOOL_CONSTANTS } from "../../constants";
 
 const toolFactory = {
@@ -6,6 +15,7 @@ const toolFactory = {
   [TOOL_CONSTANTS.CIRCLE]: new Circle(),
   [TOOL_CONSTANTS.FONT]: new Font(),
   [TOOL_CONSTANTS.DIAMOND]: new Diamond(),
+  [TOOL_CONSTANTS.POLYGON]: new Polygon(),
   [TOOL_CONSTANTS.ARROW]: new Arrow(),
   [TOOL_CONSTANTS.LINE]: new Line(),
   [TOOL_CONSTANTS.ERASER]: new Eraser(),
