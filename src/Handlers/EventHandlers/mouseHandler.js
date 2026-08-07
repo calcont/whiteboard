@@ -1,3 +1,4 @@
+import { fabric } from "fabric";
 import { TOOL_CONSTANTS, TOOL_FUNCTIONS } from "../../constants";
 import { useCanvasContext, useMenuContext } from "../../hooks";
 import { useCallback, useEffect, useRef } from "react";
@@ -72,18 +73,24 @@ function MouseHandler() {
 
   const onMouseWheel = useCallback(
     (event) => {
-      if (canvas && event.e.ctrlKey) {
+      if (!canvas) return;
+      if (event.e.ctrlKey) {
+        // Ctrl + wheel (and trackpad pinch) zooms.
         const delta = event.e.deltaY;
         let zoom = canvas.getZoom();
         zoom *= 0.999 ** delta;
         if (zoom > 20) zoom = 20;
         if (zoom < 0.01) zoom = 0.01;
         setZoomRatio(zoom);
+      } else {
+        // Plain wheel / two-finger trackpad scroll pans the viewport, so you
+        // can reach content drawn outside the current view without zooming out.
+        canvas.relativePan(new fabric.Point(-event.e.deltaX, -event.e.deltaY));
       }
       event.e.preventDefault();
       event.e.stopPropagation();
     },
-    [canvas],
+    [canvas, setZoomRatio],
   );
 
   useEffect(() => {
