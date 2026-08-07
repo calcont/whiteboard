@@ -26,7 +26,10 @@ function Canvas() {
       height: window.screen.height,
       width: window.screen.width,
     });
-    canvas._historyInit();
+    // fabric-history already runs _historyInit() from its overridden
+    // Canvas.initialize(); calling it again here double-binds the history
+    // event handlers, so every change recorded two snapshots and undo/redo
+    // needed two presses per action. Rely on the single init from the lib.
     setCanvas(canvas);
     return () => {
       canvas.dispose();
