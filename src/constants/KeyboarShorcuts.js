@@ -13,6 +13,6 @@ export const SHORTCUTS = [
   { name: "Zoom in", key: `${MOD} & +` },
   { name: "Zoom out", key: `${MOD} & -` },
   { name: "Multi-objects selection", key: `${SHIFT} & click` },
-  { name: "Undo", key: `${MOD} & Z`, release: "Beta" },
-  { name: "Redo", key: `${MOD} & ${SHIFT} & Z`, release: "Beta" },
+  { name: "Undo", key: `${MOD} & Z` },
+  { name: "Redo", key: `${MOD} & ${SHIFT} & Z` },
 ];
