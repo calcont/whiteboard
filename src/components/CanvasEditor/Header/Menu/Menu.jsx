@@ -30,6 +30,16 @@ const Menu = () => {
   }, [activeTool, lockStatus, canvas]);
 
   const onToolClick = (tool, event) => {
+    // Picking another tool is a deliberate switch-away: if a text is still
+    // being edited, exit editing so an empty IText gets cleaned up by the
+    // text:editing:exited handler. Without this it lingers invisibly on the
+    // canvas — most noticeable when the lock keeps the Text tool active.
+    // (The automatic Cursor switch after creating a shape/text goes through
+    // setActiveTool directly, not onToolClick, so it is unaffected.)
+    const active = canvas?.getActiveObject();
+    if (active && active.isEditing) {
+      active.exitEditing();
+    }
     setActiveTool(tool);
     setAnchorEl(event?.currentTarget);
   };
