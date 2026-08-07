@@ -2,6 +2,9 @@ import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
 
 const SIDES = 6;
+// Size used when the tool is clicked without dragging (like the other shapes
+// that drop a default shape on a plain click).
+const DEFAULT_RADIUS = 40;
 
 // Vertices of a regular polygon centred on (0, 0) with the given radius.
 // Points are relative to the object's centre; position comes from left/top.
@@ -25,6 +28,16 @@ export class Polygon extends Tool {
     this.origY = null;
     this.pointer = null;
     this.polygon = null;
+  }
+
+  // Resize the polygon to the given radius, keeping its centre at the click
+  // point. _setPositionDimensions() recomputes width/height but resets
+  // left/top, so the centre is restored afterwards.
+  applyRadius(radius) {
+    this.polygon.set({ points: polygonPoints(radius) });
+    this.polygon._setPositionDimensions({});
+    this.polygon.set({ left: this.origX, top: this.origY });
+    this.polygon.setCoords();
   }
 
   create(canvas, event) {
@@ -55,23 +68,18 @@ export class Polygon extends Tool {
       Math.hypot(this.pointer.x - this.origX, this.pointer.y - this.origY),
       1,
     );
-    this.polygon.set({ points: polygonPoints(radius) });
-    // Recompute width/height/pathOffset from the new points. This resets
-    // left/top, so restore the centre to the original click point afterwards.
-    this.polygon._setPositionDimensions({});
-    this.polygon.set({ left: this.origX, top: this.origY });
-    this.polygon.setCoords();
+    this.applyRadius(radius);
   }
 
-  done(canvas) {
+  done() {
     if (!this.polygon) {
       return;
     }
-    // Drop accidental clicks that never grew into a shape.
+    // A plain click (no real drag) leaves a near-zero shape — give it a
+    // sensible default size instead of dropping it, so click-to-create works
+    // as well as drag-to-size.
     if (this.polygon.width < 5 || this.polygon.height < 5) {
-      canvas.remove(this.polygon);
-      this.polygon = null;
-      return;
+      this.applyRadius(DEFAULT_RADIUS);
     }
     this.polygon.setCoords();
   }
