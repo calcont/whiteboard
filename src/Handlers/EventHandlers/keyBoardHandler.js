@@ -12,33 +12,54 @@ import {
 } from "../../utils/Shortcuts";
 import { handleZoomUtil } from "../../utils/Zoom";
 
+// fabric-history records one snapshot per object:added/object:removed event.
+// When we add/remove a group of objects in a loop, that produces one history
+// entry per object, so undo replays them one by one. Wrapping the mutation
+// suppresses the per-object snapshots (historyProcessing flag) and records a
+// single snapshot afterwards, so the whole group undoes/redoes in one step.
+const runAsSingleHistoryStep = (canvas, mutate) => {
+  if (!canvas) return;
+  const supportsHistory = typeof canvas._historySaveAction === "function";
+  if (supportsHistory) canvas.historyProcessing = true;
+  try {
+    mutate();
+  } finally {
+    if (supportsHistory) {
+      canvas.historyProcessing = false;
+      canvas._historySaveAction();
+    }
+  }
+};
+
 function KeyBoardHandler() {
   const { canvas, activeObject, setZoomRatio } = useCanvasContext();
 
   const handleDeleteSelected = () => {
-    if (activeObject) {
-      if (activeObject._objects) {
-        activeObject._objects.forEach((obj) => {
-          canvas.discardActiveObject();
-          canvas.remove(obj);
-        });
-      }
+    if (!activeObject || !canvas) return;
+    // Snapshot the targets first: an active selection exposes its members on
+    // _objects; a single object is deleted on its own.
+    const targets = activeObject._objects
+      ? [...activeObject._objects]
+      : [activeObject];
+    runAsSingleHistoryStep(canvas, () => {
       canvas.discardActiveObject();
-      canvas.remove(activeObject);
-      // sessionStorage.setItem('canvas', JSON.stringify(canvas.toJSON()));
-      canvas.requestRenderAll();
-    }
+      targets.forEach((obj) => canvas.remove(obj));
+    });
+    canvas.requestRenderAll();
   };
 
   // reference :- http://fabricjs.com/copypaste
   const duplicateObjects = () => {
-    if (activeObject) {
-      activeObject.clone((clonedObj) => {
-        canvas.discardActiveObject();
-        clonedObj.set({
-          left: clonedObj.left + 20,
-          top: clonedObj.top + 20,
-        });
+    if (!activeObject || !canvas) return;
+    activeObject.clone((clonedObj) => {
+      canvas.discardActiveObject();
+      clonedObj.set({
+        left: clonedObj.left + 20,
+        top: clonedObj.top + 20,
+      });
+      // Add every duplicated object under a single history step so the whole
+      // duplicated group undoes in one Ctrl+Z instead of one object at a time.
+      runAsSingleHistoryStep(canvas, () => {
         if (clonedObj.type === "activeSelection") {
           // active selection needs a reference to the canvas.
           clonedObj.canvas = canvas;
@@ -50,10 +71,10 @@ function KeyBoardHandler() {
         } else {
           canvas.add(clonedObj);
         }
-        canvas.setActiveObject(clonedObj);
-        canvas.renderAll();
       });
-    }
+      canvas.setActiveObject(clonedObj);
+      canvas.renderAll();
+    });
   };
 
   const selectAllObjects = () => {
