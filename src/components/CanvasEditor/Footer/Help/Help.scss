@@ -44,6 +44,15 @@
       }
     }
 
+    // Keep the shortcut title and its release chip together on the left; the
+    // flex-grow pushes the key(s) to the far right of the row.
+    &-shortcut-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1 1 auto;
+    }
+
     &-shortcut-key {
       background-color: var(--default-theme-color);
       margin: 0 5px;

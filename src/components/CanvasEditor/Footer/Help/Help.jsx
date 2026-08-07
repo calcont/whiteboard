@@ -93,19 +93,22 @@ function HelpDialog({ open, onClose }) {
                     key={index}
                     className="help-dialog__shortcuts-shortcut"
                   >
-                    <ListItemText
-                      primaryTypographyProps={{ fontSize: "14px" }}
-                      primary={shortcut.name}
-                    />
-                    {shortcut.release && (
-                      <Chip
-                        label={shortcut.release}
-                        className="help-dialog__shortcuts-chip"
-                        variant="outlined"
-                        size="small"
-                        color="primary"
+                    <div className="help-dialog__shortcuts-shortcut-label">
+                      <ListItemText
+                        primaryTypographyProps={{ fontSize: "14px" }}
+                        primary={shortcut.name}
+                        sx={{ flex: "0 0 auto", m: 0 }}
                       />
-                    )}
+                      {shortcut.release && (
+                        <Chip
+                          label={shortcut.release}
+                          className="help-dialog__shortcuts-chip"
+                          variant="outlined"
+                          size="small"
+                          color="primary"
+                        />
+                      )}
+                    </div>
                     <ListItemIcon>
                       {shortcut.key.split("&").map((key, index) => (
                         <kbd
