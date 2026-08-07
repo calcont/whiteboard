@@ -9,6 +9,7 @@ export const TOOL_CONSTANTS = {
   IMAGE: "image",
   BACKGROUND_COLOR: "bgColors",
   DIAMOND: "diamond",
+  POLYGON: "polygon",
   ERASER: "eraser",
 };
 
@@ -51,7 +52,11 @@ export const TOOL_FUNCTIONS = {
   },
   [TOOL_CONSTANTS.DIAMOND]: {
     createOnClick: true,
-    onMove: false,
+    onMove: true,
+  },
+  [TOOL_CONSTANTS.POLYGON]: {
+    createOnClick: true,
+    onMove: true,
   },
   [TOOL_CONSTANTS.ERASER]: {
     createOnClick: true,

@@ -1,37 +1,43 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
 
+const SIDES = 6;
 // Size used when the tool is clicked without dragging (like the other shapes
 // that drop a default shape on a plain click).
-const DEFAULT_RADIUS = 50;
+const DEFAULT_RADIUS = 40;
 
-// Diamond (rhombus) vertices relative to the centre (0, 0): top, right,
-// bottom, left. Points are relative to the object's centre; position comes
-// from left/top.
-const diamondPoints = (radius) => [
-  { x: 0, y: -radius },
-  { x: radius, y: 0 },
-  { x: 0, y: radius },
-  { x: -radius, y: 0 },
-];
+// Vertices of a regular polygon centred on (0, 0) with the given radius.
+// Points are relative to the object's centre; position comes from left/top.
+// Starts at the top so the shape reads upright as it is drawn.
+const polygonPoints = (radius) => {
+  const points = [];
+  for (let i = 0; i < SIDES; i++) {
+    const angle = (Math.PI * 2 * i) / SIDES - Math.PI / 2;
+    points.push({
+      x: radius * Math.cos(angle),
+      y: radius * Math.sin(angle),
+    });
+  }
+  return points;
+};
 
-export class Diamond extends Tool {
+export class Polygon extends Tool {
   constructor() {
     super();
     this.origX = null;
     this.origY = null;
     this.pointer = null;
-    this.diamond = null;
+    this.polygon = null;
   }
 
-  // Resize the diamond to the given radius, keeping its centre at the click
+  // Resize the polygon to the given radius, keeping its centre at the click
   // point. _setPositionDimensions() recomputes width/height but resets
   // left/top, so the centre is restored afterwards.
   applyRadius(radius) {
-    this.diamond.set({ points: diamondPoints(radius) });
-    this.diamond._setPositionDimensions({});
-    this.diamond.set({ left: this.origX, top: this.origY });
-    this.diamond.setCoords();
+    this.polygon.set({ points: polygonPoints(radius) });
+    this.polygon._setPositionDimensions({});
+    this.polygon.set({ left: this.origX, top: this.origY });
+    this.polygon.setCoords();
   }
 
   create(canvas, event) {
@@ -39,7 +45,7 @@ export class Diamond extends Tool {
     // The click point becomes the centre; the shape grows outward from it.
     this.origX = this.pointer.x;
     this.origY = this.pointer.y;
-    this.diamond = new fabric.Polygon(diamondPoints(1), {
+    this.polygon = new fabric.Polygon(polygonPoints(1), {
       left: this.origX,
       top: this.origY,
       originX: "center",
@@ -50,11 +56,11 @@ export class Diamond extends Tool {
       objectCaching: false, // recompute the bounding box as it is dragged
       selectable: true,
     });
-    canvas.add(this.diamond);
+    canvas.add(this.polygon);
   }
 
   draw(canvas, event) {
-    if (!this.diamond) {
+    if (!this.polygon) {
       return;
     }
     this.pointer = canvas.getPointer(event.e);
@@ -66,15 +72,15 @@ export class Diamond extends Tool {
   }
 
   done() {
-    if (!this.diamond) {
+    if (!this.polygon) {
       return;
     }
     // A plain click (no real drag) leaves a near-zero shape — give it a
     // sensible default size instead of dropping it, so click-to-create works
     // as well as drag-to-size.
-    if (this.diamond.width < 5 || this.diamond.height < 5) {
+    if (this.polygon.width < 5 || this.polygon.height < 5) {
       this.applyRadius(DEFAULT_RADIUS);
     }
-    this.diamond.setCoords();
+    this.polygon.setCoords();
   }
 }
