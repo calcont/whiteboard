@@ -52,7 +52,7 @@ export const TOOL_FUNCTIONS = {
   },
   [TOOL_CONSTANTS.DIAMOND]: {
     createOnClick: true,
-    onMove: false,
+    onMove: true,
   },
   [TOOL_CONSTANTS.POLYGON]: {
     createOnClick: true,
