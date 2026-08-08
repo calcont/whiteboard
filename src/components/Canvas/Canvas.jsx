@@ -8,6 +8,7 @@ import {
   SelectionHandler,
   TextEventHandler,
   ZoomHandler,
+  PersistenceHandler,
 } from "../../Handlers/EventHandlers";
 
 function Canvas() {
@@ -16,6 +17,7 @@ function Canvas() {
   SelectionHandler();
   TextEventHandler();
   ZoomHandler();
+  PersistenceHandler();
   const canvasRef = useRef(null);
   const { setCanvas } = useCanvasContext();
 
