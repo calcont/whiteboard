@@ -23,6 +23,10 @@ function Canvas() {
     const canvas = new fabric.Canvas("canvas", {
       isDrawingMode: false,
       selection: true,
+      // Keep z-order stable while an object is selected. Without this fabric
+      // renders the active object on top, so selecting a filled shape that
+      // sits under text (or another shape) hides what's above it.
+      preserveObjectStacking: true,
       height: window.screen.height,
       width: window.screen.width,
     });
