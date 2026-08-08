@@ -37,6 +37,20 @@ function PersistenceHandler() {
       }, SAVE_DEBOUNCE_MS);
     };
 
+    // Save immediately (cancelling any pending debounce) when the tab is
+    // hidden or closing, so a change made within the debounce window isn't
+    // lost. Best-effort — the write may not finish if the tab is killed.
+    const flushSave = () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+      saveScene(canvas.toJSON());
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushSave();
+    };
+
     const events = [
       "object:added",
       "object:modified",
@@ -45,11 +59,15 @@ function PersistenceHandler() {
       "background:changed", // fired by the background-color tool
     ];
     events.forEach((ev) => canvas.on(ev, scheduleSave));
+    window.addEventListener("beforeunload", flushSave);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       disposed = true;
       if (saveTimer.current) clearTimeout(saveTimer.current);
       events.forEach((ev) => canvas.off(ev, scheduleSave));
+      window.removeEventListener("beforeunload", flushSave);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [canvas]);
 }
