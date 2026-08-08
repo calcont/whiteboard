@@ -1,6 +1,6 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
-import { resolveToolStyle } from "../toolStyle";
+import { resolveTextStyle } from "../toolStyle";
 
 export class Font extends Tool {
   create(canvas, event) {
@@ -10,13 +10,12 @@ export class Font extends Tool {
 
 const createFont = (canvas, event) => {
   let pointer = canvas.getPointer(event.e);
-  // Text colour follows the chosen stroke colour (fabric text colour is fill).
+  // Colour, family and size come from the current text style (colour is the
+  // chosen stroke swatch, since fabric text colour is fill).
   let text = new fabric.IText("", {
     left: pointer.x,
     top: pointer.y,
-    fill: resolveToolStyle(canvas).stroke,
-    fontSize: 20,
-    fontFamily: "Arial",
+    ...resolveTextStyle(canvas),
   });
   canvas.add(text);
   text.enterEditing();
