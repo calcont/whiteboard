@@ -68,8 +68,14 @@ export class Arrow extends Tool {
   }
 
   done(canvas) {
-    let width = Math.abs(this.pointer.x - this.origX);
-    if (width < this.deleteOffset) {
+    // Use the arrow's actual length, not just its horizontal extent — a
+    // vertical/steep arrow has a small x-delta and was being discarded as if
+    // it were a stray click, so it never appeared.
+    const length = Math.hypot(
+      this.pointer.x - this.origX,
+      this.pointer.y - this.origY,
+    );
+    if (length < this.deleteOffset) {
       canvas.remove(this.line, this.arrowHead);
       return;
     }
