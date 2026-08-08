@@ -1,0 +1,107 @@
+@import "src/css/variables.scss";
+
+.properties-panel {
+  position: absolute;
+  left: var(--default-spacing);
+  // Anchor to the top-left corner (below the toolbar), out of the centre
+  // drawing area, so it doesn't sit on top of freshly drawn content.
+  top: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  width: 200px;
+  background-color: white;
+  border-radius: var(--default-border-radius);
+  box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__label {
+    font-size: var(--default-font-size);
+    font-weight: 600;
+    color: #495057;
+  }
+
+  &__swatches {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  &__swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 1px solid var(--light-border-color);
+    cursor: pointer;
+    padding: 0;
+
+    &.active {
+      outline: 2px solid var(--default-theme-hoverColor);
+      outline-offset: 1px;
+    }
+
+    // "No fill" swatch: white with a red diagonal strike.
+    &[data-none="true"] {
+      background: white;
+      background-image: linear-gradient(
+        to top right,
+        transparent 45%,
+        #e03131 46%,
+        #e03131 54%,
+        transparent 55%
+      );
+    }
+  }
+
+  &__picker {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid var(--light-border-color);
+    border-radius: 5px;
+    background: none;
+    cursor: pointer;
+  }
+
+  &__row {
+    display: flex;
+    gap: 6px;
+  }
+
+  &__btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    border: 1px solid var(--light-border-color);
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+
+    &.active {
+      background-color: var(--default-theme-color);
+      border-color: var(--button-borderColor);
+    }
+  }
+
+  &__width-preview {
+    width: 22px;
+    background-color: #1e1e1e;
+    border-radius: 2px;
+  }
+
+  &__style-preview {
+    width: 24px;
+    border-top-width: 2px;
+    border-top-color: #1e1e1e;
+    display: inline-block;
+  }
+}

@@ -4,8 +4,6 @@ import Menu from "@mui/material/Menu";
 import Grid from "@mui/material/Grid";
 import Fade from "@mui/material/Fade";
 import Divider from "@mui/material/Divider";
-import Popover from "@mui/material/Popover";
-import TextField from "@mui/material/TextField";
 import { useCanvasContext } from "../../hooks";
 import { Tooltip } from "@mui/material";
 
@@ -29,8 +27,6 @@ const BackgroundColor = ({ open, anchorEl, onClose }) => {
   const { canvas } = useCanvasContext();
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const [customColor, setCustomColor] = useState("#ffffff");
-  const [isCustomDialogOpen, setCustomDialogOpen] = useState(false);
-  const [cAnchorEl, cSetAnchorEl] = React.useState(null);
 
   const handleClose = () => {
     onClose();
@@ -49,17 +45,6 @@ const BackgroundColor = ({ open, anchorEl, onClose }) => {
     document.getElementsByTagName("body")[0].style.backgroundColor = color;
     canvas.backgroundColor = color;
     canvas.renderAll();
-  };
-
-  const handleCustomDialogOpen = (e) => {
-    setSelectedIndex(-1);
-    cSetAnchorEl(e.currentTarget);
-    setCustomDialogOpen(true);
-  };
-
-  const handleCustomDialogClose = () => {
-    cSetAnchorEl(null);
-    setCustomDialogOpen(false);
   };
 
   return (
@@ -97,57 +82,29 @@ const BackgroundColor = ({ open, anchorEl, onClose }) => {
             </Grid>
           ))}
           <Divider orientation="vertical" flexItem />
-          <Tooltip title={"Set custom color"}>
-            <MenuItem
-              onClick={handleCustomDialogOpen}
-              selected={selectedIndex === -1}
-            >
-              <div style={generateColorBoxStyle(customColor)} />
+          <Tooltip title={"Pick a color"}>
+            <MenuItem selected={selectedIndex === -1} disableRipple>
+              <input
+                type="color"
+                aria-label="Background color picker"
+                value={hexReg.test(customColor) ? customColor : "#ffffff"}
+                onChange={(e) => handleColorSelect(e.target.value, -1)}
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  padding: 0,
+                  border: "0.1px solid #000",
+                  borderRadius: "10%",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              />
             </MenuItem>
           </Tooltip>
         </Grid>
       </Menu>
-      <CustomColorInput
-        anchor={cAnchorEl}
-        open={isCustomDialogOpen}
-        onClose={handleCustomDialogClose}
-        customColor={customColor}
-        setCustomColor={handleColorSelect}
-      />
     </>
   );
 };
-
-function CustomColorInput({
-  anchor,
-  open,
-  onClose,
-  customColor,
-  setCustomColor,
-}) {
-  return (
-    <div>
-      <Popover
-        open={open}
-        anchorEl={anchor}
-        onClose={onClose}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
-        }}
-      >
-        <div style={{ padding: "16px", maxWidth: "200px" }}>
-          <TextField
-            id="outlined-basic"
-            label="Enter Hex Color Code"
-            variant="outlined"
-            defaultValue={customColor}
-            onChange={(e) => setCustomColor(e.target.value, -1)}
-          />
-        </div>
-      </Popover>
-    </div>
-  );
-}
 
 export default BackgroundColor;

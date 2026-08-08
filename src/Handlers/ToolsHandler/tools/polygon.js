@@ -1,5 +1,6 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
+import { resolveToolStyle } from "../toolStyle";
 
 const SIDES = 6;
 // Size used when the tool is clicked without dragging (like the other shapes
@@ -50,9 +51,7 @@ export class Polygon extends Tool {
       top: this.origY,
       originX: "center",
       originY: "center",
-      fill: "transparent",
-      stroke: "black",
-      strokeWidth: 3,
+      ...resolveToolStyle(canvas),
       objectCaching: false, // recompute the bounding box as it is dragged
       selectable: true,
     });
