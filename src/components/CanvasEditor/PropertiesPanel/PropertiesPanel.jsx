@@ -94,8 +94,27 @@ const PropertiesPanel = () => {
     targets.forEach((obj) => {
       // For text the colour control drives the text colour (fill); other
       // controls don't meaningfully apply.
-      if (isText(obj)) obj.set({ fill: nextStyle.stroke });
-      else obj.set(fab);
+      if (isText(obj)) {
+        obj.set({ fill: nextStyle.stroke });
+      } else if (obj.type === "group" && obj._objects) {
+        // A group (e.g. the arrow) doesn't propagate style to its children,
+        // so apply to each: line-like children take the stroke/width/dash;
+        // the filled head takes the stroke colour as its fill.
+        obj._objects.forEach((child) => {
+          if (child.type === "line") {
+            child.set({
+              stroke: fab.stroke,
+              strokeWidth: fab.strokeWidth,
+              strokeDashArray: fab.strokeDashArray,
+            });
+          } else {
+            child.set({ fill: fab.stroke });
+          }
+        });
+        obj.dirty = true;
+      } else {
+        obj.set(fab);
+      }
     });
     canvas.requestRenderAll();
     // Record a single history entry for the style change.

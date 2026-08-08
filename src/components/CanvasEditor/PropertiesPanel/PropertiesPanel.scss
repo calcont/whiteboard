@@ -3,8 +3,9 @@
 .properties-panel {
   position: absolute;
   left: var(--default-spacing);
-  top: 50%;
-  transform: translateY(-50%);
+  // Anchor to the top-left corner (below the toolbar), out of the centre
+  // drawing area, so it doesn't sit on top of freshly drawn content.
+  top: 90px;
   display: flex;
   flex-direction: column;
   gap: 14px;
