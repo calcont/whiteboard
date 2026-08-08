@@ -45,6 +45,8 @@ const BackgroundColor = ({ open, anchorEl, onClose }) => {
     document.getElementsByTagName("body")[0].style.backgroundColor = color;
     canvas.backgroundColor = color;
     canvas.renderAll();
+    // Not a native fabric event — let the persistence handler save the change.
+    canvas.fire("background:changed");
   };
 
   return (
