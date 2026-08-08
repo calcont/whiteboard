@@ -8,7 +8,25 @@ export const DEFAULT_STYLE = {
   strokeWidth: 3,
   strokeStyle: "solid", // solid | dashed | dotted
   fill: "transparent",
+  fontFamily: "Arial",
+  fontSize: 24,
 };
+
+export const FONT_FAMILIES = [
+  "Arial",
+  "Helvetica",
+  "Georgia",
+  "Times New Roman",
+  "Courier New",
+  "Verdana",
+  "Comic Sans MS",
+];
+
+export const FONT_SIZES = [
+  { label: "S", value: 16 },
+  { label: "M", value: 24 },
+  { label: "L", value: 36 },
+];
 
 export const STROKE_WIDTHS = [
   { label: "Thin", value: 2 },
@@ -55,3 +73,14 @@ export const toFabricStyle = (style = DEFAULT_STYLE) => ({
 // Fabric-ready style the tools should apply to a new object.
 export const resolveToolStyle = (canvas) =>
   canvas?.currentStyle || toFabricStyle(DEFAULT_STYLE);
+
+// Fabric-ready props for a new text object (colour is the stroke swatch).
+export const toTextStyle = (style = DEFAULT_STYLE) => ({
+  fill: style.stroke,
+  fontFamily: style.fontFamily,
+  fontSize: style.fontSize,
+});
+
+// Text style the Font tool should apply to a new text object.
+export const resolveTextStyle = (canvas) =>
+  canvas?.currentTextStyle || toTextStyle(DEFAULT_STYLE);
