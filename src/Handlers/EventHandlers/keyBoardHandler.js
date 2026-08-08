@@ -136,8 +136,14 @@ function KeyBoardHandler() {
   useEffect(() => {
     const keyManager = (e) => {
       switch (true) {
-        case e.keyCode === 46: // delete selected objects
-          handleDeleteSelected(canvas);
+        // Delete (46, = fn+Delete on Mac) and Backspace (8, the Mac "delete"
+        // key) both remove the selection — but not while a text is being
+        // edited, where Backspace must delete a character instead.
+        case e.keyCode === 46 || e.keyCode === 8:
+          if (activeObject && !activeObject.isEditing) {
+            e.preventDefault();
+            handleDeleteSelected(canvas);
+          }
           break;
         case isCtrlD(e): // duplicate selected objects
           e.preventDefault();
