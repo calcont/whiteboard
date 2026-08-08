@@ -1,5 +1,6 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
+import { resolveToolStyle } from "../toolStyle";
 
 export class Circle extends Tool {
   constructor() {
@@ -18,9 +19,7 @@ export class Circle extends Tool {
       left: this.origX,
       top: this.origY,
       radius: 1,
-      fill: "",
-      stroke: "black",
-      strokeWidth: 3,
+      ...resolveToolStyle(canvas),
     });
     canvas.add(this.circle);
   }

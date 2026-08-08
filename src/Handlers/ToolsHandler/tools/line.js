@@ -1,5 +1,6 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
+import { resolveToolStyle } from "../toolStyle";
 
 export class Line extends Tool {
   constructor() {
@@ -20,8 +21,7 @@ export class Line extends Tool {
       {
         left: this.origX,
         top: this.origY,
-        stroke: "black",
-        strokeWidth: 3,
+        ...resolveToolStyle(canvas),
         selectable: true,
       },
     );
