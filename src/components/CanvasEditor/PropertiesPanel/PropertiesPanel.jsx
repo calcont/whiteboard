@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Tooltip } from "@mui/material";
+import { BringToFront, SendToBack, ChevronUp, ChevronDown } from "lucide-react";
 import { useMenuContext, useCanvasContext } from "../../../hooks";
 import { TOOL_CONSTANTS } from "../../../constants";
 import {
@@ -138,6 +139,24 @@ const PropertiesPanel = () => {
     styleRef.current = next;
     setStyle(next);
     applyToActive(next);
+  };
+
+  // Reorder the selection's z-index. sendToBack/sendBackwards process in
+  // reverse so a multi-selection keeps its internal stacking order.
+  const reorder = (method) => {
+    if (!canvas || !activeObject) return;
+    const targets =
+      activeObject.type === "activeSelection"
+        ? activeObject.getObjects()
+        : [activeObject];
+    const ordered =
+      method === "sendToBack" || method === "sendBackwards"
+        ? [...targets].reverse()
+        : targets;
+    ordered.forEach((obj) => canvas[method](obj));
+    canvas.requestRenderAll();
+    // Record one history entry (and trigger persistence) for the reorder.
+    canvas.fire("object:modified", { target: activeObject });
   };
 
   if (!activeObject && !STYLEABLE_TOOLS.has(activeTool)) return null;
@@ -303,6 +322,50 @@ const PropertiesPanel = () => {
             </div>
           </div>
         </>
+      )}
+
+      {activeObject && (
+        <div className="properties-panel__group">
+          <span className="properties-panel__label">Layer</span>
+          <div className="properties-panel__row">
+            <Tooltip title="Send to back">
+              <button
+                type="button"
+                className="properties-panel__btn"
+                onClick={() => reorder("sendToBack")}
+              >
+                <SendToBack size={16} />
+              </button>
+            </Tooltip>
+            <Tooltip title="Send backward">
+              <button
+                type="button"
+                className="properties-panel__btn"
+                onClick={() => reorder("sendBackwards")}
+              >
+                <ChevronDown size={16} />
+              </button>
+            </Tooltip>
+            <Tooltip title="Bring forward">
+              <button
+                type="button"
+                className="properties-panel__btn"
+                onClick={() => reorder("bringForward")}
+              >
+                <ChevronUp size={16} />
+              </button>
+            </Tooltip>
+            <Tooltip title="Bring to front">
+              <button
+                type="button"
+                className="properties-panel__btn"
+                onClick={() => reorder("bringToFront")}
+              >
+                <BringToFront size={16} />
+              </button>
+            </Tooltip>
+          </div>
+        </div>
       )}
     </div>
   );
