@@ -34,7 +34,23 @@ function PersistenceHandler() {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
         saveScene(canvas.toJSON());
+        // Mark clean once written, so a later flush knows nothing is pending.
+        saveTimer.current = null;
       }, SAVE_DEBOUNCE_MS);
+    };
+
+    // Flush a *pending* change immediately when the tab is hidden/closing, so a
+    // change made within the debounce window isn't lost. Crucially, do nothing
+    // when there's no pending save — otherwise an idle tab would overwrite the
+    // shared record with its stale scene and clobber edits made in another tab.
+    const flushSave = () => {
+      if (!saveTimer.current) return;
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+      saveScene(canvas.toJSON());
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushSave();
     };
 
     const events = [
@@ -45,11 +61,15 @@ function PersistenceHandler() {
       "background:changed", // fired by the background-color tool
     ];
     events.forEach((ev) => canvas.on(ev, scheduleSave));
+    window.addEventListener("beforeunload", flushSave);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       disposed = true;
       if (saveTimer.current) clearTimeout(saveTimer.current);
       events.forEach((ev) => canvas.off(ev, scheduleSave));
+      window.removeEventListener("beforeunload", flushSave);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [canvas]);
 }
