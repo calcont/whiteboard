@@ -1,5 +1,6 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
+import { resolveToolStyle } from "../toolStyle";
 
 export class Arrow extends Tool {
   constructor() {
@@ -18,12 +19,14 @@ export class Arrow extends Tool {
     this.origX = this.pointer.x;
     this.origY = this.pointer.y;
     let arrowHeadPath = "M 0 0 L 20 10 L 0 20 Z";
+    const style = resolveToolStyle(canvas);
 
     this.line = new fabric.Line(
       [this.origX, this.origY, this.origX, this.origY],
       {
-        stroke: "black",
-        strokeWidth: 2,
+        stroke: style.stroke,
+        strokeWidth: style.strokeWidth,
+        strokeDashArray: style.strokeDashArray,
         originX: "center",
         originY: "center",
         hasControls: false,
@@ -35,7 +38,7 @@ export class Arrow extends Tool {
     this.arrowHead = new fabric.Path(arrowHeadPath, {
       stroke: "",
       strokeWidth: 0,
-      fill: "black",
+      fill: style.stroke,
       originX: "center",
       originY: "center",
       hasControls: false,
@@ -65,8 +68,14 @@ export class Arrow extends Tool {
   }
 
   done(canvas) {
-    let width = Math.abs(this.pointer.x - this.origX);
-    if (width < this.deleteOffset) {
+    // Use the arrow's actual length, not just its horizontal extent — a
+    // vertical/steep arrow has a small x-delta and was being discarded as if
+    // it were a stray click, so it never appeared.
+    const length = Math.hypot(
+      this.pointer.x - this.origX,
+      this.pointer.y - this.origY,
+    );
+    if (length < this.deleteOffset) {
       canvas.remove(this.line, this.arrowHead);
       return;
     }

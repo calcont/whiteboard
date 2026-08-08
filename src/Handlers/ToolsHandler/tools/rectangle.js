@@ -1,5 +1,6 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
+import { resolveToolStyle } from "../toolStyle";
 
 export class Rectangle extends Tool {
   constructor() {
@@ -21,9 +22,7 @@ export class Rectangle extends Tool {
       top: this.origY,
       originX: "left",
       originY: "top",
-      fill: "transparent",
-      stroke: "black",
-      strokeWidth: 3,
+      ...resolveToolStyle(canvas),
       selectable: true,
       width: this.pointer2.x - this.origX,
       height: this.pointer2.y - this.origY,
@@ -36,15 +35,15 @@ export class Rectangle extends Tool {
       return;
     }
     this.pointer = canvas.getPointer(event.e);
-    if (this.origX > this.pointer.x) {
-      // updating up left boundary
-      this.rect.set({ left: Math.abs(this.pointer.x) });
-    }
-    if (this.origY > this.pointer.y) {
-      this.rect.set({ top: Math.abs(this.pointer.y) });
-    }
-    this.rect.set({ width: Math.abs(this.origX - this.pointer.x) });
-    this.rect.set({ height: Math.abs(this.origY - this.pointer.y) });
+    // Use min() (not abs()) so dragging up/left works in negative scene
+    // coordinates too — e.g. after the canvas has been panned.
+    const left = Math.min(this.origX, this.pointer.x);
+    const top = Math.min(this.origY, this.pointer.y);
+    const width = Math.abs(this.origX - this.pointer.x);
+    const height = Math.abs(this.origY - this.pointer.y);
+    // Excalidraw-style gentle rounded corners, scaled to the smaller side.
+    const radius = Math.min(Math.min(width, height) * 0.2, 32);
+    this.rect.set({ left, top, width, height, rx: radius, ry: radius });
   }
 
   done(canvas) {
