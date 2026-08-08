@@ -34,17 +34,19 @@ function PersistenceHandler() {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
         saveScene(canvas.toJSON());
+        // Mark clean once written, so a later flush knows nothing is pending.
+        saveTimer.current = null;
       }, SAVE_DEBOUNCE_MS);
     };
 
-    // Save immediately (cancelling any pending debounce) when the tab is
-    // hidden or closing, so a change made within the debounce window isn't
-    // lost. Best-effort — the write may not finish if the tab is killed.
+    // Flush a *pending* change immediately when the tab is hidden/closing, so a
+    // change made within the debounce window isn't lost. Crucially, do nothing
+    // when there's no pending save — otherwise an idle tab would overwrite the
+    // shared record with its stale scene and clobber edits made in another tab.
     const flushSave = () => {
-      if (saveTimer.current) {
-        clearTimeout(saveTimer.current);
-        saveTimer.current = null;
-      }
+      if (!saveTimer.current) return;
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
       saveScene(canvas.toJSON());
     };
     const onVisibility = () => {
