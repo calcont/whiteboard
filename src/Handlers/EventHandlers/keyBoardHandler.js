@@ -36,11 +36,16 @@ function KeyBoardHandler() {
 
   const handleDeleteSelected = () => {
     if (!activeObject || !canvas) return;
-    // Snapshot the targets first: an active selection exposes its members on
-    // _objects; a single object is deleted on its own.
-    const targets = activeObject._objects
-      ? [...activeObject._objects]
-      : [activeObject];
+    // An active selection exposes the selected canvas objects on _objects and
+    // each must be removed individually. A single object — including a Group
+    // such as an arrow (which also has _objects, but whose children live
+    // inside the group, not on the canvas) — is removed on its own. Only treat
+    // _objects as removal targets for an activeSelection, or a Group never gets
+    // deleted.
+    const targets =
+      activeObject.type === "activeSelection"
+        ? [...activeObject._objects]
+        : [activeObject];
     runAsSingleHistoryStep(canvas, () => {
       canvas.discardActiveObject();
       targets.forEach((obj) => canvas.remove(obj));
