@@ -1,11 +1,13 @@
 import { useCanvasContext } from "../../hooks";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { fabric } from "fabric";
 import {
   isCtrlShiftZ,
   isArrow,
   isCtrlA,
+  isCtrlC,
   isCtrlD,
+  isCtrlV,
   isCtrlZ,
   isCtrlMinus,
   isCtrlPlus,
@@ -33,6 +35,11 @@ const runAsSingleHistoryStep = (canvas, mutate) => {
 
 function KeyBoardHandler() {
   const { canvas, activeObject, setZoomRatio } = useCanvasContext();
+
+  // In-app clipboard (a cloned object) and the last pointer position over the
+  // canvas, so paste can drop at the cursor like excalidraw.
+  const clipboardRef = useRef(null);
+  const lastPointerRef = useRef(null);
 
   const handleDeleteSelected = () => {
     if (!activeObject || !canvas) return;
@@ -79,6 +86,51 @@ function KeyBoardHandler() {
       });
       canvas.setActiveObject(clonedObj);
       canvas.renderAll();
+    });
+  };
+
+  // Copy the current selection into the in-app clipboard (clone so later edits
+  // to the original don't change what gets pasted).
+  const copyObjects = () => {
+    if (!activeObject || !canvas) return;
+    activeObject.clone((cloned) => {
+      clipboardRef.current = cloned;
+    });
+  };
+
+  // Paste a fresh clone of the clipboard — at the cursor for a single object,
+  // or nudged by an offset for a multi-selection (whose child coords make
+  // centring unreliable). Repeated pastes keep cloning the same clipboard.
+  const pasteObjects = () => {
+    const clip = clipboardRef.current;
+    if (!clip || !canvas) return;
+    clip.clone((clonedObj) => {
+      canvas.discardActiveObject();
+      const pointer = lastPointerRef.current;
+      runAsSingleHistoryStep(canvas, () => {
+        if (clonedObj.type === "activeSelection") {
+          clonedObj.set({ left: clonedObj.left + 20, top: clonedObj.top + 20 });
+          clonedObj.canvas = canvas;
+          clonedObj.forEachObject((obj) => canvas.add(obj));
+          clonedObj.setCoords();
+        } else {
+          if (pointer) {
+            clonedObj.set({
+              left: pointer.x - clonedObj.getScaledWidth() / 2,
+              top: pointer.y - clonedObj.getScaledHeight() / 2,
+            });
+          } else {
+            clonedObj.set({
+              left: clonedObj.left + 20,
+              top: clonedObj.top + 20,
+            });
+          }
+          clonedObj.setCoords();
+          canvas.add(clonedObj);
+        }
+      });
+      canvas.setActiveObject(clonedObj);
+      canvas.requestRenderAll();
     });
   };
 
@@ -134,6 +186,10 @@ function KeyBoardHandler() {
   }, [activeObject, canvas]);
 
   useEffect(() => {
+    // Track the pointer over the canvas (scene coords) so paste can drop there.
+    const onMove = (opt) => {
+      lastPointerRef.current = canvas.getPointer(opt.e);
+    };
     const keyManager = (e) => {
       switch (true) {
         // Delete (46, = fn+Delete on Mac) and Backspace (8, the Mac "delete"
@@ -143,6 +199,18 @@ function KeyBoardHandler() {
           if (activeObject && !activeObject.isEditing) {
             e.preventDefault();
             handleDeleteSelected(canvas);
+          }
+          break;
+        case isCtrlC(e): // copy selected objects (skip while editing text)
+          if (activeObject && !activeObject.isEditing) {
+            e.preventDefault();
+            copyObjects();
+          }
+          break;
+        case isCtrlV(e): // paste from the in-app clipboard
+          if (!(activeObject && activeObject.isEditing)) {
+            e.preventDefault();
+            pasteObjects();
           }
           break;
         case isCtrlD(e): // duplicate selected objects
@@ -181,10 +249,12 @@ function KeyBoardHandler() {
     };
     if (canvas) {
       window.addEventListener("keydown", keyManager);
+      canvas.on("mouse:move", onMove);
     }
     return () => {
       if (canvas) {
         window.removeEventListener("keydown", keyManager);
+        canvas.off("mouse:move", onMove);
       }
     };
   }, [canvas, activeObject]);

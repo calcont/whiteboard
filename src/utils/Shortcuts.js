@@ -12,6 +12,14 @@ export const isCtrlD = (e) => {
   return isMod(e) && !e.shiftKey && e.code === "KeyD";
 };
 
+export const isCtrlC = (e) => {
+  return isMod(e) && !e.shiftKey && e.code === "KeyC";
+};
+
+export const isCtrlV = (e) => {
+  return isMod(e) && !e.shiftKey && e.code === "KeyV";
+};
+
 export const isCtrlA = (e) => {
   return isMod(e) && !e.shiftKey && e.code === "KeyA";
 };
