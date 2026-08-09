@@ -95,6 +95,10 @@
     border: 1px solid var(--light-border-color);
     border-radius: 6px;
     background: var(--surface-input-bg);
+    // Themed text/icon colour — without this the S/M/L labels and the Layer
+    // and Arrowheads lucide icons (currentColor) fall back to black and vanish
+    // on the dark panel.
+    color: var(--surface-text);
     cursor: pointer;
 
     &.active {
