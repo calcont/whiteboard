@@ -12,8 +12,6 @@ const isArrowGroup = (o) =>
   o._objects.some((c) => c.type === "line") &&
   o._objects.some((c) => c.type === "path");
 
-const OPPOSITE = { tl: "br", tr: "bl", br: "tl", bl: "tr" };
-
 // Resizing an arrow scales the whole group, which stretches and distorts the
 // arrowhead. Instead, after a scale we rebuild the arrow between its real
 // endpoints with a fixed-size head and unscaled stroke — length/direction
@@ -60,18 +58,25 @@ function ArrowResizeHandler() {
         new fabric.Point(head.left, head.top),
         matrix,
       );
-      // The tail is the bounding-box corner diagonally opposite the tip corner.
-      const corners = group.aCoords;
-      let nearest = "tl";
-      let bestDist = Infinity;
-      Object.keys(corners).forEach((k) => {
-        const d = Math.hypot(corners[k].x - tip.x, corners[k].y - tip.y);
-        if (d < bestDist) {
-          bestDist = d;
-          nearest = k;
-        }
-      });
-      const tail = corners[OPPOSITE[nearest]];
+      // The tail is the line's OTHER endpoint. Derive it from the line's real
+      // endpoints — NOT the group's bounding box: the head inflates the bbox, so
+      // an opposite-corner tail sits off the line and tilts a horizontal arrow
+      // on drop. calcLinePoints() is relative to the line's centre; add the
+      // line's left/top (relative to the group centre) then map to absolute.
+      const lp = line.calcLinePoints();
+      const end1 = fabric.util.transformPoint(
+        new fabric.Point(line.left + lp.x1, line.top + lp.y1),
+        matrix,
+      );
+      const end2 = fabric.util.transformPoint(
+        new fabric.Point(line.left + lp.x2, line.top + lp.y2),
+        matrix,
+      );
+      const tail =
+        Math.hypot(end1.x - tip.x, end1.y - tip.y) >
+        Math.hypot(end2.x - tip.x, end2.y - tip.y)
+          ? end1
+          : end2;
 
       const style = {
         stroke: line.stroke,
