@@ -1,29 +1,20 @@
 @import "src/css/variables.scss";
 
-.zoom-panel {
+.theme-toggle {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-
-  &__inner-container {
-    display: flex;
-    background-color: var(--surface-bg);
-    border-radius: var(--default-border-radius);
-    box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
-    width: 100%;
-  }
+  left: 0;
+  display: flex;
 
   &__button {
-    margin: auto 5px 0 5px;
-    padding: 10px;
-    border: none;
+    background-color: var(--surface-bg);
     color: var(--surface-text);
-    user-select: none;
+    border-radius: var(--default-border-radius);
+    box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
+    padding: 10px;
     cursor: pointer;
 
     &:hover {
       background-color: var(--default-theme-color);
-      border-radius: var(--default-border-radius);
     }
   }
 }

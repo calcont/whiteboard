@@ -8,7 +8,7 @@
   &__inner-container {
     display: flex;
     border-radius: 10px;
-    background-color: white;
+    background-color: var(--surface-bg);
     box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
     padding: 5px;
 
@@ -22,7 +22,7 @@
     margin: 0 5px;
     padding: 8px 10px;
     border: none;
-    color: black;
+    color: var(--surface-text);
     cursor: pointer;
 
     &:hover {

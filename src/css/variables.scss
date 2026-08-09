@@ -14,4 +14,30 @@
   --default-border-radius: 10px;
 
   --secondary-font-size: 14px;
+
+  // Semantic surface tokens (light defaults). Dark overrides live below.
+  // --app-bg is the board itself (the transparent fabric canvas shows the body
+  // background); the rest theme the floating chrome (toolbar, panels, footer).
+  --app-bg: #ffffff;
+  --surface-bg: #ffffff;
+  --surface-text: #1e1e1e;
+  --surface-muted: #495057;
+  --surface-input-bg: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --default-theme-color: #33333c;
+  --default-theme-hoverColor: #4a4a55;
+  --default-menu-bg-color: #2b2b33;
+
+  --button-borderColor: #4a4a55;
+  --light-border-color: #3a3a42;
+
+  --default-shadow-color: rgba(0, 0, 0, 0.6);
+
+  --app-bg: #121212;
+  --surface-bg: #232329;
+  --surface-text: #e6e6ea;
+  --surface-muted: #a0a0aa;
+  --surface-input-bg: #2b2b33;
 }

@@ -6,7 +6,7 @@
 
   &__icon {
     display: flex;
-    background-color: white;
+    background-color: var(--surface-bg);
     border-radius: var(--default-border-radius);
     box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
     width: 100%;
@@ -22,7 +22,7 @@
     text-transform: none;
     font-weight: bold;
     font-size: var(--default-font-size);
-    color: #000;
+    color: var(--surface-text);
     padding: 5px 20px;
     background-color: var(--default-theme-color);
     border: 1px solid var(--button-borderColor);
