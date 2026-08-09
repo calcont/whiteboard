@@ -3,14 +3,20 @@ import { fabric } from "fabric";
 import { useCanvasContext } from "../../hooks";
 import { buildArrowGroup } from "../ToolsHandler/tools/arrow";
 
-// An arrow is a group of exactly a line + a path (the head).
-const isArrowGroup = (o) =>
-  o &&
-  o.type === "group" &&
-  o._objects &&
-  o._objects.length === 2 &&
-  o._objects.some((c) => c.type === "line") &&
-  o._objects.some((c) => c.type === "path");
+// An arrow is a group of one line + one or two heads (paths), nothing else.
+// One head = single-ended, two = double-ended; the config is read from the
+// child composition (no custom props to serialise).
+const isArrowGroup = (o) => {
+  if (!o || o.type !== "group" || !o._objects) return false;
+  const lines = o._objects.filter((c) => c.type === "line");
+  const heads = o._objects.filter((c) => c.type === "path");
+  return (
+    lines.length === 1 &&
+    heads.length >= 1 &&
+    heads.length <= 2 &&
+    o._objects.length === lines.length + heads.length
+  );
+};
 
 const isScaled = (o) =>
   (o.scaleX != null && o.scaleX !== 1) || (o.scaleY != null && o.scaleY !== 1);
@@ -26,22 +32,18 @@ function ArrowResizeHandler() {
     if (!canvas) return undefined;
     let rebuilding = false;
 
-    // Rebuild one scaled arrow group at scale 1 between its real endpoints.
-    // Returns the fresh arrow (already swapped onto the canvas).
+    // Rebuild one scaled arrow group at scale 1 between its real endpoints,
+    // preserving its head config (single vs double). Returns the fresh arrow
+    // (already swapped onto the canvas).
     const rebuildScaledArrow = (group) => {
-      const head = group._objects.find((c) => c.type === "path");
       const line = group._objects.find((c) => c.type === "line");
+      const heads = group._objects.filter((c) => c.type === "path");
       const matrix = group.calcTransformMatrix();
-      // The head sits at the arrow tip; its absolute centre is the new tip.
-      const tip = fabric.util.transformPoint(
-        new fabric.Point(head.left, head.top),
-        matrix,
-      );
-      // The tail is the line's OTHER endpoint. Derive it from the line's real
-      // endpoints — NOT the group's bounding box: the head inflates the bbox,
-      // so an opposite-corner tail sits off the line and tilts a horizontal
-      // arrow on drop. calcLinePoints() is relative to the line's centre; add
-      // the line's left/top (relative to the group centre) then map to absolute.
+      // Derive both endpoints from the line's real endpoints — NOT the group's
+      // bounding box: a head inflates the bbox, so an opposite-corner tail sits
+      // off the line and tilts a horizontal arrow on drop. calcLinePoints() is
+      // relative to the line's centre; add its left/top (relative to the group
+      // centre) then map to absolute.
       const lp = line.calcLinePoints();
       const end1 = fabric.util.transformPoint(
         new fabric.Point(line.left + lp.x1, line.top + lp.y1),
@@ -51,17 +53,35 @@ function ArrowResizeHandler() {
         new fabric.Point(line.left + lp.x2, line.top + lp.y2),
         matrix,
       );
-      const tail =
-        Math.hypot(end1.x - tip.x, end1.y - tip.y) >
-        Math.hypot(end2.x - tip.x, end2.y - tip.y)
-          ? end1
-          : end2;
 
-      const arrow = buildArrowGroup({ x: tail.x, y: tail.y }, tip, {
-        stroke: line.stroke,
-        strokeWidth: line.strokeWidth,
-        strokeDashArray: line.strokeDashArray,
-      });
+      let tail;
+      let tip;
+      if (heads.length === 2) {
+        // Double-headed: symmetric, so either endpoint can be the "end".
+        tail = end1;
+        tip = end2;
+      } else {
+        // Single-headed: the tip is the endpoint nearest the head.
+        const headAbs = fabric.util.transformPoint(
+          new fabric.Point(heads[0].left, heads[0].top),
+          matrix,
+        );
+        const d1 = Math.hypot(end1.x - headAbs.x, end1.y - headAbs.y);
+        const d2 = Math.hypot(end2.x - headAbs.x, end2.y - headAbs.y);
+        tip = d1 < d2 ? end1 : end2;
+        tail = d1 < d2 ? end2 : end1;
+      }
+
+      const arrow = buildArrowGroup(
+        { x: tail.x, y: tail.y },
+        { x: tip.x, y: tip.y },
+        {
+          stroke: line.stroke,
+          strokeWidth: line.strokeWidth,
+          strokeDashArray: line.strokeDashArray,
+          heads: heads.length === 2 ? "both" : "end",
+        },
+      );
       canvas.remove(group);
       canvas.add(arrow);
       arrow.setCoords();
@@ -75,13 +95,17 @@ function ArrowResizeHandler() {
     const onScaling = (e) => {
       const group = e && e.target;
       if (rebuilding || !isArrowGroup(group)) return;
-      const head = group._objects.find((c) => c.type === "path");
-      if (!head) return;
-      // Use |scale| so the head keeps a constant size AND mirrors together with
+      // Use |scale| so each head keeps a constant size AND mirrors together with
       // the line when the group is flipped (a corner dragged past the opposite
       // corner) — otherwise the line would mirror while the head stayed put.
-      head.scaleX = 1 / Math.abs(group.scaleX || 1);
-      head.scaleY = 1 / Math.abs(group.scaleY || 1);
+      const sx = 1 / Math.abs(group.scaleX || 1);
+      const sy = 1 / Math.abs(group.scaleY || 1);
+      group._objects
+        .filter((c) => c.type === "path")
+        .forEach((head) => {
+          head.scaleX = sx;
+          head.scaleY = sy;
+        });
     };
 
     const onModified = (e) => {
