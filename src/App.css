@@ -3,9 +3,10 @@ html {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  /* Explicit light canvas so the board doesn't inherit the OS/browser theme
-     (which left shapes invisible on a dark-mode default). */
-  background: #ffffff;
+  /* The board background. Driven by the theme token (light #ffffff / dark
+     #121212); the fabric canvas is transparent so this shows through, unless
+     the user sets an explicit canvas background via the background-color tool. */
+  background: var(--app-bg, #ffffff);
 }
 
 canvas {

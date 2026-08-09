@@ -11,7 +11,7 @@
   gap: 14px;
   padding: 14px;
   width: 200px;
-  background-color: white;
+  background-color: var(--surface-bg);
   border-radius: var(--default-border-radius);
   box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
 
@@ -24,7 +24,7 @@
   &__label {
     font-size: var(--default-font-size);
     font-weight: 600;
-    color: #495057;
+    color: var(--surface-muted);
   }
 
   &__swatches {
@@ -49,7 +49,7 @@
 
     // "No fill" swatch: white with a red diagonal strike.
     &[data-none="true"] {
-      background: white;
+      background: var(--surface-input-bg);
       background-image: linear-gradient(
         to top right,
         transparent 45%,
@@ -75,9 +75,9 @@
     padding: 5px 8px;
     border: 1px solid var(--light-border-color);
     border-radius: 6px;
-    background: white;
+    background: var(--surface-input-bg);
     font-size: var(--default-font-size);
-    color: #1e1e1e;
+    color: var(--surface-text);
     cursor: pointer;
   }
 
@@ -94,7 +94,7 @@
     height: 28px;
     border: 1px solid var(--light-border-color);
     border-radius: 6px;
-    background: white;
+    background: var(--surface-input-bg);
     cursor: pointer;
 
     &.active {
@@ -105,14 +105,14 @@
 
   &__width-preview {
     width: 22px;
-    background-color: #1e1e1e;
+    background-color: var(--surface-text);
     border-radius: 2px;
   }
 
   &__style-preview {
     width: 24px;
     border-top-width: 2px;
-    border-top-color: #1e1e1e;
+    border-top-color: var(--surface-text);
     display: inline-block;
   }
 }

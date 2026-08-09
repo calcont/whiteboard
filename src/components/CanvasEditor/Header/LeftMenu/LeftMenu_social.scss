@@ -12,7 +12,7 @@
     text-transform: none;
     font-weight: bold;
     font-size: var(--default-font-size);
-    color: #000;
+    color: var(--surface-text);
     background-color: var(--default-theme-color);
     border: 1px solid var(--button-borderColor);
     &:hover {
