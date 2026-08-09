@@ -1,6 +1,14 @@
 import React, { useEffect, useRef } from "react";
+import { fabric } from "fabric";
 import { Tooltip } from "@mui/material";
-import { BringToFront, SendToBack, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  BringToFront,
+  SendToBack,
+  ChevronUp,
+  ChevronDown,
+  ArrowRight,
+  ArrowLeftRight,
+} from "lucide-react";
 import { useMenuContext, useCanvasContext } from "../../../hooks";
 import { TOOL_CONSTANTS } from "../../../constants";
 import {
@@ -10,9 +18,11 @@ import {
   STROKE_STYLES,
   FONT_FAMILIES,
   FONT_SIZES,
+  ARROW_HEAD_OPTIONS,
   toFabricStyle,
   toTextStyle,
 } from "../../../Handlers/ToolsHandler/toolStyle";
+import { buildArrowGroup } from "../../../Handlers/ToolsHandler/tools/arrow";
 import "./PropertiesPanel.scss";
 
 // Tools whose new shapes pick up the current style; the panel shows for these
@@ -31,6 +41,19 @@ const STYLEABLE_TOOLS = new Set([
 const isText = (obj) =>
   obj &&
   (obj.type === "i-text" || obj.type === "text" || obj.type === "textbox");
+
+// An arrow is a group of one line + one or two heads (paths).
+const isArrowObject = (o) => {
+  if (!o || o.type !== "group" || !o._objects) return false;
+  const lines = o._objects.filter((c) => c.type === "line");
+  const heads = o._objects.filter((c) => c.type === "path");
+  return (
+    lines.length === 1 &&
+    heads.length >= 1 &&
+    heads.length <= 2 &&
+    o._objects.length === lines.length + heads.length
+  );
+};
 
 // Best-effort reverse of strokeDashArray -> friendly style name.
 const dashToStyle = (dash, width) => {
@@ -56,6 +79,8 @@ const PropertiesPanel = () => {
     if (!canvas) return;
     canvas.currentStyle = toFabricStyle(style);
     canvas.currentTextStyle = toTextStyle(style);
+    // Arrowheads aren't a fabric prop — expose it separately for the arrow tool.
+    canvas.currentArrowHeads = style.arrowHeads;
     if (canvas.freeDrawingBrush) {
       canvas.freeDrawingBrush.color = style.stroke;
     }
@@ -141,6 +166,50 @@ const PropertiesPanel = () => {
     applyToActive(next);
   };
 
+  // Arrowheads can't be set with obj.set() — the head is a child object — so a
+  // selected arrow is rebuilt with the new config. Also updates the default for
+  // the next drawn arrow.
+  const setArrowHeads = (mode) => {
+    const next = { ...styleRef.current, arrowHeads: mode };
+    styleRef.current = next;
+    setStyle(next);
+    if (!canvas || !isArrowObject(activeObject)) return;
+
+    const group = activeObject;
+    const line = group._objects.find((c) => c.type === "line");
+    const matrix = group.calcTransformMatrix();
+    const lp = line.calcLinePoints();
+    const p1 = fabric.util.transformPoint(
+      new fabric.Point(line.left + lp.x1, line.top + lp.y1),
+      matrix,
+    );
+    const p2 = fabric.util.transformPoint(
+      new fabric.Point(line.left + lp.x2, line.top + lp.y2),
+      matrix,
+    );
+    const arrow = buildArrowGroup(
+      { x: p1.x, y: p1.y },
+      { x: p2.x, y: p2.y },
+      {
+        stroke: line.stroke,
+        strokeWidth: line.strokeWidth,
+        strokeDashArray: line.strokeDashArray,
+        heads: mode,
+      },
+    );
+
+    const supportsHistory = typeof canvas._historySaveAction === "function";
+    if (supportsHistory) canvas.historyProcessing = true;
+    canvas.remove(group);
+    canvas.add(arrow);
+    arrow.setCoords();
+    canvas.setActiveObject(arrow);
+    if (supportsHistory) canvas.historyProcessing = false;
+    canvas.requestRenderAll();
+    // One history entry (and a persistence save) for the head change.
+    canvas.fire("object:modified", { target: arrow });
+  };
+
   // Reorder the selection's z-index. sendToBack/sendBackwards process in
   // reverse so a multi-selection keeps its internal stacking order.
   const reorder = (method) => {
@@ -164,6 +233,17 @@ const PropertiesPanel = () => {
   // Text context shows font controls; shapes show fill/width/style.
   const textContext =
     isText(activeObject) || activeTool === TOOL_CONSTANTS.FONT;
+
+  // Arrow context adds the arrowheads control. When an arrow is selected, the
+  // active option reflects that arrow's own head count; otherwise the default.
+  const selectedArrowHeads = isArrowObject(activeObject)
+    ? activeObject._objects.filter((c) => c.type === "path").length === 2
+      ? "both"
+      : "end"
+    : null;
+  const arrowContext =
+    activeTool === TOOL_CONSTANTS.ARROW || selectedArrowHeads !== null;
+  const activeHeads = selectedArrowHeads || style.arrowHeads;
 
   return (
     <div className="properties-panel upper">
@@ -322,6 +402,34 @@ const PropertiesPanel = () => {
             </div>
           </div>
         </>
+      )}
+
+      {arrowContext && (
+        <div className="properties-panel__group">
+          <span className="properties-panel__label">Arrowheads</span>
+          <div className="properties-panel__row">
+            {ARROW_HEAD_OPTIONS.map((opt) => (
+              <Tooltip title={opt.label} key={opt.id}>
+                <button
+                  type="button"
+                  className={
+                    activeHeads === opt.id
+                      ? "properties-panel__btn active"
+                      : "properties-panel__btn"
+                  }
+                  onClick={() => setArrowHeads(opt.id)}
+                  aria-label={opt.label}
+                >
+                  {opt.id === "both" ? (
+                    <ArrowLeftRight size={16} />
+                  ) : (
+                    <ArrowRight size={16} />
+                  )}
+                </button>
+              </Tooltip>
+            ))}
+          </div>
+        </div>
       )}
 
       {activeObject && (

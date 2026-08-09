@@ -7,9 +7,28 @@ const ARROW_HEAD_PATH = "M 0 0 L 20 10 L 0 20 Z";
 const angleBetween = (start, end) =>
   (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI;
 
-// Build a fresh arrow (line + fixed-size head) from start -> end with the given
-// style. Exported so the resize handler can rebuild an arrow at a new size
-// without scaling — and distorting — the head.
+// A fixed-size arrowhead (filled triangle) centred at `at`, pointing along
+// `angle`. Kept a plain child so the head config can be derived from the number
+// of path children (1 = single, 2 = double) — no custom props to persist.
+const makeHead = (at, angle, color) =>
+  new fabric.Path(ARROW_HEAD_PATH, {
+    stroke: "",
+    strokeWidth: 0,
+    fill: color,
+    originX: "center",
+    originY: "center",
+    left: at.x,
+    top: at.y,
+    angle,
+    hasControls: false,
+    hasBorders: false,
+    selectable: false,
+  });
+
+// Build a fresh arrow (line + fixed-size head(s)) from start -> end with the
+// given style. style.heads: "end" (default, single head at end) or "both"
+// (a second head at start). Exported so the resize handler and the properties
+// panel can rebuild an arrow without scaling — and distorting — the head(s).
 export const buildArrowGroup = (start, end, style) => {
   const line = new fabric.Line([start.x, start.y, end.x, end.y], {
     stroke: style.stroke,
@@ -22,20 +41,14 @@ export const buildArrowGroup = (start, end, style) => {
     hasBorders: false,
     selectable: false,
   });
-  const head = new fabric.Path(ARROW_HEAD_PATH, {
-    stroke: "",
-    strokeWidth: 0,
-    fill: style.stroke,
-    originX: "center",
-    originY: "center",
-    left: end.x,
-    top: end.y,
-    angle: angleBetween(start, end),
-    hasControls: false,
-    hasBorders: false,
-    selectable: false,
-  });
-  const group = new fabric.Group([line, head], { objectCaching: false });
+  const children = [
+    line,
+    makeHead(end, angleBetween(start, end), style.stroke),
+  ];
+  if (style.heads === "both") {
+    children.push(makeHead(start, angleBetween(end, start), style.stroke));
+  }
+  const group = new fabric.Group(children, { objectCaching: false });
   // Resize arrows from the corners only. Canvas uniformScaling makes corner
   // drags scale both axes together; a *side* handle scales one axis, which
   // shears/mirrors the rotated head. Hiding the side handles keeps every
@@ -52,7 +65,9 @@ export class Arrow extends Tool {
     this.pointer = null;
     this.line = null;
     this.arrowHead = null;
+    this.arrowHeadStart = null;
     this.style = null;
+    this.heads = "end";
     this.deleteOffset = 10;
   }
 
@@ -61,6 +76,7 @@ export class Arrow extends Tool {
     this.origX = this.pointer.x;
     this.origY = this.pointer.y;
     this.style = resolveToolStyle(canvas);
+    this.heads = canvas.currentArrowHeads === "both" ? "both" : "end";
 
     // Live preview: a plain line + head that follow the cursor; on mouse-up
     // they're replaced by a proper arrow group (buildArrowGroup).
@@ -77,19 +93,21 @@ export class Arrow extends Tool {
         selectable: false,
       },
     );
-    this.arrowHead = new fabric.Path(ARROW_HEAD_PATH, {
-      stroke: "",
-      strokeWidth: 0,
-      fill: this.style.stroke,
-      originX: "center",
-      originY: "center",
-      top: this.origY,
-      left: this.origX,
-      hasControls: false,
-      hasBorders: false,
-      selectable: false,
-    });
+    this.arrowHead = makeHead(
+      { x: this.origX, y: this.origY },
+      0,
+      this.style.stroke,
+    );
     canvas.add(this.line, this.arrowHead);
+    // Preview the second head too when drawing a double-headed arrow.
+    if (this.heads === "both") {
+      this.arrowHeadStart = makeHead(
+        { x: this.origX, y: this.origY },
+        0,
+        this.style.stroke,
+      );
+      canvas.add(this.arrowHeadStart);
+    }
   }
 
   draw(canvas, event) {
@@ -97,15 +115,17 @@ export class Arrow extends Tool {
       return;
     }
     this.pointer = canvas.getPointer(event.e);
+    const origin = { x: this.origX, y: this.origY };
     this.line.set({ x2: this.pointer.x, y2: this.pointer.y });
     this.line.setCoords();
     this.arrowHead.left = this.pointer.x;
     this.arrowHead.top = this.pointer.y;
-    this.arrowHead.angle = angleBetween(
-      { x: this.origX, y: this.origY },
-      this.pointer,
-    );
+    this.arrowHead.angle = angleBetween(origin, this.pointer);
     this.arrowHead.setCoords();
+    if (this.arrowHeadStart) {
+      this.arrowHeadStart.angle = angleBetween(this.pointer, origin);
+      this.arrowHeadStart.setCoords();
+    }
   }
 
   done(canvas) {
@@ -117,13 +137,14 @@ export class Arrow extends Tool {
       this.pointer.y - this.origY,
     );
     canvas.remove(this.line, this.arrowHead);
+    if (this.arrowHeadStart) canvas.remove(this.arrowHeadStart);
     if (length < this.deleteOffset) {
       return;
     }
     const arrow = buildArrowGroup(
       { x: this.origX, y: this.origY },
       { x: this.pointer.x, y: this.pointer.y },
-      this.style || resolveToolStyle(canvas),
+      { ...(this.style || resolveToolStyle(canvas)), heads: this.heads },
     );
     arrow.setCoords();
     canvas.add(arrow);

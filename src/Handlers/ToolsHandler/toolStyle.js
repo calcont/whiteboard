@@ -10,7 +10,14 @@ export const DEFAULT_STYLE = {
   fill: "transparent",
   fontFamily: "Arial",
   fontSize: 24,
+  arrowHeads: "end", // "end" (single head) | "both" (double-headed)
 };
+
+// Arrowhead configurations offered for the arrow tool.
+export const ARROW_HEAD_OPTIONS = [
+  { id: "end", label: "Single-headed" },
+  { id: "both", label: "Double-headed" },
+];
 
 export const FONT_FAMILIES = [
   "Arial",
