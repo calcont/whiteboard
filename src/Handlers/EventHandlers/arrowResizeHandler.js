@@ -34,8 +34,11 @@ function ArrowResizeHandler() {
       if (rebuilding || !isArrowGroup(group)) return;
       const head = group._objects.find((c) => c.type === "path");
       if (!head) return;
-      head.scaleX = 1 / (group.scaleX || 1);
-      head.scaleY = 1 / (group.scaleY || 1);
+      // Use |scale| so the head keeps a constant size AND mirrors together with
+      // the line when the group is flipped (a corner dragged past the opposite
+      // corner) — otherwise the line would mirror while the head stayed put.
+      head.scaleX = 1 / Math.abs(group.scaleX || 1);
+      head.scaleY = 1 / Math.abs(group.scaleY || 1);
     };
 
     const onModified = (e) => {

@@ -35,7 +35,13 @@ export const buildArrowGroup = (start, end, style) => {
     hasBorders: false,
     selectable: false,
   });
-  return new fabric.Group([line, head], { objectCaching: false });
+  const group = new fabric.Group([line, head], { objectCaching: false });
+  // Resize arrows from the corners only. Canvas uniformScaling makes corner
+  // drags scale both axes together; a *side* handle scales one axis, which
+  // shears/mirrors the rotated head. Hiding the side handles keeps every
+  // resize uniform so the head stays a clean, fixed-size triangle.
+  group.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
+  return group;
 };
 
 export class Arrow extends Tool {
