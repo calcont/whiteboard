@@ -31,6 +31,10 @@ function Canvas() {
       // renders the active object on top, so selecting a filled shape that
       // sits under text (or another shape) hides what's above it.
       preserveObjectStacking: true,
+      // A few px of slack when per-pixel target finding is on (arrows), so a
+      // thin 3px line is still easy to click. Only consulted for objects with
+      // perPixelTargetFind, so bbox selection of shapes is unaffected.
+      targetFindTolerance: 5,
       height: window.screen.height,
       width: window.screen.width,
     });

@@ -48,7 +48,14 @@ export const buildArrowGroup = (start, end, style) => {
   if (style.heads === "both") {
     children.push(makeHead(start, angleBetween(end, start), style.stroke));
   }
-  const group = new fabric.Group(children, { objectCaching: false });
+  const group = new fabric.Group(children, {
+    objectCaching: false,
+    // Select an arrow by its actual line/head pixels, not its (large) bounding
+    // box — so two overlapping arrows can each be picked by clicking the one you
+    // mean instead of always grabbing the top box. Per-object, so filled/
+    // transparent shapes keep convenient click-anywhere bbox selection.
+    perPixelTargetFind: true,
+  });
   // Resize arrows from the corners only. Canvas uniformScaling makes corner
   // drags scale both axes together; a *side* handle scales one axis, which
   // shears/mirrors the rotated head. Hiding the side handles keeps every
