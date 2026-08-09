@@ -35,7 +35,7 @@ const ThemeToggle = () => {
 
   const Icon = isDark ? Sun : Moon;
   return (
-    <div className="theme-toggle">
+    <div className="theme-toggle upper">
       <Tooltip title={isDark ? "Switch to light mode" : "Switch to dark mode"}>
         <Icon
           className="theme-toggle__button"
