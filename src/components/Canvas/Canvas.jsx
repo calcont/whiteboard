@@ -9,6 +9,7 @@ import {
   TextEventHandler,
   ZoomHandler,
   PersistenceHandler,
+  ArrowResizeHandler,
 } from "../../Handlers/EventHandlers";
 
 function Canvas() {
@@ -18,6 +19,7 @@ function Canvas() {
   TextEventHandler();
   ZoomHandler();
   PersistenceHandler();
+  ArrowResizeHandler();
   const canvasRef = useRef(null);
   const { setCanvas } = useCanvasContext();
 

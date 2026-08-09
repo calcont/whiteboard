@@ -4,3 +4,4 @@ export { default as SelectionHandler } from "./selectionHandler";
 export { default as TextEventHandler } from "./textEventHandler";
 export { default as ZoomHandler } from "./zoomHandler";
 export { default as PersistenceHandler } from "./persistenceHandler";
+export { default as ArrowResizeHandler } from "./arrowResizeHandler";

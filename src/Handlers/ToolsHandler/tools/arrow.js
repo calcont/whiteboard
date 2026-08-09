@@ -2,6 +2,41 @@ import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
 import { resolveToolStyle } from "../toolStyle";
 
+const ARROW_HEAD_PATH = "M 0 0 L 20 10 L 0 20 Z";
+
+const angleBetween = (start, end) =>
+  (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI;
+
+// Build a fresh arrow (line + fixed-size head) from start -> end with the given
+// style. Exported so the resize handler can rebuild an arrow at a new size
+// without scaling — and distorting — the head.
+export const buildArrowGroup = (start, end, style) => {
+  const line = new fabric.Line([start.x, start.y, end.x, end.y], {
+    stroke: style.stroke,
+    strokeWidth: style.strokeWidth,
+    strokeDashArray: style.strokeDashArray || null,
+    originX: "center",
+    originY: "center",
+    hasControls: false,
+    hasBorders: false,
+    selectable: false,
+  });
+  const head = new fabric.Path(ARROW_HEAD_PATH, {
+    stroke: "",
+    strokeWidth: 0,
+    fill: style.stroke,
+    originX: "center",
+    originY: "center",
+    left: end.x,
+    top: end.y,
+    angle: angleBetween(start, end),
+    hasControls: false,
+    hasBorders: false,
+    selectable: false,
+  });
+  return new fabric.Group([line, head], { objectCaching: false });
+};
+
 export class Arrow extends Tool {
   constructor() {
     super();
@@ -10,7 +45,7 @@ export class Arrow extends Tool {
     this.pointer = null;
     this.line = null;
     this.arrowHead = null;
-    this.arrow = null;
+    this.style = null;
     this.deleteOffset = 10;
   }
 
@@ -18,15 +53,16 @@ export class Arrow extends Tool {
     this.pointer = canvas.getPointer(event.e);
     this.origX = this.pointer.x;
     this.origY = this.pointer.y;
-    let arrowHeadPath = "M 0 0 L 20 10 L 0 20 Z";
-    const style = resolveToolStyle(canvas);
+    this.style = resolveToolStyle(canvas);
 
+    // Live preview: a plain line + head that follow the cursor; on mouse-up
+    // they're replaced by a proper arrow group (buildArrowGroup).
     this.line = new fabric.Line(
       [this.origX, this.origY, this.origX, this.origY],
       {
-        stroke: style.stroke,
-        strokeWidth: style.strokeWidth,
-        strokeDashArray: style.strokeDashArray,
+        stroke: this.style.stroke,
+        strokeWidth: this.style.strokeWidth,
+        strokeDashArray: this.style.strokeDashArray,
         originX: "center",
         originY: "center",
         hasControls: false,
@@ -34,17 +70,16 @@ export class Arrow extends Tool {
         selectable: false,
       },
     );
-
-    this.arrowHead = new fabric.Path(arrowHeadPath, {
+    this.arrowHead = new fabric.Path(ARROW_HEAD_PATH, {
       stroke: "",
       strokeWidth: 0,
-      fill: style.stroke,
+      fill: this.style.stroke,
       originX: "center",
       originY: "center",
-      hasControls: false,
-      hasBorders: false,
       top: this.origY,
       left: this.origX,
+      hasControls: false,
+      hasBorders: false,
       selectable: false,
     });
     canvas.add(this.line, this.arrowHead);
@@ -59,10 +94,9 @@ export class Arrow extends Tool {
     this.line.setCoords();
     this.arrowHead.left = this.pointer.x;
     this.arrowHead.top = this.pointer.y;
-    this.arrowHead.angle = this.calcArrowAngle(
+    this.arrowHead.angle = angleBetween(
+      { x: this.origX, y: this.origY },
       this.pointer,
-      this.origX,
-      this.origY,
     );
     this.arrowHead.setCoords();
   }
@@ -75,19 +109,16 @@ export class Arrow extends Tool {
       this.pointer.x - this.origX,
       this.pointer.y - this.origY,
     );
+    canvas.remove(this.line, this.arrowHead);
     if (length < this.deleteOffset) {
-      canvas.remove(this.line, this.arrowHead);
       return;
     }
-    this.arrow = new fabric.Group([this.line, this.arrowHead], {
-      objectCaching: false,
-    });
-    canvas.remove(this.line, this.arrowHead);
-    this.arrow.setCoords();
-    canvas.add(this.arrow);
-  }
-
-  calcArrowAngle(pointer, origX, origY) {
-    return (Math.atan2(pointer.y - origY, pointer.x - origX) * 180) / Math.PI;
+    const arrow = buildArrowGroup(
+      { x: this.origX, y: this.origY },
+      { x: this.pointer.x, y: this.pointer.y },
+      this.style || resolveToolStyle(canvas),
+    );
+    arrow.setCoords();
+    canvas.add(arrow);
   }
 }
