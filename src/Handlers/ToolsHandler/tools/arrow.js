@@ -15,6 +15,7 @@ export const buildArrowGroup = (start, end, style) => {
     stroke: style.stroke,
     strokeWidth: style.strokeWidth,
     strokeDashArray: style.strokeDashArray || null,
+    strokeUniform: true,
     originX: "center",
     originY: "center",
     hasControls: false,

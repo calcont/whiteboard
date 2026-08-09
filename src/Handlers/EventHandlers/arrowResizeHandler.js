@@ -25,6 +25,19 @@ function ArrowResizeHandler() {
     if (!canvas) return undefined;
     let rebuilding = false;
 
+    // While the arrow is being dragged, fabric scales the whole group so the
+    // head balloons/distorts until the drag ends (when onModified rebuilds it).
+    // Counter-scale the head child every scaling frame so it stays a constant
+    // size live; the line's stroke already stays constant via strokeUniform.
+    const onScaling = (e) => {
+      const group = e && e.target;
+      if (rebuilding || !isArrowGroup(group)) return;
+      const head = group._objects.find((c) => c.type === "path");
+      if (!head) return;
+      head.scaleX = 1 / (group.scaleX || 1);
+      head.scaleY = 1 / (group.scaleY || 1);
+    };
+
     const onModified = (e) => {
       const group = e && e.target;
       if (rebuilding || !isArrowGroup(group)) return;
@@ -88,8 +101,12 @@ function ArrowResizeHandler() {
       rebuilding = false;
     };
 
+    canvas.on("object:scaling", onScaling);
     canvas.on("object:modified", onModified);
-    return () => canvas.off("object:modified", onModified);
+    return () => {
+      canvas.off("object:scaling", onScaling);
+      canvas.off("object:modified", onModified);
+    };
   }, [canvas]);
 }
 

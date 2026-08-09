@@ -63,11 +63,14 @@ export const strokeDashArrayFor = (strokeStyle, strokeWidth) => {
 };
 
 // Convert a style object into the fabric props shared by the shape tools.
+// strokeUniform keeps the border a constant width when the shape is scaled
+// (fabric otherwise scales strokeWidth, making borders balloon on resize).
 export const toFabricStyle = (style = DEFAULT_STYLE) => ({
   stroke: style.stroke,
   strokeWidth: style.strokeWidth,
   strokeDashArray: strokeDashArrayFor(style.strokeStyle, style.strokeWidth),
   fill: style.fill,
+  strokeUniform: true,
 });
 
 // Fabric-ready style the tools should apply to a new object.
