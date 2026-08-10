@@ -110,9 +110,17 @@ function KeyBoardHandler() {
         if (clonedObj.type === "activeSelection") {
           // A cloned activeSelection keeps its children in GROUP-LOCAL coords;
           // adding them directly drops them near the origin. Un-group each child
-          // to absolute (position + scale + angle) via the group matrix, nudge
-          // by an offset, then re-form the selection.
+          // to absolute (position + scale + angle) via the group matrix, shifting
+          // the whole group so its centre lands at the cursor (else a +20 nudge),
+          // then re-form the selection.
           const groupMatrix = clonedObj.calcTransformMatrix();
+          // groupMatrix[4],[5] = the selection's centre in absolute coords.
+          let dx = 20;
+          let dy = 20;
+          if (pointer) {
+            dx = pointer.x - groupMatrix[4];
+            dy = pointer.y - groupMatrix[5];
+          }
           const pasted = [];
           clonedObj.forEachObject((obj) => {
             const m = fabric.util.multiplyTransformMatrices(
@@ -130,7 +138,7 @@ function KeyBoardHandler() {
               angle: d.angle,
             });
             obj.setPositionByOrigin(
-              new fabric.Point(d.translateX + 20, d.translateY + 20),
+              new fabric.Point(d.translateX + dx, d.translateY + dy),
               "center",
               "center",
             );
