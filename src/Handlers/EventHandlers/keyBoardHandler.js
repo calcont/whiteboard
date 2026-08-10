@@ -99,8 +99,7 @@ function KeyBoardHandler() {
   };
 
   // Paste a fresh clone of the clipboard — at the cursor for a single object,
-  // or nudged by an offset for a multi-selection (whose child coords make
-  // centring unreliable). Repeated pastes keep cloning the same clipboard.
+  // or offset for a multi-selection. Repeated pastes keep cloning the clipboard.
   const pasteObjects = () => {
     const clip = clipboardRef.current;
     if (!clip || !canvas) return;
@@ -109,10 +108,39 @@ function KeyBoardHandler() {
       const pointer = lastPointerRef.current;
       runAsSingleHistoryStep(canvas, () => {
         if (clonedObj.type === "activeSelection") {
-          clonedObj.set({ left: clonedObj.left + 20, top: clonedObj.top + 20 });
-          clonedObj.canvas = canvas;
-          clonedObj.forEachObject((obj) => canvas.add(obj));
-          clonedObj.setCoords();
+          // A cloned activeSelection keeps its children in GROUP-LOCAL coords;
+          // adding them directly drops them near the origin. Un-group each child
+          // to absolute (position + scale + angle) via the group matrix, nudge
+          // by an offset, then re-form the selection.
+          const groupMatrix = clonedObj.calcTransformMatrix();
+          const pasted = [];
+          clonedObj.forEachObject((obj) => {
+            const m = fabric.util.multiplyTransformMatrices(
+              groupMatrix,
+              obj.calcOwnMatrix(),
+            );
+            const d = fabric.util.qrDecompose(m);
+            obj.set({
+              flipX: false,
+              flipY: false,
+              scaleX: d.scaleX,
+              scaleY: d.scaleY,
+              skewX: d.skewX,
+              skewY: d.skewY,
+              angle: d.angle,
+            });
+            obj.setPositionByOrigin(
+              new fabric.Point(d.translateX + 20, d.translateY + 20),
+              "center",
+              "center",
+            );
+            obj.setCoords();
+            canvas.add(obj);
+            pasted.push(obj);
+          });
+          canvas.setActiveObject(
+            new fabric.ActiveSelection(pasted, { canvas }),
+          );
         } else {
           if (pointer) {
             clonedObj.set({
@@ -127,9 +155,9 @@ function KeyBoardHandler() {
           }
           clonedObj.setCoords();
           canvas.add(clonedObj);
+          canvas.setActiveObject(clonedObj);
         }
       });
-      canvas.setActiveObject(clonedObj);
       canvas.requestRenderAll();
     });
   };
