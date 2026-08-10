@@ -1,6 +1,7 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import { TOOL_CONSTANTS } from "../constants";
 import { DEFAULT_STYLE } from "../Handlers/ToolsHandler/toolStyle";
+import { getStoredStyle, saveStyle } from "../utils/stylePrefs";
 
 export const MenuContext = createContext({
   activeTool: null,
@@ -14,7 +15,13 @@ export const MenuContext = createContext({
 export const MenuProvider = ({ children }) => {
   const [activeTool, setActiveTool] = useState(TOOL_CONSTANTS.MARKER);
   const [lockStatus, setLockStatus] = useState(false);
-  const [style, setStyle] = useState(DEFAULT_STYLE);
+  // Start from the last-used style and persist it so a reload keeps the user's
+  // last colour / width / fill / font / arrowhead choices.
+  const [style, setStyle] = useState(getStoredStyle);
+
+  useEffect(() => {
+    saveStyle(style);
+  }, [style]);
 
   const context = {
     activeTool,
