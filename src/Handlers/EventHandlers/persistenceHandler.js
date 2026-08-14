@@ -19,6 +19,11 @@ function PersistenceHandler() {
       canvas.loadFromJSON(scene, () => {
         // Restored objects should be selectable once the cursor tool is used.
         canvas.getObjects().forEach((obj) => obj.set({ selectable: true }));
+        // Restore the pan/zoom so the board reopens exactly where it was left
+        // (canvas.toJSON omits the viewport, so we stash it on the scene).
+        if (Array.isArray(scene.viewport)) {
+          canvas.setViewportTransform(scene.viewport);
+        }
         canvas.renderAll();
         // Reset the history baseline so the restored scene is the starting
         // point — otherwise an undo would wipe it back to empty.
@@ -30,10 +35,17 @@ function PersistenceHandler() {
       });
     });
 
+    // Serialize the scene plus the current pan/zoom (toJSON drops the viewport).
+    const buildScene = () => {
+      const scene = canvas.toJSON();
+      scene.viewport = canvas.viewportTransform;
+      return scene;
+    };
+
     const scheduleSave = () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        saveScene(canvas.toJSON());
+        saveScene(buildScene());
         // Mark clean once written, so a later flush knows nothing is pending.
         saveTimer.current = null;
       }, SAVE_DEBOUNCE_MS);
@@ -47,7 +59,7 @@ function PersistenceHandler() {
       if (!saveTimer.current) return;
       clearTimeout(saveTimer.current);
       saveTimer.current = null;
-      saveScene(canvas.toJSON());
+      saveScene(buildScene());
     };
     const onVisibility = () => {
       if (document.visibilityState === "hidden") flushSave();
@@ -59,6 +71,7 @@ function PersistenceHandler() {
       "object:removed",
       "path:created",
       "background:changed", // fired by the background-color tool
+      "mouse:wheel", // pan / ctrl-zoom — persist the viewport (debounced)
     ];
     events.forEach((ev) => canvas.on(ev, scheduleSave));
     window.addEventListener("beforeunload", flushSave);
