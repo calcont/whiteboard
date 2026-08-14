@@ -25,7 +25,7 @@ export const iconToolsMaps = [
   { icon: Minus, title: "Line", id: TOOL_CONSTANTS.LINE },
   { icon: ArrowRight, title: "Arrow", id: TOOL_CONSTANTS.ARROW },
   { icon: Type, title: "Text", id: TOOL_CONSTANTS.FONT },
-  { icon: Component, title: "Infra icons", id: TOOL_CONSTANTS.ICONS },
+  { icon: Component, title: "Icons (logos)", id: TOOL_CONSTANTS.ICONS },
   { icon: ImageIcon, title: "Image", id: TOOL_CONSTANTS.IMAGE },
   {
     icon: Palette,

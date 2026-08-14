@@ -1,20 +1,15 @@
 import { fabric } from "fabric";
 
-// Drop a lucide (or any) SVG string onto the canvas as a fabric group, sized and
-// placed at the centre of the current viewport (pan/zoom aware), stroked in the
-// given colour with no fill (outline icon), and selected so it can be moved/
-// styled straight away.
-const TARGET_SIZE = 56;
+// Drop an SVG string (a full-colour brand logo from the Iconify hub) onto the
+// canvas as a fabric group — its original colours preserved — sized and placed
+// at the centre of the current viewport (pan/zoom aware), and selected so it can
+// be moved straight away.
+const TARGET_SIZE = 64;
 
-export const addIconToCanvas = (canvas, svgString, color = "#1e1e1e") => {
+export const addSvgIconToCanvas = (canvas, svgString) => {
   if (!canvas || !svgString) return;
   fabric.loadSVGFromString(svgString, (objects, options) => {
     if (!objects || !objects.length) return;
-    // lucide paths are stroke-only; force outline (no black default fill) and a
-    // constant stroke width so scaling the icon doesn't thicken it.
-    objects.forEach((o) =>
-      o.set({ stroke: color, strokeUniform: true, fill: "" }),
-    );
     const icon = fabric.util.groupSVGElements(objects, options);
     const scale =
       TARGET_SIZE /
@@ -25,8 +20,7 @@ export const addIconToCanvas = (canvas, svgString, color = "#1e1e1e") => {
     const zoom = canvas.getZoom();
     const cx = (canvas.getWidth() / 2 - vpt[4]) / zoom;
     const cy = (canvas.getHeight() / 2 - vpt[5]) / zoom;
-    // Cascade successive drops so stamping several icons doesn't pile them all
-    // on the exact same spot.
+    // Cascade successive drops so several logos don't pile on the same spot.
     const offset = (canvas.getObjects().length % 6) * 16;
     icon.set({
       left: cx + offset,

@@ -1,51 +1,91 @@
-import React from "react";
-import Menu from "@mui/material/Menu";
+import React, { useEffect, useState } from "react";
+import Popover from "@mui/material/Popover";
 import { Tooltip } from "@mui/material";
-import { INFRA_ICONS } from "../../../constants/InfraIcons";
 import { useCanvasContext } from "../../../hooks";
-import { addIconToCanvas } from "../../../utils/iconToCanvas";
+import { addSvgIconToCanvas } from "../../../utils/iconToCanvas";
+import {
+  POPULAR,
+  searchIcons,
+  fetchIconSvg,
+  iconImgUrl,
+} from "../../../utils/iconify";
 import "./IconLibrary.scss";
 
-// A picker of infra/architecture icons. Clicking one grabs its rendered SVG
-// markup and drops it onto the canvas as a movable/stylable object.
+// A searchable icon hub. Type to search the Iconify colour-logo sets; click a
+// result to drop the real (full-colour) logo on the canvas. Stays open so you
+// can stamp several.
 const IconLibrary = ({ open, anchorEl, onClose }) => {
   const { canvas } = useCanvasContext();
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState(POPULAR);
+  const [loading, setLoading] = useState(false);
 
-  // Add the icon but keep the picker open so several can be stamped in a row;
-  // the user closes it by clicking away or pressing Escape.
-  const handlePick = (e) => {
-    const svg = e.currentTarget.querySelector("svg");
-    if (svg && canvas) {
-      const color =
-        (canvas.currentStyle && canvas.currentStyle.stroke) || "#1e1e1e";
-      addIconToCanvas(canvas, svg.outerHTML, color);
+  useEffect(() => {
+    if (!open) return undefined;
+    const q = query.trim();
+    if (!q) {
+      setResults(POPULAR);
+      setLoading(false);
+      return undefined;
     }
+    setLoading(true);
+    const t = setTimeout(async () => {
+      const ids = await searchIcons(q);
+      setResults(ids);
+      setLoading(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query, open]);
+
+  const handlePick = async (id) => {
+    const svg = await fetchIconSvg(id);
+    if (svg && canvas) addSvgIconToCanvas(canvas, svg);
   };
 
   return (
-    <Menu
-      id="icon-library-menu"
-      anchorEl={anchorEl}
+    <Popover
       open={open}
+      anchorEl={anchorEl}
       onClose={onClose}
       anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       transformOrigin={{ vertical: "top", horizontal: "center" }}
     >
       <div className="icon-library">
-        {INFRA_ICONS.map(({ name, Icon }) => (
-          <Tooltip title={name} key={name}>
-            <button
-              type="button"
-              className="icon-library__item"
-              onClick={handlePick}
-              aria-label={name}
-            >
-              <Icon size={24} />
-            </button>
-          </Tooltip>
-        ))}
+        <input
+          className="icon-library__search"
+          autoFocus
+          placeholder="Search logos…  aws · docker · redis · react"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <div className="icon-library__grid">
+          {results.map((id) => (
+            <Tooltip title={id.split(":")[1]} key={id}>
+              <button
+                type="button"
+                className="icon-library__item"
+                aria-label={id}
+                onClick={() => handlePick(id)}
+              >
+                <img
+                  src={iconImgUrl(id, 40)}
+                  alt=""
+                  width="26"
+                  height="26"
+                  loading="lazy"
+                />
+              </button>
+            </Tooltip>
+          ))}
+        </div>
+        {loading && <div className="icon-library__hint">Searching…</div>}
+        {!loading && results.length === 0 && (
+          <div className="icon-library__hint">
+            No logos found — try another term.
+          </div>
+        )}
       </div>
-    </Menu>
+    </Popover>
   );
 };
 
