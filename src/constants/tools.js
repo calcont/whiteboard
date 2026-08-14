@@ -11,6 +11,7 @@ export const TOOL_CONSTANTS = {
   DIAMOND: "diamond",
   POLYGON: "polygon",
   ERASER: "eraser",
+  ICONS: "icons",
 };
 
 export const TOOL_FUNCTIONS = {
@@ -61,5 +62,9 @@ export const TOOL_FUNCTIONS = {
   [TOOL_CONSTANTS.ERASER]: {
     createOnClick: true,
     onMove: true,
+  },
+  [TOOL_CONSTANTS.ICONS]: {
+    createOnClick: false,
+    onMove: false,
   },
 };
