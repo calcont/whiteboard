@@ -13,7 +13,10 @@ export const MenuContext = createContext({
 });
 
 export const MenuProvider = ({ children }) => {
-  const [activeTool, setActiveTool] = useState(TOOL_CONSTANTS.MARKER);
+  // Open (and re-open after a reload) in the selection tool, like excalidraw —
+  // so you can immediately click/rubber-band select instead of landing in the
+  // marker and drawing when you meant to select.
+  const [activeTool, setActiveTool] = useState(TOOL_CONSTANTS.CURSOR);
   const [lockStatus, setLockStatus] = useState(false);
   // Start from the last-used style and persist it so a reload keeps the user's
   // last colour / width / fill / font / arrowhead choices.
