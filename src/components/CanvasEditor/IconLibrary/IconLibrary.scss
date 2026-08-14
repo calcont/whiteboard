@@ -1,0 +1,59 @@
+@import "src/css/variables.scss";
+
+.icon-library {
+  width: 300px;
+  padding: 10px;
+
+  &__search {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--light-border-color);
+    border-radius: 6px;
+    background: var(--surface-input-bg);
+    color: var(--surface-text);
+    font-size: var(--default-font-size);
+    outline: none;
+
+    &::placeholder {
+      color: var(--surface-muted);
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--default-theme-color);
+      border-color: var(--light-border-color);
+    }
+
+    img {
+      display: block;
+    }
+  }
+
+  &__hint {
+    padding: 12px 4px;
+    font-size: var(--default-font-size);
+    color: var(--surface-muted);
+    text-align: center;
+  }
+}

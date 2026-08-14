@@ -5,6 +5,7 @@ import { Lock, Unlock, Trash2 } from "lucide-react";
 import removeCursor from "../../../../assets/icons/circle.svg";
 import GenericDialog from "../../../Dialog/ConsentDialog";
 import BackgroundColor from "../../BackgroundColor";
+import IconLibrary from "../../IconLibrary/IconLibrary";
 import { Image } from "../../../../Handlers/ToolsHandler";
 import { useMenuContext, useCanvasContext } from "../../../../hooks";
 import { iconToolsMaps, TOOL_CONSTANTS } from "../../../../constants";
@@ -19,6 +20,7 @@ const Menu = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpenBackground, setIsOpenBackground] = useState(false);
+  const [isOpenIcons, setIsOpenIcons] = useState(false);
 
   useEffect(() => {
     if (!canvas) return;
@@ -26,7 +28,10 @@ const Menu = () => {
       canvas.isDrawingMode = true;
       canvas.freeDrawingBrush.width = 3;
     } else canvas.isDrawingMode = false;
-    handleToolsSettings(canvas, activeTool, () => setIsOpenBackground(true));
+    handleToolsSettings(canvas, activeTool, {
+      openBg: () => setIsOpenBackground(true),
+      openIcons: () => setIsOpenIcons(true),
+    });
   }, [activeTool, lockStatus, canvas]);
 
   const onToolClick = (tool, event) => {
@@ -55,6 +60,11 @@ const Menu = () => {
 
   const handleBackgroundClose = () => {
     setIsOpenBackground(false);
+    setActiveTool(TOOL_CONSTANTS.CURSOR);
+  };
+
+  const handleIconsClose = () => {
+    setIsOpenIcons(false);
     setActiveTool(TOOL_CONSTANTS.CURSOR);
   };
 
@@ -106,13 +116,18 @@ const Menu = () => {
             anchorEl={anchorEl}
             onClose={handleBackgroundClose}
           />
+          <IconLibrary
+            open={isOpenIcons}
+            anchorEl={anchorEl}
+            onClose={handleIconsClose}
+          />
         </div>
       </div>
     </>
   );
 };
 
-const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
+const handleToolsSettings = (canvas, tool, openers) => {
   switch (tool) {
     case TOOL_CONSTANTS.CURSOR:
       canvas.getObjects().forEach((obj) => {
@@ -127,7 +142,14 @@ const handleToolsSettings = (canvas, tool, setOpenBgPanel) => {
       Image(canvas);
       break;
     case TOOL_CONSTANTS.BACKGROUND_COLOR:
-      setOpenBgPanel();
+      openers.openBg();
+      break;
+    case TOOL_CONSTANTS.ICONS:
+      // Keep the board selectable while the picker is open; closing it returns
+      // to the cursor tool.
+      canvas.getObjects().forEach((obj) => obj.set({ selectable: true }));
+      canvas.selection = true;
+      openers.openIcons();
       break;
     case TOOL_CONSTANTS.ERASER:
       canvas.getObjects().forEach((obj) => {

@@ -227,6 +227,18 @@ function KeyBoardHandler() {
       lastPointerRef.current = canvas.getPointer(opt.e);
     };
     const keyManager = (e) => {
+      // Don't hijack shortcuts while typing in a form field / contenteditable
+      // (e.g. the icon-hub search box) — let the browser handle Cmd+A, Cmd+C,
+      // typing, etc. natively instead of acting on the canvas.
+      const el = e.target;
+      if (
+        el &&
+        (el.tagName === "INPUT" ||
+          el.tagName === "TEXTAREA" ||
+          el.isContentEditable)
+      ) {
+        return;
+      }
       switch (true) {
         // Delete (46, = fn+Delete on Mac) and Backspace (8, the Mac "delete"
         // key) both remove the selection — but not while a text is being
