@@ -1,11 +1,13 @@
 import { useCanvasContext } from "../../hooks";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { fabric } from "fabric";
 import {
   isCtrlShiftZ,
   isArrow,
   isCtrlA,
+  isCtrlC,
   isCtrlD,
+  isCtrlV,
   isCtrlZ,
   isCtrlMinus,
   isCtrlPlus,
@@ -33,6 +35,11 @@ const runAsSingleHistoryStep = (canvas, mutate) => {
 
 function KeyBoardHandler() {
   const { canvas, activeObject, setZoomRatio } = useCanvasContext();
+
+  // In-app clipboard (a cloned object) and the last pointer position over the
+  // canvas, so paste can drop at the cursor like excalidraw.
+  const clipboardRef = useRef(null);
+  const lastPointerRef = useRef(null);
 
   const handleDeleteSelected = () => {
     if (!activeObject || !canvas) return;
@@ -79,6 +86,87 @@ function KeyBoardHandler() {
       });
       canvas.setActiveObject(clonedObj);
       canvas.renderAll();
+    });
+  };
+
+  // Copy the current selection into the in-app clipboard (clone so later edits
+  // to the original don't change what gets pasted).
+  const copyObjects = () => {
+    if (!activeObject || !canvas) return;
+    activeObject.clone((cloned) => {
+      clipboardRef.current = cloned;
+    });
+  };
+
+  // Paste a fresh clone of the clipboard — at the cursor for a single object,
+  // or offset for a multi-selection. Repeated pastes keep cloning the clipboard.
+  const pasteObjects = () => {
+    const clip = clipboardRef.current;
+    if (!clip || !canvas) return;
+    clip.clone((clonedObj) => {
+      canvas.discardActiveObject();
+      const pointer = lastPointerRef.current;
+      runAsSingleHistoryStep(canvas, () => {
+        if (clonedObj.type === "activeSelection") {
+          // A cloned activeSelection keeps its children in GROUP-LOCAL coords;
+          // adding them directly drops them near the origin. Un-group each child
+          // to absolute (position + scale + angle) via the group matrix, shifting
+          // the whole group so its centre lands at the cursor (else a +20 nudge),
+          // then re-form the selection.
+          const groupMatrix = clonedObj.calcTransformMatrix();
+          // groupMatrix[4],[5] = the selection's centre in absolute coords.
+          let dx = 20;
+          let dy = 20;
+          if (pointer) {
+            dx = pointer.x - groupMatrix[4];
+            dy = pointer.y - groupMatrix[5];
+          }
+          const pasted = [];
+          clonedObj.forEachObject((obj) => {
+            const m = fabric.util.multiplyTransformMatrices(
+              groupMatrix,
+              obj.calcOwnMatrix(),
+            );
+            const d = fabric.util.qrDecompose(m);
+            obj.set({
+              flipX: false,
+              flipY: false,
+              scaleX: d.scaleX,
+              scaleY: d.scaleY,
+              skewX: d.skewX,
+              skewY: d.skewY,
+              angle: d.angle,
+            });
+            obj.setPositionByOrigin(
+              new fabric.Point(d.translateX + dx, d.translateY + dy),
+              "center",
+              "center",
+            );
+            obj.setCoords();
+            canvas.add(obj);
+            pasted.push(obj);
+          });
+          canvas.setActiveObject(
+            new fabric.ActiveSelection(pasted, { canvas }),
+          );
+        } else {
+          if (pointer) {
+            clonedObj.set({
+              left: pointer.x - clonedObj.getScaledWidth() / 2,
+              top: pointer.y - clonedObj.getScaledHeight() / 2,
+            });
+          } else {
+            clonedObj.set({
+              left: clonedObj.left + 20,
+              top: clonedObj.top + 20,
+            });
+          }
+          clonedObj.setCoords();
+          canvas.add(clonedObj);
+          canvas.setActiveObject(clonedObj);
+        }
+      });
+      canvas.requestRenderAll();
     });
   };
 
@@ -134,6 +222,10 @@ function KeyBoardHandler() {
   }, [activeObject, canvas]);
 
   useEffect(() => {
+    // Track the pointer over the canvas (scene coords) so paste can drop there.
+    const onMove = (opt) => {
+      lastPointerRef.current = canvas.getPointer(opt.e);
+    };
     const keyManager = (e) => {
       switch (true) {
         // Delete (46, = fn+Delete on Mac) and Backspace (8, the Mac "delete"
@@ -143,6 +235,18 @@ function KeyBoardHandler() {
           if (activeObject && !activeObject.isEditing) {
             e.preventDefault();
             handleDeleteSelected(canvas);
+          }
+          break;
+        case isCtrlC(e): // copy selected objects (skip while editing text)
+          if (activeObject && !activeObject.isEditing) {
+            e.preventDefault();
+            copyObjects();
+          }
+          break;
+        case isCtrlV(e): // paste from the in-app clipboard
+          if (!(activeObject && activeObject.isEditing)) {
+            e.preventDefault();
+            pasteObjects();
           }
           break;
         case isCtrlD(e): // duplicate selected objects
@@ -181,10 +285,12 @@ function KeyBoardHandler() {
     };
     if (canvas) {
       window.addEventListener("keydown", keyManager);
+      canvas.on("mouse:move", onMove);
     }
     return () => {
       if (canvas) {
         window.removeEventListener("keydown", keyManager);
+        canvas.off("mouse:move", onMove);
       }
     };
   }, [canvas, activeObject]);
