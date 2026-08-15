@@ -57,7 +57,7 @@ export const searchIcons = async (query, limit = 120) => {
           COLORED_SETS.indexOf(a.split(":")[0]) -
           COLORED_SETS.indexOf(b.split(":")[0]),
       );
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -67,7 +67,7 @@ export const fetchIconSvg = async (id) => {
     const res = await fetch(`${API}/${id.replace(":", "/")}.svg`);
     if (!res.ok) return null;
     return res.text();
-  } catch (e) {
+  } catch {
     return null;
   }
 };

@@ -5,6 +5,11 @@ module.exports = {
     es2021: true,
   },
   extends: ["eslint:recommended", "plugin:react/recommended"],
+  settings: {
+    react: {
+      version: "detect",
+    },
+  },
   overrides: [
     {
       env: {
@@ -14,6 +19,13 @@ module.exports = {
       parserOptions: {
         sourceType: "script",
       },
+    },
+    {
+      // Jest globals (describe/test/expect/beforeEach) for the unit suite.
+      env: {
+        jest: true,
+      },
+      files: ["**/*.test.js", "src/setupTests.js"],
     },
   ],
   parserOptions: {

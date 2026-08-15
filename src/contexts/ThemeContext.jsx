@@ -27,7 +27,7 @@ export const ThemeProvider = ({ children }) => {
     let mq;
     try {
       mq = window.matchMedia("(prefers-color-scheme: dark)");
-    } catch (e) {
+    } catch {
       return undefined;
     }
     if (!mq) return undefined;

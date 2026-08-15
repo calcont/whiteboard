@@ -35,7 +35,7 @@ export const getStoredStyle = () => {
     }
     merged._v = STYLE_VERSION;
     return merged;
-  } catch (e) {
+  } catch {
     return themedDefault();
   }
 };
@@ -43,7 +43,7 @@ export const getStoredStyle = () => {
 export const saveStyle = (style) => {
   try {
     localStorage.setItem(KEY, JSON.stringify(style));
-  } catch (e) {
+  } catch {
     // best-effort; never break drawing over a persistence failure
   }
 };

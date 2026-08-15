@@ -123,7 +123,6 @@ const PropertiesPanel = () => {
         : prev.fontFamily,
       fontSize: text ? activeObject.fontSize || prev.fontSize : prev.fontSize,
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeObject]);
 
   const applyToActive = (nextStyle) => {
