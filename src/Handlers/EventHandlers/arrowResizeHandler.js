@@ -2,21 +2,11 @@ import { useEffect } from "react";
 import { fabric } from "fabric";
 import { useCanvasContext } from "../../hooks";
 import { buildArrowGroup } from "../ToolsHandler/tools/arrow";
+import { isArrow } from "../../utils/shapeLabel";
 
-// An arrow is a group of one line + one or two heads (paths), nothing else.
-// One head = single-ended, two = double-ended; the config is read from the
-// child composition (no custom props to serialise).
-const isArrowGroup = (o) => {
-  if (!o || o.type !== "group" || !o._objects) return false;
-  const lines = o._objects.filter((c) => c.type === "line");
-  const heads = o._objects.filter((c) => c.type === "path");
-  return (
-    lines.length === 1 &&
-    heads.length >= 1 &&
-    heads.length <= 2 &&
-    o._objects.length === lines.length + heads.length
-  );
-};
+// Arrow detection (line + 1-2 heads, optional text label) is centralised in
+// shapeLabel's isArrow — single source of truth shared with the properties
+// panel and the label editor.
 
 const isScaled = (o) =>
   (o.scaleX != null && o.scaleX !== 1) || (o.scaleY != null && o.scaleY !== 1);
@@ -38,6 +28,9 @@ function ArrowResizeHandler() {
     const rebuildScaledArrow = (group) => {
       const line = group._objects.find((c) => c.type === "line");
       const heads = group._objects.filter((c) => c.type === "path");
+      const textChild = group._objects.find(
+        (c) => c.type === "textbox" || c.type === "i-text" || c.type === "text",
+      );
       const matrix = group.calcTransformMatrix();
       // Derive both endpoints from the line's real endpoints — NOT the group's
       // bounding box: a head inflates the bbox, so an opposite-corner tail sits
@@ -80,6 +73,15 @@ function ArrowResizeHandler() {
           strokeWidth: line.strokeWidth,
           strokeDashArray: line.strokeDashArray,
           heads: heads.length === 2 ? "both" : "end",
+          // Preserve a label across the rebuild, re-centred on the new midpoint.
+          label: textChild
+            ? {
+                text: textChild.text,
+                fontFamily: textChild.fontFamily,
+                fontSize: textChild.fontSize,
+                fill: textChild.fill,
+              }
+            : null,
         },
       );
       canvas.remove(group);
@@ -94,7 +96,7 @@ function ArrowResizeHandler() {
     // size live; the line's stroke already stays constant via strokeUniform.
     const onScaling = (e) => {
       const group = e && e.target;
-      if (rebuilding || !isArrowGroup(group)) return;
+      if (rebuilding || !isArrow(group)) return;
       // Use |scale| so each head keeps a constant size AND mirrors together with
       // the line when the group is flipped (a corner dragged past the opposite
       // corner) — otherwise the line would mirror while the head stayed put.
@@ -120,17 +122,17 @@ function ArrowResizeHandler() {
       // (fabric bakes the selection's scale into each child on discard).
       let toRebuild = [];
       let members = null;
-      if (isArrowGroup(target)) {
+      if (isArrow(target)) {
         if (!isScaled(target)) return; // plain move/rotate needs no rebuild
         toRebuild = [target];
       } else if (target.type === "activeSelection") {
         if (!isScaled(target)) return;
         members = target._objects.slice();
-        if (!members.some(isArrowGroup)) return;
+        if (!members.some(isArrow)) return;
         // Disband the selection first so each child's scale is baked in, then
         // rebuild whichever arrows ended up scaled.
         canvas.discardActiveObject();
-        toRebuild = members.filter((o) => isArrowGroup(o) && isScaled(o));
+        toRebuild = members.filter((o) => isArrow(o) && isScaled(o));
         if (!toRebuild.length) return;
       } else {
         return;

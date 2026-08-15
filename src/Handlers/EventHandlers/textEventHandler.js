@@ -17,6 +17,9 @@ export const handleTextEditingExited = (canvas, e) => {
   if (e && e.target) e.target.set({ hasBorders: true });
   if (e && e.target && e.target.text === "") {
     canvas.remove(e.target);
+    // Keep fabric's exitEditing tail (this.canvas.fire('object:modified'))
+    // from throwing after we've removed the text it was editing.
+    e.target.canvas = canvas;
     canvas.renderAll();
   }
 };

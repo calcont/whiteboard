@@ -24,6 +24,41 @@ export const getLabelParts = (group) => ({
   text: group._objects.find((c) => TEXT_TYPES.has(c.type)),
 });
 
+// An arrow is a group of one line + one or two heads (paths), and now an
+// OPTIONAL text label. Detected structurally (single source of truth, imported
+// by the resize handler and properties panel) so an arrow stays an arrow whether
+// or not it carries a label, and survives undo/reload without custom props.
+export const isArrow = (o) => {
+  if (!o || o.type !== "group" || !o._objects) return false;
+  const lines = o._objects.filter((c) => c.type === "line");
+  const heads = o._objects.filter((c) => c.type === "path");
+  const texts = o._objects.filter((c) => TEXT_TYPES.has(c.type));
+  return (
+    lines.length === 1 &&
+    heads.length >= 1 &&
+    heads.length <= 2 &&
+    texts.length <= 1 &&
+    o._objects.length === lines.length + heads.length + texts.length
+  );
+};
+
+export const getArrowParts = (group) => ({
+  line: group._objects.find((c) => c.type === "line"),
+  heads: group._objects.filter((c) => c.type === "path"),
+  text: group._objects.find((c) => TEXT_TYPES.has(c.type)) || null,
+});
+
+// Absolute midpoint of an arrow's line (its label anchor). The line child is
+// centre-origin, so its (left, top) in group space IS the segment midpoint;
+// map it through the group transform to canvas coordinates.
+export const arrowLineMidpoint = (arrow) => {
+  const { line } = getArrowParts(arrow);
+  return fabric.util.transformPoint(
+    new fabric.Point(line.left, line.top),
+    arrow.calcTransformMatrix(),
+  );
+};
+
 // Run structural mutations without recording intermediate history snapshots,
 // then record a single one (or just resync the baseline when nothing changed) —
 // the same batching the mouse draw gesture uses to keep one undo step.
@@ -39,6 +74,15 @@ const runLabelMutation = (canvas, record, fn) => {
       else canvas.historyNextState = canvas._historyNext();
     }
   }
+};
+
+// Removing the text object being edited nulls its `canvas` back-reference, but
+// fabric's IText.exitEditing keeps going after the text:editing:exited event
+// and calls `this.canvas.fire('object:modified')` — which then throws. Restore
+// the back-ref (the object is still out of canvas._objects, so it won't render)
+// so that trailing fire is a harmless no-op.
+const keepCanvasRef = (text, canvas) => {
+  text.canvas = canvas;
 };
 
 // Centre a text object on a shape, sized to wrap inside it.
@@ -65,6 +109,41 @@ export const beginLabelEditing = (canvas, target) => {
   // Capture the stacking position now, before disbanding moves things around,
   // so finishLabelEditing can drop the regrouped label back where it was.
   const zIndex = canvas.getObjects().indexOf(target);
+
+  if (isArrow(target)) {
+    // Arrow label: pull the (optional) text child OUT of the arrow group so it
+    // can be edited (fabric can't edit text inside a group), leaving the arrow
+    // [line + head(s)] itself intact on the canvas. Transient, so keep it out of
+    // the undo history — finishLabelEditing records the one real step.
+    const arrow = target;
+    const canBatch = typeof canvas._historySaveAction === "function";
+    if (canBatch) canvas.historyProcessing = true;
+    const existing = getArrowParts(arrow).text;
+    if (existing) {
+      text = existing;
+      original = text.text || "";
+      arrow.removeWithUpdate(text);
+      canvas.add(text);
+    } else {
+      const mid = arrowLineMidpoint(arrow);
+      text = new fabric.Textbox("", {
+        ...resolveTextStyle(canvas),
+        textAlign: "center",
+        left: mid.x,
+        top: mid.y,
+        originX: "center",
+        originY: "center",
+      });
+      canvas.add(text);
+    }
+    if (canBatch) canvas.historyProcessing = false;
+    canvas.setActiveObject(text);
+    text.enterEditing();
+    if (typeof text.selectAll === "function") text.selectAll();
+    canvas.__labelPending = { kind: "arrow", arrow, text, original, zIndex };
+    canvas.requestRenderAll();
+    return true;
+  }
 
   if (isLabeledShape(target)) {
     const parts = getLabelParts(target);
@@ -102,9 +181,33 @@ export const beginLabelEditing = (canvas, target) => {
   canvas.setActiveObject(text);
   text.enterEditing();
   if (typeof text.selectAll === "function") text.selectAll();
-  canvas.__labelPending = { shape, text, original, zIndex };
+  canvas.__labelPending = { kind: "shape", shape, text, original, zIndex };
   canvas.requestRenderAll();
   return true;
+};
+
+// Finish an arrow-label edit: add the text back into the arrow group at the
+// line midpoint, or drop it if left empty. addWithUpdate keeps the arrow's own
+// group config (perPixelTargetFind, hidden side controls, objectCaching).
+const finishArrowLabelEditing = (canvas, pending) => {
+  const { arrow, text, original } = pending;
+  const nextText = (text.text || "").trim();
+  const changed = nextText !== (original || "").trim();
+
+  runLabelMutation(canvas, changed, () => {
+    if (!nextText) {
+      canvas.remove(text); // discard; arrow stays [line + head(s)]
+      keepCanvasRef(text, canvas);
+      canvas.setActiveObject(arrow);
+      return;
+    }
+    const mid = arrowLineMidpoint(arrow);
+    text.set({ left: mid.x, top: mid.y, originX: "center", originY: "center" });
+    text.setCoords();
+    canvas.remove(text); // detach from the canvas top level...
+    arrow.addWithUpdate(text); // ...and fold it into the arrow group
+    canvas.setActiveObject(arrow);
+  });
 };
 
 // Called when text editing exits. If this was a label edit, regroup the shape
@@ -115,31 +218,37 @@ export const finishLabelEditing = (canvas) => {
   const pending = canvas.__labelPending;
   if (!pending) return;
   canvas.__labelPending = null;
-  const { shape, text, original, zIndex } = pending;
 
-  const nextText = (text.text || "").trim();
-  const prevText = (original || "").trim();
-  const changed = nextText !== prevText;
+  if (pending.kind === "arrow") {
+    finishArrowLabelEditing(canvas, pending);
+  } else {
+    const { shape, text, original, zIndex } = pending;
+    const nextText = (text.text || "").trim();
+    const prevText = (original || "").trim();
+    const changed = nextText !== prevText;
 
-  runLabelMutation(canvas, changed, () => {
-    if (!nextText) {
-      // Empty label — drop the text, leave the bare shape. (no-op remove if the
-      // generic text handler already removed it.)
+    runLabelMutation(canvas, changed, () => {
+      if (!nextText) {
+        // Empty label — drop the text, leave the bare shape. (no-op remove if
+        // the generic text handler already removed it.)
+        canvas.remove(text);
+        keepCanvasRef(text, canvas);
+        canvas.setActiveObject(shape);
+        return;
+      }
+      centreTextOnShape(text, shape);
+      canvas.remove(shape);
       canvas.remove(text);
-      canvas.setActiveObject(shape);
-      return;
-    }
-    centreTextOnShape(text, shape);
-    canvas.remove(shape);
-    canvas.remove(text);
-    const group = new fabric.Group([shape, text]);
-    group.setCoords();
-    canvas.add(group);
-    // Drop the label back at the shape's original stacking position, so editing
-    // a label never reorders the diagram.
-    if (typeof zIndex === "number" && zIndex >= 0) canvas.moveTo(group, zIndex);
-    canvas.setActiveObject(group);
-  });
+      const group = new fabric.Group([shape, text]);
+      group.setCoords();
+      canvas.add(group);
+      // Drop the label back at the shape's original stacking position, so
+      // editing a label never reorders the diagram.
+      if (typeof zIndex === "number" && zIndex >= 0)
+        canvas.moveTo(group, zIndex);
+      canvas.setActiveObject(group);
+    });
+  }
 
   // fabric's IText.exitEditing fires a trailing object:modified *after* this
   // handler returns (still inside the same exitEditing call). Left alone it
