@@ -27,6 +27,12 @@
     color: var(--surface-muted);
   }
 
+  &__hint {
+    font-size: var(--default-font-size);
+    color: var(--surface-muted);
+    line-height: 1.35;
+  }
+
   &__swatches {
     display: flex;
     align-items: center;
