@@ -8,7 +8,7 @@ export const DEFAULT_STYLE = {
   strokeWidth: 3,
   strokeStyle: "solid", // solid | dashed | dotted
   fill: "transparent",
-  fontFamily: "Arial",
+  fontFamily: "Comic Sans MS", // excalidraw-style hand-drawn default
   fontSize: 24,
   arrowHeads: "end", // "end" (single head) | "both" (double-headed)
 };

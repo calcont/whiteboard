@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="whiteboard logo">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <!-- app tile / canvas frame -->
+  <rect x="24" y="24" width="464" height="464" rx="116" fill="url(#tile)"/>
+  <!-- diagram: connector + outlined end node -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="212" y1="212" x2="300" y2="300"/>
+    <rect x="298" y="298" width="112" height="112" rx="30"/>
+  </g>
+  <!-- start node -->
+  <circle cx="182" cy="182" r="48" fill="#FFFFFF"/>
+</svg>

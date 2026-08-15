@@ -22,7 +22,8 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "public", "index.html"),
-      favicon: "./public/favicon.ico",
+      // The favicon is an SVG declared directly in the template <head> and
+      // served from public/ — no raster favicon file to inject here.
       filename: "index.html",
       manifest: "./public/manifest.json",
     }),

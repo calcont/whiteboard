@@ -22,7 +22,7 @@ export const getSystemTheme = () => {
     ) {
       return THEME_DARK;
     }
-  } catch (e) {
+  } catch {
     // matchMedia may be unavailable — fall through to light.
   }
   return THEME_LIGHT;
@@ -33,7 +33,7 @@ export const getStoredTheme = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === THEME_LIGHT || stored === THEME_DARK) return stored;
-  } catch (e) {
+  } catch {
     // localStorage may be unavailable (private mode) — fall through.
   }
   return null;
@@ -53,7 +53,7 @@ export const applyTheme = (theme) => {
 export const persistTheme = (theme) => {
   try {
     localStorage.setItem(STORAGE_KEY, theme);
-  } catch (e) {
+  } catch {
     // ignore persistence failures
   }
 };
