@@ -48,6 +48,19 @@ export const getArrowParts = (group) => ({
   text: group._objects.find((c) => TEXT_TYPES.has(c.type)) || null,
 });
 
+// The board's current background colour, used to mask the arrow line behind a
+// label (excalidraw-style) so the line doesn't strike through the text. Falls
+// back to white when unavailable (e.g. jsdom in tests).
+export const boardBackgroundColor = () => {
+  try {
+    const bg = getComputedStyle(document.body).backgroundColor;
+    if (bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent") return bg;
+  } catch {
+    // getComputedStyle unavailable — fall through.
+  }
+  return "#ffffff";
+};
+
 // Absolute midpoint of an arrow's line (its label anchor). The line child is
 // centre-origin, so its (left, top) in group space IS the segment midpoint;
 // map it through the group transform to canvas coordinates.
@@ -136,6 +149,9 @@ export const beginLabelEditing = (canvas, target) => {
       });
       canvas.add(text);
     }
+    // Mask the arrow line behind the label so it doesn't strike through the
+    // text (excalidraw-style). Set on re-edit too, retro-fitting older labels.
+    text.set({ backgroundColor: boardBackgroundColor() });
     if (canBatch) canvas.historyProcessing = false;
     canvas.setActiveObject(text);
     text.enterEditing();

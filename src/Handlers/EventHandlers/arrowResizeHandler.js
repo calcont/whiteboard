@@ -80,6 +80,7 @@ function ArrowResizeHandler() {
                 fontFamily: textChild.fontFamily,
                 fontSize: textChild.fontSize,
                 fill: textChild.fill,
+                backgroundColor: textChild.backgroundColor,
               }
             : null,
         },

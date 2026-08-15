@@ -69,6 +69,9 @@ export const buildArrowGroup = (start, end, style) => {
     if (style.label.fontFamily) labelOpts.fontFamily = style.label.fontFamily;
     if (style.label.fontSize) labelOpts.fontSize = style.label.fontSize;
     if (style.label.fill) labelOpts.fill = style.label.fill;
+    // Background masks the line behind the label so it isn't struck through.
+    if (style.label.backgroundColor)
+      labelOpts.backgroundColor = style.label.backgroundColor;
     children.push(new fabric.Textbox(style.label.text, labelOpts));
   }
   const group = new fabric.Group(children, {
