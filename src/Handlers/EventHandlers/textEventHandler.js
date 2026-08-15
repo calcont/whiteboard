@@ -9,6 +9,9 @@ function TextEventHandler() {
     canvas.on("text:editing:entered", function (e) {
       if (e.target) {
         canvas.selection = false;
+        // Excalidraw-style: while typing show only the blinking cursor, not a
+        // box around the text. (fabric draws editingBorderColor otherwise.)
+        e.target.set({ editingBorderColor: "transparent" });
       }
     });
 

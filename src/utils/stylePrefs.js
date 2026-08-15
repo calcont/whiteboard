@@ -7,6 +7,10 @@ import { DEFAULT_STYLE } from "../Handlers/ToolsHandler/toolStyle";
 import { getInitialTheme, THEME_DARK, LIGHT_INK, DARK_INK } from "./theme";
 
 const KEY = "wb-style";
+// Bumped when the default style changes in a way existing stored styles should
+// pick up. v2: default font Arial -> Comic Sans MS.
+const STYLE_VERSION = 2;
+const PREVIOUS_DEFAULT_FONT = "Arial";
 
 // Default style whose ink matches the INITIAL theme, so shapes drawn on a
 // system-dark board come out light (visible) even before any manual theme
@@ -22,7 +26,15 @@ export const getStoredStyle = () => {
     if (!raw) return themedDefault();
     const parsed = JSON.parse(raw);
     // Merge onto the themed default; a stored choice wins.
-    return { ...themedDefault(), ...parsed };
+    const merged = { ...themedDefault(), ...parsed };
+    // One-time migration to the Comic Sans MS default: pre-versioned styles that
+    // still carry the old Arial default are upgraded. An Arial chosen after this
+    // (stored with the current version) is left alone.
+    if (!parsed._v && parsed.fontFamily === PREVIOUS_DEFAULT_FONT) {
+      merged.fontFamily = DEFAULT_STYLE.fontFamily;
+    }
+    merged._v = STYLE_VERSION;
+    return merged;
   } catch (e) {
     return themedDefault();
   }
