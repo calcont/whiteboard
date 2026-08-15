@@ -18,6 +18,10 @@ function TextEventHandler() {
     });
 
     canvas.on("text:editing:exited", function (e) {
+      // Re-enable rubber-band selection, disabled on entry above. Without this
+      // it stays off after any text/label edit until the next tool switch, so
+      // box-selecting shapes silently stops working.
+      canvas.selection = true;
       if (e.target) e.target.set({ hasBorders: true });
       if (e.target.text === "") {
         canvas.remove(e.target);
