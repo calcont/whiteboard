@@ -2,8 +2,8 @@ import React, { useEffect, useRef } from "react";
 import { fabric } from "fabric";
 import { Tooltip } from "@mui/material";
 import {
-  BringToFront,
-  SendToBack,
+  ChevronsUp,
+  ChevronsDown,
   ChevronUp,
   ChevronDown,
   ArrowRight,
@@ -460,16 +460,16 @@ const PropertiesPanel = () => {
         <div className="properties-panel__group">
           <span className="properties-panel__label">Layer</span>
           <div className="properties-panel__row">
-            <Tooltip title="Send to back">
+            <Tooltip title="Send to back (all the way)">
               <button
                 type="button"
                 className="properties-panel__btn"
                 onClick={() => reorder("sendToBack")}
               >
-                <SendToBack size={16} />
+                <ChevronsDown size={16} />
               </button>
             </Tooltip>
-            <Tooltip title="Send backward">
+            <Tooltip title="Send backward (one step)">
               <button
                 type="button"
                 className="properties-panel__btn"
@@ -478,7 +478,7 @@ const PropertiesPanel = () => {
                 <ChevronDown size={16} />
               </button>
             </Tooltip>
-            <Tooltip title="Bring forward">
+            <Tooltip title="Bring forward (one step)">
               <button
                 type="button"
                 className="properties-panel__btn"
@@ -487,13 +487,13 @@ const PropertiesPanel = () => {
                 <ChevronUp size={16} />
               </button>
             </Tooltip>
-            <Tooltip title="Bring to front">
+            <Tooltip title="Bring to front (all the way)">
               <button
                 type="button"
                 className="properties-panel__btn"
                 onClick={() => reorder("bringToFront")}
               >
-                <BringToFront size={16} />
+                <ChevronsUp size={16} />
               </button>
             </Tooltip>
           </div>
