@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { fabric } from "fabric";
 import { useCanvasContext } from "../../hooks";
 import { buildArrowGroup } from "../ToolsHandler/tools/arrow";
-import { isArrow } from "../../utils/shapeLabel";
+import { isArrow, counterScaleArrowDecorations } from "../../utils/shapeLabel";
 
 // Arrow detection (line + 1-2 heads, optional text label) is centralised in
 // shapeLabel's isArrow — single source of truth shared with the properties
@@ -98,17 +98,9 @@ function ArrowResizeHandler() {
     const onScaling = (e) => {
       const group = e && e.target;
       if (rebuilding || !isArrow(group)) return;
-      // Use |scale| so each head keeps a constant size AND mirrors together with
-      // the line when the group is flipped (a corner dragged past the opposite
-      // corner) — otherwise the line would mirror while the head stayed put.
-      const sx = 1 / Math.abs(group.scaleX || 1);
-      const sy = 1 / Math.abs(group.scaleY || 1);
-      group._objects
-        .filter((c) => c.type === "path")
-        .forEach((head) => {
-          head.scaleX = sx;
-          head.scaleY = sy;
-        });
+      // Keep the head(s) AND the text label a constant size while dragging;
+      // only the line stretches. (See counterScaleArrowDecorations.)
+      counterScaleArrowDecorations(group);
     };
 
     const onModified = (e) => {

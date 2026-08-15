@@ -72,6 +72,22 @@ export const arrowLineMidpoint = (arrow) => {
   );
 };
 
+// During a live resize fabric scales the whole arrow group, which would balloon
+// the fixed-size decorations — the head triangle(s) AND the text label — until
+// the drop-time rebuild resets everything. Counter-scale those children by
+// 1/|groupScale| each frame so they keep a constant size while only the line
+// stretches. |scale| so they mirror coherently with the line on a flip.
+export const counterScaleArrowDecorations = (group) => {
+  if (!isArrow(group)) return;
+  const sx = 1 / Math.abs(group.scaleX || 1);
+  const sy = 1 / Math.abs(group.scaleY || 1);
+  group._objects.forEach((child) => {
+    if (child.type === "line") return; // the line SHOULD scale (arrow length)
+    child.scaleX = sx;
+    child.scaleY = sy;
+  });
+};
+
 // Run structural mutations without recording intermediate history snapshots,
 // then record a single one (or just resync the baseline when nothing changed) —
 // the same batching the mouse draw gesture uses to keep one undo step.

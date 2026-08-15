@@ -7,6 +7,7 @@ import {
   normalizeLabeledGroupScale,
   isArrow,
   getArrowParts,
+  counterScaleArrowDecorations,
 } from "./shapeLabel";
 import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
 
@@ -233,5 +234,38 @@ describe("arrow label editing (finishLabelEditing, kind=arrow)", () => {
 
     expect(getArrowParts(a).text).toBeNull();
     expect(c.getObjects()).not.toContain(text);
+  });
+});
+
+describe("counterScaleArrowDecorations (live resize keeps decorations fixed)", () => {
+  test("head + label stay constant size while the line stretches", () => {
+    const a = buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      {
+        stroke: "#000",
+        strokeWidth: 2,
+        heads: "both",
+        label: { text: "x", fontSize: 16 },
+      },
+    );
+    a.scaleX = 2;
+    a.scaleY = 2;
+    counterScaleArrowDecorations(a);
+    a.getObjects().forEach((o) => {
+      if (o.type === "line") {
+        expect(o.scaleX).toBe(1); // line scales with the group (arrow length)
+      } else {
+        // head(s) + text counter-scaled to 1/groupScale -> constant rendered size
+        expect(o.scaleX).toBe(0.5);
+        expect(o.scaleY).toBe(0.5);
+      }
+    });
+  });
+
+  test("ignores non-arrows", () => {
+    expect(() =>
+      counterScaleArrowDecorations(new fabric.Rect({})),
+    ).not.toThrow();
   });
 });
