@@ -4,18 +4,27 @@
 // object, kept separate from the (larger) scene record.
 
 import { DEFAULT_STYLE } from "../Handlers/ToolsHandler/toolStyle";
+import { getInitialTheme, THEME_DARK, LIGHT_INK, DARK_INK } from "./theme";
 
 const KEY = "wb-style";
+
+// Default style whose ink matches the INITIAL theme, so shapes drawn on a
+// system-dark board come out light (visible) even before any manual theme
+// toggle — the toggle's ink-swap only fires on a manual switch.
+const themedDefault = () => ({
+  ...DEFAULT_STYLE,
+  stroke: getInitialTheme() === THEME_DARK ? DARK_INK : LIGHT_INK,
+});
 
 export const getStoredStyle = () => {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return DEFAULT_STYLE;
+    if (!raw) return themedDefault();
     const parsed = JSON.parse(raw);
-    // Merge onto defaults so a newly-added style field is never missing.
-    return { ...DEFAULT_STYLE, ...parsed };
+    // Merge onto the themed default; a stored choice wins.
+    return { ...themedDefault(), ...parsed };
   } catch (e) {
-    return DEFAULT_STYLE;
+    return themedDefault();
   }
 };
 
