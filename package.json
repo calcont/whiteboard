@@ -25,6 +25,7 @@
     "start": "webpack serve --open --config webpack.dev.config.js",
     "build": "webpack --config webpack.prod.config.js",
     "test": "react-scripts test",
+    "test:unit": "react-scripts test --watchAll=false",
     "eject": "react-scripts eject",
     "test:code": "eslint --max-warnings=0 --ext .js,.jsx .",
     "test:format": "prettier \"**/*.{css,scss,json,md,html,ym,js,jsx}\" --ignore-path=.eslintignore --check",

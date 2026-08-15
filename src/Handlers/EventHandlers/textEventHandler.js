@@ -1,38 +1,40 @@
 import { useCanvasContext } from "../../hooks";
 import { useEffect } from "react";
 
+// Exported so the behaviour can be unit-tested without rendering the hook.
+// On entry: disable rubber-band selection and hide the object border so only
+// the blinking cursor shows while typing (excalidraw-style).
+export const handleTextEditingEntered = (canvas, e) => {
+  if (!e || !e.target) return;
+  canvas.selection = false;
+  e.target.set({ hasBorders: false });
+};
+
+// On exit: restore selection (otherwise box-selecting shapes silently stops
+// working after any text/label edit) and the border, and drop an empty text.
+export const handleTextEditingExited = (canvas, e) => {
+  canvas.selection = true;
+  if (e && e.target) e.target.set({ hasBorders: true });
+  if (e && e.target && e.target.text === "") {
+    canvas.remove(e.target);
+    canvas.renderAll();
+  }
+};
+
 function TextEventHandler() {
   const { canvas } = useCanvasContext();
 
   useEffect(() => {
     if (!canvas) return;
-    canvas.on("text:editing:entered", function (e) {
-      if (e.target) {
-        canvas.selection = false;
-        // Excalidraw-style: while typing show only the blinking cursor, not a
-        // box around the text. fabric draws the active object's border
-        // (borderColor) even mid-edit, so drop it outright — the cursor is
-        // rendered separately and stays. Restored on exit.
-        e.target.set({ hasBorders: false });
-      }
-    });
-
-    canvas.on("text:editing:exited", function (e) {
-      // Re-enable rubber-band selection, disabled on entry above. Without this
-      // it stays off after any text/label edit until the next tool switch, so
-      // box-selecting shapes silently stops working.
-      canvas.selection = true;
-      if (e.target) e.target.set({ hasBorders: true });
-      if (e.target.text === "") {
-        canvas.remove(e.target);
-        canvas.renderAll();
-      }
-    });
+    const onEntered = (e) => handleTextEditingEntered(canvas, e);
+    const onExited = (e) => handleTextEditingExited(canvas, e);
+    canvas.on("text:editing:entered", onEntered);
+    canvas.on("text:editing:exited", onExited);
 
     return () => {
       if (!canvas) return;
-      canvas.off("text:editing:entered");
-      canvas.off("text:editing:exited");
+      canvas.off("text:editing:entered", onEntered);
+      canvas.off("text:editing:exited", onExited);
     };
   }, [canvas]);
 }
