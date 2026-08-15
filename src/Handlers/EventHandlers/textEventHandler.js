@@ -10,12 +10,15 @@ function TextEventHandler() {
       if (e.target) {
         canvas.selection = false;
         // Excalidraw-style: while typing show only the blinking cursor, not a
-        // box around the text. (fabric draws editingBorderColor otherwise.)
-        e.target.set({ editingBorderColor: "transparent" });
+        // box around the text. fabric draws the active object's border
+        // (borderColor) even mid-edit, so drop it outright — the cursor is
+        // rendered separately and stays. Restored on exit.
+        e.target.set({ hasBorders: false });
       }
     });
 
     canvas.on("text:editing:exited", function (e) {
+      if (e.target) e.target.set({ hasBorders: true });
       if (e.target.text === "") {
         canvas.remove(e.target);
         canvas.renderAll();
