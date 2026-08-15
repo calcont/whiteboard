@@ -229,7 +229,12 @@ const PropertiesPanel = () => {
       method === "sendToBack" || method === "sendBackwards"
         ? [...targets].reverse()
         : targets;
-    ordered.forEach((obj) => canvas[method](obj));
+    // The one-step actions move relative to *overlapping* objects only
+    // (fabric's `intersecting` flag), so nudging a shape that's already in
+    // front of everything it touches is a no-op instead of endlessly walking
+    // it up the flat stack. The "all the way" actions ignore this.
+    const oneStep = method === "bringForward" || method === "sendBackwards";
+    ordered.forEach((obj) => canvas[method](obj, oneStep));
     canvas.requestRenderAll();
     // Record one history entry (and trigger persistence) for the reorder.
     canvas.fire("object:modified", { target: activeObject });
