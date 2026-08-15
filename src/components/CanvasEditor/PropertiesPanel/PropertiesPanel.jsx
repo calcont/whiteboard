@@ -23,6 +23,7 @@ import {
   toTextStyle,
 } from "../../../Handlers/ToolsHandler/toolStyle";
 import { buildArrowGroup } from "../../../Handlers/ToolsHandler/tools/arrow";
+import { isLabeledShape, getLabelParts } from "../../../utils/shapeLabel";
 import "./PropertiesPanel.scss";
 
 // Tools whose new shapes pick up the current style; the panel shows for these
@@ -55,10 +56,12 @@ const isArrowObject = (o) => {
   );
 };
 
-// An icon is an imported SVG logo — a group that isn't an arrow. Its colours
-// come from the logo itself, so the stroke/fill/width/style controls must not
-// touch it (that would flatten the logo into a single-colour blob).
-const isIcon = (o) => o && o.type === "group" && !isArrowObject(o);
+// An icon is an imported SVG logo — a group that isn't an arrow and isn't a
+// labelled shape. Its colours come from the logo itself, so the
+// stroke/fill/width/style controls must not touch it (that would flatten the
+// logo into a single-colour blob).
+const isIcon = (o) =>
+  o && o.type === "group" && !isArrowObject(o) && !isLabeledShape(o);
 
 // Best-effort reverse of strokeDashArray -> friendly style name.
 const dashToStyle = (dash, width) => {
@@ -154,6 +157,12 @@ const PropertiesPanel = () => {
             child.set({ fill: fab.stroke });
           }
         });
+        obj.dirty = true;
+      } else if (isLabeledShape(obj)) {
+        // Labelled shape — style the shape child (fill/stroke/width/style); the
+        // text keeps its own colour, set from the ink when it was typed.
+        const { shape } = getLabelParts(obj);
+        if (shape) shape.set(fab);
         obj.dirty = true;
       } else if (obj.type === "group") {
         // Icon (imported SVG logo) — leave its own colours untouched.
