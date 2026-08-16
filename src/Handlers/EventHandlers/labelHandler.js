@@ -3,6 +3,7 @@ import { useCanvasContext } from "../../hooks";
 import {
   beginLabelEditing,
   finishLabelEditing,
+  isArrow,
   isLabelableShape,
   isLabeledShape,
   normalizeLabeledGroupScale,
@@ -22,7 +23,11 @@ function LabelHandler() {
     const onDblClick = (opt) => {
       const target = opt.target;
       if (!target) return;
-      if (isLabeledShape(target) || isLabelableShape(target)) {
+      if (
+        isArrow(target) ||
+        isLabeledShape(target) ||
+        isLabelableShape(target)
+      ) {
         beginLabelEditing(canvas, target);
       }
     };

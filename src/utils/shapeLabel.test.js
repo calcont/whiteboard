@@ -5,7 +5,11 @@ import {
   getLabelParts,
   finishLabelEditing,
   normalizeLabeledGroupScale,
+  isArrow,
+  getArrowParts,
+  counterScaleArrowDecorations,
 } from "./shapeLabel";
+import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
 
 const makeCanvas = () => new fabric.Canvas(document.createElement("canvas"));
 const rect = (o = {}) =>
@@ -146,5 +150,122 @@ describe("normalizeLabeledGroupScale (resize keeps border width)", () => {
     const r = rect();
     c.add(r);
     expect(normalizeLabeledGroupScale(c, r)).toBe(false);
+  });
+});
+
+describe("arrow detection (isArrow)", () => {
+  const arrow = (style = {}) =>
+    buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { stroke: "#000", strokeWidth: 2, ...style },
+    );
+
+  test("a single-headed arrow is an arrow", () => {
+    expect(isArrow(arrow())).toBe(true);
+  });
+
+  test("a double-headed arrow is an arrow", () => {
+    expect(isArrow(arrow({ heads: "both" }))).toBe(true);
+  });
+
+  test("an arrow with a label is STILL an arrow", () => {
+    const a = arrow({ label: { text: "edge", fontSize: 16, fill: "#000" } });
+    expect(isArrow(a)).toBe(true);
+    expect(getArrowParts(a).text.text).toBe("edge");
+  });
+
+  test("a labeled shape (rect + text) is NOT an arrow", () => {
+    const g = new fabric.Group([
+      rect(),
+      new fabric.Textbox("x", { width: 40 }),
+    ]);
+    expect(isArrow(g)).toBe(false);
+  });
+
+  test("buildArrowGroup without a label has no text child", () => {
+    expect(getArrowParts(arrow()).text).toBeNull();
+  });
+});
+
+describe("arrow label editing (finishLabelEditing, kind=arrow)", () => {
+  const plainArrow = () =>
+    buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { stroke: "#000", strokeWidth: 2 },
+    );
+
+  test("a non-empty label is folded into the arrow group", () => {
+    const c = makeCanvas();
+    const a = plainArrow();
+    c.add(a);
+    const text = new fabric.Textbox("hop", {
+      left: 50,
+      top: 0,
+      originX: "center",
+      originY: "center",
+    });
+    c.add(text);
+    c.__labelPending = { kind: "arrow", arrow: a, text, original: "" };
+
+    finishLabelEditing(c);
+
+    expect(isArrow(a)).toBe(true); // still an arrow
+    expect(getArrowParts(a).text.text).toBe("hop"); // now carries the label
+    expect(c.getObjects()).toContain(a);
+    expect(c.getObjects()).not.toContain(text); // folded in, not top-level
+  });
+
+  test("an empty label leaves the arrow with no text child", () => {
+    const c = makeCanvas();
+    const a = plainArrow();
+    c.add(a);
+    const text = new fabric.Textbox("", {
+      left: 50,
+      top: 0,
+      originX: "center",
+      originY: "center",
+    });
+    c.add(text);
+    c.__labelPending = { kind: "arrow", arrow: a, text, original: "" };
+
+    finishLabelEditing(c);
+
+    expect(getArrowParts(a).text).toBeNull();
+    expect(c.getObjects()).not.toContain(text);
+  });
+});
+
+describe("counterScaleArrowDecorations (live resize keeps decorations fixed)", () => {
+  test("head + label stay constant size while the line stretches", () => {
+    const a = buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      {
+        stroke: "#000",
+        strokeWidth: 2,
+        heads: "both",
+        label: { text: "x", fontSize: 16 },
+      },
+    );
+    a.scaleX = 2;
+    a.scaleY = 2;
+    counterScaleArrowDecorations(a);
+    a.getObjects().forEach((o) => {
+      if (o.type === "line") {
+        expect(o.scaleX).toBe(1); // line scales with the group (arrow length)
+      } else {
+        // head(s) + text counter-scaled to 1/groupScale -> constant rendered size
+        expect(o.scaleX).toBe(0.5);
+        expect(o.scaleY).toBe(0.5);
+      }
+    });
+  });
+
+  test("ignores non-arrows", () => {
+    expect(() =>
+      counterScaleArrowDecorations(new fabric.Rect({})),
+    ).not.toThrow();
   });
 });
