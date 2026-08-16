@@ -172,6 +172,20 @@ export const enableRoughRendering = () => {
   if (fabric.__roughEnabled) return;
   fabric.__roughEnabled = true;
 
+  // Persist the per-object rough seed so a shape keeps the SAME hand-drawn
+  // wobble across reloads and undo/redo (Excalidraw does this). The seed is
+  // in-memory otherwise, so every load re-randomised the sketch. Serialising it
+  // on every object's toObject makes it ride along in canvas.toJSON() (scene
+  // persistence) AND fabric-history snapshots; loadFromJSON restores it, so
+  // seedFor finds it and the pattern is stable. Undefined seeds JSON-drop.
+  const baseToObject = fabric.Object.prototype.toObject;
+  fabric.Object.prototype.toObject = function (propertiesToInclude) {
+    return baseToObject.call(this, [
+      "__roughSeed",
+      ...(propertiesToInclude || []),
+    ]);
+  };
+
   installRough(fabric.Rect, function (ctx) {
     const w = this.width;
     const h = this.height;
