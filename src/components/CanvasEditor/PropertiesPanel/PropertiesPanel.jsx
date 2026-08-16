@@ -23,7 +23,11 @@ import {
   toTextStyle,
 } from "../../../Handlers/ToolsHandler/toolStyle";
 import { buildArrowGroup } from "../../../Handlers/ToolsHandler/tools/arrow";
-import { isLabeledShape, getLabelParts } from "../../../utils/shapeLabel";
+import {
+  isLabeledShape,
+  getLabelParts,
+  isArrow,
+} from "../../../utils/shapeLabel";
 import "./PropertiesPanel.scss";
 
 // Tools whose new shapes pick up the current style; the panel shows for these
@@ -43,18 +47,9 @@ const isText = (obj) =>
   obj &&
   (obj.type === "i-text" || obj.type === "text" || obj.type === "textbox");
 
-// An arrow is a group of one line + one or two heads (paths).
-const isArrowObject = (o) => {
-  if (!o || o.type !== "group" || !o._objects) return false;
-  const lines = o._objects.filter((c) => c.type === "line");
-  const heads = o._objects.filter((c) => c.type === "path");
-  return (
-    lines.length === 1 &&
-    heads.length >= 1 &&
-    heads.length <= 2 &&
-    o._objects.length === lines.length + heads.length
-  );
-};
+// Arrow detection is centralised in shapeLabel's isArrow (line + 1-2 heads,
+// optional text label) — shared with the resize handler and label editor.
+const isArrowObject = isArrow;
 
 // An icon is an imported SVG logo — a group that isn't an arrow and isn't a
 // labelled shape. Its colours come from the logo itself, so the
@@ -152,9 +147,10 @@ const PropertiesPanel = () => {
               strokeWidth: fab.strokeWidth,
               strokeDashArray: fab.strokeDashArray,
             });
-          } else {
+          } else if (child.type === "path") {
             child.set({ fill: fab.stroke });
           }
+          // A text label child keeps its own colour (like shape labels).
         });
         obj.dirty = true;
       } else if (isLabeledShape(obj)) {
@@ -192,6 +188,7 @@ const PropertiesPanel = () => {
 
     const group = activeObject;
     const line = group._objects.find((c) => c.type === "line");
+    const textChild = group._objects.find((c) => isText(c));
     const matrix = group.calcTransformMatrix();
     const lp = line.calcLinePoints();
     const p1 = fabric.util.transformPoint(
@@ -210,6 +207,16 @@ const PropertiesPanel = () => {
         strokeWidth: line.strokeWidth,
         strokeDashArray: line.strokeDashArray,
         heads: mode,
+        // Preserve a label when toggling the head style.
+        label: textChild
+          ? {
+              text: textChild.text,
+              fontFamily: textChild.fontFamily,
+              fontSize: textChild.fontSize,
+              fill: textChild.fill,
+              backgroundColor: textChild.backgroundColor,
+            }
+          : null,
       },
     );
 

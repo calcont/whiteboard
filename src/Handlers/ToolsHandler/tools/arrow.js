@@ -1,6 +1,7 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
 import { resolveToolStyle } from "../toolStyle";
+import { attachEndpointControls } from "../../../utils/arrowEndpoints";
 
 const ARROW_HEAD_PATH = "M 0 0 L 20 10 L 0 20 Z";
 
@@ -48,6 +49,34 @@ export const buildArrowGroup = (start, end, style) => {
   if (style.heads === "both") {
     children.push(makeHead(start, angleBetween(end, start), style.stroke));
   }
+  // Optional centred text label, anchored to the line's midpoint. Carried
+  // through rebuilds (resize) so a labelled arrow keeps its label; a non-
+  // interactive child like the head(s), so the arrow group stays the unit.
+  if (style.label && style.label.text) {
+    const mid = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    // Only set provided text props — passing an undefined fontFamily makes
+    // fabric's font-cache crash on .toLowerCase(); omitting it keeps fabric's
+    // own default instead.
+    const labelOpts = {
+      left: mid.x,
+      top: mid.y,
+      originX: "center",
+      originY: "center",
+      textAlign: "center",
+      hasControls: false,
+      hasBorders: false,
+      selectable: false,
+    };
+    if (style.label.fontFamily) labelOpts.fontFamily = style.label.fontFamily;
+    if (style.label.fontSize) labelOpts.fontSize = style.label.fontSize;
+    if (style.label.fill) labelOpts.fill = style.label.fill;
+    // Background masks the line behind the label so it isn't struck through.
+    if (style.label.backgroundColor)
+      labelOpts.backgroundColor = style.label.backgroundColor;
+    // IText (not Textbox): the label auto-sizes to its content on the line
+    // instead of wrapping inside a fixed narrow box.
+    children.push(new fabric.IText(style.label.text, labelOpts));
+  }
   const group = new fabric.Group(children, {
     objectCaching: false,
     // Select an arrow by its actual line/head pixels, not its (large) bounding
@@ -56,11 +85,10 @@ export const buildArrowGroup = (start, end, style) => {
     // transparent shapes keep convenient click-anywhere bbox selection.
     perPixelTargetFind: true,
   });
-  // Resize arrows from the corners only. Canvas uniformScaling makes corner
-  // drags scale both axes together; a *side* handle scales one axis, which
-  // shears/mirrors the rotated head. Hiding the side handles keeps every
-  // resize uniform so the head stays a clean, fixed-size triangle.
-  group.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
+  // Excalidraw-style editing: drag either endpoint to re-aim/extend the arrow,
+  // instead of scaling a bounding box. Replaces the default controls with two
+  // endpoint handles (tail + tip).
+  attachEndpointControls(group);
   return group;
 };
 
