@@ -8,9 +8,11 @@ import { getInitialTheme, THEME_DARK, LIGHT_INK, DARK_INK } from "./theme";
 
 const KEY = "wb-style";
 // Bumped when the default style changes in a way existing stored styles should
-// pick up. v2: default font Arial -> Comic Sans MS.
-const STYLE_VERSION = 2;
+// pick up. v2: default font Arial -> Comic Sans MS. v3: font-size scale shrank
+// (default 24 -> 16) so labels stop overflowing their boxes.
+const STYLE_VERSION = 3;
 const PREVIOUS_DEFAULT_FONT = "Arial";
+const PREVIOUS_DEFAULT_FONT_SIZE = 24; // the old "M"/default, pre-v3
 
 // Default style whose ink matches the INITIAL theme, so shapes drawn on a
 // system-dark board come out light (visible) even before any manual theme
@@ -32,6 +34,14 @@ export const getStoredStyle = () => {
     // (stored with the current version) is left alone.
     if (!parsed._v && parsed.fontFamily === PREVIOUS_DEFAULT_FONT) {
       merged.fontFamily = DEFAULT_STYLE.fontFamily;
+    }
+    // v3: shrink anyone still parked on the old 24px default down to the new
+    // default. An explicitly-picked size stored at v3+ is left alone.
+    if (
+      (parsed._v || 0) < 3 &&
+      parsed.fontSize === PREVIOUS_DEFAULT_FONT_SIZE
+    ) {
+      merged.fontSize = DEFAULT_STYLE.fontSize;
     }
     merged._v = STYLE_VERSION;
     return merged;
