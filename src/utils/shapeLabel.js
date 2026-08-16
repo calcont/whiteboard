@@ -88,6 +88,20 @@ export const counterScaleArrowDecorations = (group) => {
   });
 };
 
+// While a labelled shape is being resized, fabric scales the whole group, which
+// would balloon the text along with the box. Counter-scale ONLY the text child
+// each frame (by 1/|groupScale|) so the label keeps its authored font size
+// while the box grows/shrinks — the shape child still scales normally. |scale|
+// so a flipped resize mirrors coherently. normalizeLabeledGroupScale bakes this
+// in on drop.
+export const counterScaleLabelText = (group) => {
+  if (!isLabeledShape(group)) return;
+  const { text } = getLabelParts(group);
+  if (!text) return;
+  text.scaleX = 1 / Math.abs(group.scaleX || 1);
+  text.scaleY = 1 / Math.abs(group.scaleY || 1);
+};
+
 // Run structural mutations without recording intermediate history snapshots,
 // then record a single one (or just resync the baseline when nothing changed) —
 // the same batching the mouse draw gesture uses to keep one undo step.
@@ -303,7 +317,9 @@ export const finishLabelEditing = (canvas) => {
 // thicker border than an un-resized one (and than plain shapes). Re-bake it:
 // disband (which pushes the group's scale down onto each child) then regroup at
 // scale 1, so strokeUniform on the shape child cancels the scale and the border
-// renders at its true width again. Text scales with the box as before.
+// renders at its true width again. The text is reset to scale 1 and re-centred
+// so the label keeps its authored font size — resizing the box grows the box,
+// not the text (Excalidraw-style).
 export const normalizeLabeledGroupScale = (canvas, group) => {
   if (!isLabeledShape(group)) return false;
   if (Math.abs(group.scaleX - 1) < 1e-6 && Math.abs(group.scaleY - 1) < 1e-6)
@@ -317,6 +333,10 @@ export const normalizeLabeledGroupScale = (canvas, group) => {
     // Disband bakes the group transform (incl. scale) into each child.
     group.toActiveSelection();
     canvas.discardActiveObject();
+    // Keep the label at its authored font size: undo whatever scale baking
+    // pushed onto the text, then re-centre it on the (now resized) shape.
+    text.set({ scaleX: 1, scaleY: 1 });
+    centreTextOnShape(text, shape);
     canvas.remove(shape);
     canvas.remove(text);
     const regrouped = new fabric.Group([shape, text]);

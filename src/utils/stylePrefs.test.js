@@ -37,3 +37,49 @@ describe("getStoredStyle", () => {
     expect(getStoredStyle().fontFamily).toBe("Verdana");
   });
 });
+
+describe("getStoredStyle — v4 font-size migration", () => {
+  test("default is 20px", () => {
+    expect(getStoredStyle().fontSize).toBe(20);
+    expect(DEFAULT_STYLE.fontSize).toBe(20);
+  });
+
+  test("bumps a superseded default (24, pre-v4) up to 20", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 24, _v: 2 }));
+    expect(getStoredStyle().fontSize).toBe(20);
+  });
+
+  test("bumps the v3 default (16) up to 20", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 16, _v: 3 }));
+    expect(getStoredStyle().fontSize).toBe(20);
+  });
+
+  test("keeps a deliberately-picked size (e.g. 28) chosen at v4", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 28, _v: 4 }));
+    expect(getStoredStyle().fontSize).toBe(28);
+  });
+
+  test("keeps a current preset (28) untouched", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 28, _v: 4 }));
+    expect(getStoredStyle().fontSize).toBe(28);
+  });
+});
+
+describe("getStoredStyle — off-preset sizes snap to the nearest preset", () => {
+  // Legacy sizes from an older S/M/L scale are no longer presets, which left the
+  // Size control blank; snapping keeps a preset always active. Presets: 16/20/28.
+  test("legacy 12 (old S) snaps to 16", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 12, _v: 4 }));
+    expect(getStoredStyle().fontSize).toBe(16);
+  });
+
+  test("legacy 36 (old L) snaps to 28", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 36, _v: 4 }));
+    expect(getStoredStyle().fontSize).toBe(28);
+  });
+
+  test("an exact preset is left alone", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 16, _v: 4 }));
+    expect(getStoredStyle().fontSize).toBe(16);
+  });
+});

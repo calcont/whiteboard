@@ -5,6 +5,7 @@ import {
   getLabelParts,
   finishLabelEditing,
   normalizeLabeledGroupScale,
+  counterScaleLabelText,
   isArrow,
   getArrowParts,
   counterScaleArrowDecorations,
@@ -138,6 +139,23 @@ describe("normalizeLabeledGroupScale (resize keeps border width)", () => {
     expect(rc.strokeWidth).toBe(2);
   });
 
+  test("text keeps its authored font size — only the box scales", () => {
+    const c = makeCanvas();
+    const g = labeled();
+    c.add(g);
+    g.set({ scaleX: 1.5, scaleY: 1.5 });
+
+    normalizeLabeledGroupScale(c, g);
+
+    const out = c.getObjects()[0];
+    const tx = out.getObjects().find((o) => o.type === "textbox");
+    const rc = out.getObjects().find((o) => o.type === "rect");
+    // text is reset to scale 1 (constant font size) while the box stays at 1.5
+    expect(Math.round(tx.scaleX * 100) / 100).toBe(1);
+    expect(Math.round(tx.scaleY * 100) / 100).toBe(1);
+    expect(Math.round(rc.scaleX * 100) / 100).toBe(1.5);
+  });
+
   test("an un-scaled group is left untouched", () => {
     const c = makeCanvas();
     const g = labeled();
@@ -150,6 +168,27 @@ describe("normalizeLabeledGroupScale (resize keeps border width)", () => {
     const r = rect();
     c.add(r);
     expect(normalizeLabeledGroupScale(c, r)).toBe(false);
+  });
+});
+
+describe("counterScaleLabelText (live resize keeps text size)", () => {
+  test("text child is counter-scaled by 1/groupScale; shape untouched", () => {
+    const g = labeled();
+    g.set({ scaleX: 2, scaleY: 4 });
+
+    counterScaleLabelText(g);
+
+    const tx = g.getObjects().find((o) => o.type === "textbox");
+    const rc = g.getObjects().find((o) => o.type === "rect");
+    expect(tx.scaleX).toBeCloseTo(0.5);
+    expect(tx.scaleY).toBeCloseTo(0.25);
+    // the shape child is left alone — it scales with the group (box grows)
+    expect(rc.scaleX).toBe(1);
+    expect(rc.scaleY).toBe(1);
+  });
+
+  test("non-labeled targets are ignored (no throw)", () => {
+    expect(() => counterScaleLabelText(rect())).not.toThrow();
   });
 });
 

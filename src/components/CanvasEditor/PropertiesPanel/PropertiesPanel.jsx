@@ -102,6 +102,18 @@ const PropertiesPanel = () => {
   useEffect(() => {
     if (!activeObject) return;
     const t = activeObject.type;
+    // A labelled shape is a group; sync the panel to its text child's font so
+    // the Size/Font controls reflect (and can change) the current label.
+    if (isLabeledShape(activeObject)) {
+      const { text: label } = getLabelParts(activeObject);
+      if (label)
+        setStyle((prev) => ({
+          ...prev,
+          fontFamily: label.fontFamily || prev.fontFamily,
+          fontSize: label.fontSize || prev.fontSize,
+        }));
+      return;
+    }
     if (t === "activeSelection" || t === "group") return;
     const text = isText(activeObject);
     setStyle((prev) => ({
@@ -161,10 +173,16 @@ const PropertiesPanel = () => {
         });
         obj.dirty = true;
       } else if (isLabeledShape(obj)) {
-        // Labelled shape — style the shape child (fill/stroke/width/style); the
-        // text keeps its own colour, set from the ink when it was typed.
-        const { shape } = getLabelParts(obj);
+        // Labelled shape — style the box (shape child: fill/stroke/width/style)
+        // AND the label (text child: font family/size) so the Size/Font controls
+        // can change a label after it's created. The label keeps its own colour.
+        const { shape, text } = getLabelParts(obj);
         if (shape) shape.set({ ...fab, fill: fillForObject(fab.fill) });
+        if (text)
+          text.set({
+            fontFamily: nextStyle.fontFamily,
+            fontSize: nextStyle.fontSize,
+          });
         obj.dirty = true;
       } else if (obj.type === "group") {
         // Icon (imported SVG logo) — leave its own colours untouched.
@@ -266,9 +284,13 @@ const PropertiesPanel = () => {
 
   if (!activeObject && !STYLEABLE_TOOLS.has(activeTool)) return null;
 
-  // Text context shows font controls; shapes show fill/width/style.
+  // Text context shows ONLY font controls; shapes show fill/width/style. A
+  // labelled shape shows BOTH — box styling and the label's font/size — so the
+  // Size/Font controls can change a label after it's been created.
   const textContext =
     isText(activeObject) || activeTool === TOOL_CONSTANTS.FONT;
+  const labeledContext = isLabeledShape(activeObject);
+  const showFont = textContext || labeledContext;
 
   // Arrow context adds the arrowheads control. When an arrow is selected, the
   // active option reflects that arrow's own head count; otherwise the default.
@@ -325,137 +347,136 @@ const PropertiesPanel = () => {
         </div>
       )}
 
-      {!iconContext &&
-        (textContext ? (
-          <>
-            <div className="properties-panel__group">
-              <span className="properties-panel__label">Font</span>
-              <select
-                className="properties-panel__select"
-                value={style.fontFamily}
-                style={{ fontFamily: style.fontFamily }}
-                onChange={(e) => updateStyle({ fontFamily: e.target.value })}
-              >
-                {FONT_FAMILIES.map((f) => (
-                  <option key={f} value={f} style={{ fontFamily: f }}>
-                    {f}
-                  </option>
-                ))}
-              </select>
+      {!iconContext && showFont && (
+        <>
+          <div className="properties-panel__group">
+            <span className="properties-panel__label">Font</span>
+            <select
+              className="properties-panel__select"
+              value={style.fontFamily}
+              style={{ fontFamily: style.fontFamily }}
+              onChange={(e) => updateStyle({ fontFamily: e.target.value })}
+            >
+              {FONT_FAMILIES.map((f) => (
+                <option key={f} value={f} style={{ fontFamily: f }}>
+                  {f}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="properties-panel__group">
+            <span className="properties-panel__label">Size</span>
+            <div className="properties-panel__row">
+              {FONT_SIZES.map((s) => (
+                <button
+                  key={s.value}
+                  type="button"
+                  className={
+                    style.fontSize === s.value
+                      ? "properties-panel__btn active"
+                      : "properties-panel__btn"
+                  }
+                  onClick={() => updateStyle({ fontSize: s.value })}
+                >
+                  {s.label}
+                </button>
+              ))}
             </div>
-            <div className="properties-panel__group">
-              <span className="properties-panel__label">Size</span>
-              <div className="properties-panel__row">
-                {FONT_SIZES.map((s) => (
-                  <button
-                    key={s.value}
-                    type="button"
-                    className={
-                      style.fontSize === s.value
-                        ? "properties-panel__btn active"
-                        : "properties-panel__btn"
-                    }
-                    onClick={() => updateStyle({ fontSize: s.value })}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="properties-panel__group">
-              <span className="properties-panel__label">Fill</span>
-              <div className="properties-panel__swatches">
-                {FILL_SWATCHES.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    className={
-                      style.fill === color
-                        ? "properties-panel__swatch active"
-                        : "properties-panel__swatch"
-                    }
-                    style={
-                      color === "transparent"
-                        ? undefined
-                        : { backgroundColor: color }
-                    }
-                    data-none={color === "transparent" ? "true" : undefined}
-                    onClick={() => updateStyle({ fill: color })}
-                    aria-label={
-                      color === "transparent" ? "No fill" : `Fill ${color}`
-                    }
-                  />
-                ))}
-                <Tooltip title="Custom fill color">
-                  <input
-                    type="color"
-                    className="properties-panel__picker"
-                    value={
-                      style.fill === "transparent" ? "#ffffff" : style.fill
-                    }
-                    onChange={(e) => updateStyle({ fill: e.target.value })}
-                  />
-                </Tooltip>
-              </div>
-            </div>
+          </div>
+        </>
+      )}
 
-            <div className="properties-panel__group">
-              <span className="properties-panel__label">Width</span>
-              <div className="properties-panel__row">
-                {STROKE_WIDTHS.map((w) => (
-                  <button
-                    key={w.value}
-                    type="button"
-                    className={
-                      style.strokeWidth === w.value
-                        ? "properties-panel__btn active"
-                        : "properties-panel__btn"
-                    }
-                    onClick={() => updateStyle({ strokeWidth: w.value })}
-                  >
-                    <span
-                      className="properties-panel__width-preview"
-                      style={{ height: `${w.value}px` }}
-                    />
-                  </button>
-                ))}
-              </div>
+      {!iconContext && !textContext && (
+        <>
+          <div className="properties-panel__group">
+            <span className="properties-panel__label">Fill</span>
+            <div className="properties-panel__swatches">
+              {FILL_SWATCHES.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  className={
+                    style.fill === color
+                      ? "properties-panel__swatch active"
+                      : "properties-panel__swatch"
+                  }
+                  style={
+                    color === "transparent"
+                      ? undefined
+                      : { backgroundColor: color }
+                  }
+                  data-none={color === "transparent" ? "true" : undefined}
+                  onClick={() => updateStyle({ fill: color })}
+                  aria-label={
+                    color === "transparent" ? "No fill" : `Fill ${color}`
+                  }
+                />
+              ))}
+              <Tooltip title="Custom fill color">
+                <input
+                  type="color"
+                  className="properties-panel__picker"
+                  value={style.fill === "transparent" ? "#ffffff" : style.fill}
+                  onChange={(e) => updateStyle({ fill: e.target.value })}
+                />
+              </Tooltip>
             </div>
+          </div>
 
-            <div className="properties-panel__group">
-              <span className="properties-panel__label">Style</span>
-              <div className="properties-panel__row">
-                {STROKE_STYLES.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className={
-                      style.strokeStyle === s
-                        ? "properties-panel__btn active"
-                        : "properties-panel__btn"
-                    }
-                    onClick={() => updateStyle({ strokeStyle: s })}
-                  >
-                    <span
-                      className="properties-panel__style-preview"
-                      style={{
-                        borderTopStyle:
-                          s === "solid"
-                            ? "solid"
-                            : s === "dashed"
-                              ? "dashed"
-                              : "dotted",
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
+          <div className="properties-panel__group">
+            <span className="properties-panel__label">Width</span>
+            <div className="properties-panel__row">
+              {STROKE_WIDTHS.map((w) => (
+                <button
+                  key={w.value}
+                  type="button"
+                  className={
+                    style.strokeWidth === w.value
+                      ? "properties-panel__btn active"
+                      : "properties-panel__btn"
+                  }
+                  onClick={() => updateStyle({ strokeWidth: w.value })}
+                >
+                  <span
+                    className="properties-panel__width-preview"
+                    style={{ height: `${w.value}px` }}
+                  />
+                </button>
+              ))}
             </div>
-          </>
-        ))}
+          </div>
+
+          <div className="properties-panel__group">
+            <span className="properties-panel__label">Style</span>
+            <div className="properties-panel__row">
+              {STROKE_STYLES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={
+                    style.strokeStyle === s
+                      ? "properties-panel__btn active"
+                      : "properties-panel__btn"
+                  }
+                  onClick={() => updateStyle({ strokeStyle: s })}
+                >
+                  <span
+                    className="properties-panel__style-preview"
+                    style={{
+                      borderTopStyle:
+                        s === "solid"
+                          ? "solid"
+                          : s === "dashed"
+                            ? "dashed"
+                            : "dotted",
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {arrowContext && (
         <div className="properties-panel__group">
