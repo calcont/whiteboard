@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useCanvasContext } from "../../hooks";
 import {
   beginLabelEditing,
+  counterScaleLabelText,
   finishLabelEditing,
   isArrow,
   isLabelableShape,
@@ -34,6 +35,13 @@ function LabelHandler() {
 
     const onEditingExited = () => finishLabelEditing(canvas);
 
+    // While a labelled shape is being resized, keep its text at a constant
+    // font size (only the box grows). object:modified then bakes it in.
+    const onScaling = (opt) => {
+      const target = opt && opt.target;
+      if (isLabeledShape(target)) counterScaleLabelText(target);
+    };
+
     // Keep a resized label's border at its true width (see the helper). Runs
     // after fabric-history's own object:modified handler, so it can re-point the
     // history baseline at the normalised result.
@@ -44,11 +52,13 @@ function LabelHandler() {
 
     canvas.on("mouse:dblclick", onDblClick);
     canvas.on("text:editing:exited", onEditingExited);
+    canvas.on("object:scaling", onScaling);
     canvas.on("object:modified", onModified);
 
     return () => {
       canvas.off("mouse:dblclick", onDblClick);
       canvas.off("text:editing:exited", onEditingExited);
+      canvas.off("object:scaling", onScaling);
       canvas.off("object:modified", onModified);
     };
   }, [canvas]);

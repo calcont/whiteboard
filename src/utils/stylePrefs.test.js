@@ -37,3 +37,25 @@ describe("getStoredStyle", () => {
     expect(getStoredStyle().fontFamily).toBe("Verdana");
   });
 });
+
+describe("getStoredStyle — v3 font-size migration", () => {
+  test("default is the shrunk 16px", () => {
+    expect(getStoredStyle().fontSize).toBe(16);
+    expect(DEFAULT_STYLE.fontSize).toBe(16);
+  });
+
+  test("bumps a pre-v3 style still on the old 24px default down to 16", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 24, _v: 2 }));
+    expect(getStoredStyle().fontSize).toBe(16);
+  });
+
+  test("keeps a deliberately-picked size (e.g. 24) chosen at v3", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 24, _v: 3 }));
+    expect(getStoredStyle().fontSize).toBe(24);
+  });
+
+  test("never touches a non-24 stored size", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 36, _v: 2 }));
+    expect(getStoredStyle().fontSize).toBe(36);
+  });
+});
