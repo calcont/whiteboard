@@ -3,8 +3,20 @@
 // resetting to defaults. localStorage (not IndexedDB) — it's a tiny, plain
 // object, kept separate from the (larger) scene record.
 
-import { DEFAULT_STYLE } from "../Handlers/ToolsHandler/toolStyle";
+import { DEFAULT_STYLE, FONT_SIZES } from "../Handlers/ToolsHandler/toolStyle";
 import { getInitialTheme, THEME_DARK, LIGHT_INK, DARK_INK } from "./theme";
+
+// Snap an arbitrary size onto the nearest current preset. A legacy stored size
+// (from an older S/M/L scale, e.g. 12) is no longer one of the presets, which
+// left the Size control with nothing highlighted; snapping keeps it in sync so
+// a preset is always active and new text uses a real preset value.
+const snapToPreset = (size) => {
+  const presets = FONT_SIZES.map((s) => s.value);
+  if (presets.includes(size)) return size;
+  return presets.reduce((a, b) =>
+    Math.abs(b - size) < Math.abs(a - size) ? b : a,
+  );
+};
 
 const KEY = "wb-style";
 // Bumped when the default style changes in a way existing stored styles should
@@ -46,6 +58,9 @@ export const getStoredStyle = () => {
     ) {
       merged.fontSize = DEFAULT_STYLE.fontSize;
     }
+    // Keep the effective size on a real preset so the Size control is never
+    // blank (covers legacy sizes the version migration above doesn't name).
+    merged.fontSize = snapToPreset(merged.fontSize);
     merged._v = STYLE_VERSION;
     return merged;
   } catch {
