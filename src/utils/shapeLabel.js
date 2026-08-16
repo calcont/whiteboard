@@ -155,7 +155,9 @@ export const beginLabelEditing = (canvas, target) => {
       canvas.add(text);
     } else {
       const mid = arrowLineMidpoint(arrow);
-      text = new fabric.Textbox("", {
+      // IText, not Textbox: an arrow label auto-sizes to its text on the line
+      // rather than wrapping inside a fixed narrow box.
+      text = new fabric.IText("", {
         ...resolveTextStyle(canvas),
         textAlign: "center",
         left: mid.x,

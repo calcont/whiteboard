@@ -72,7 +72,9 @@ export const buildArrowGroup = (start, end, style) => {
     // Background masks the line behind the label so it isn't struck through.
     if (style.label.backgroundColor)
       labelOpts.backgroundColor = style.label.backgroundColor;
-    children.push(new fabric.Textbox(style.label.text, labelOpts));
+    // IText (not Textbox): the label auto-sizes to its content on the line
+    // instead of wrapping inside a fixed narrow box.
+    children.push(new fabric.IText(style.label.text, labelOpts));
   }
   const group = new fabric.Group(children, {
     objectCaching: false,
