@@ -82,3 +82,36 @@ test("stroke is a single rough pass (no doubled border) and rough draws no fill"
   const pathOps = sets.find((s) => s.type === "path").ops.length;
   expect(pathOps).toBeLessThanOrEqual(10); // single pass (~8), not ~16
 });
+
+describe("scale compensation (constant stroke/wobble at any size)", () => {
+  test("a scaled rect regenerates its rough at the ON-SCREEN size", () => {
+    enableRoughRendering();
+    setSketchyMode(true);
+    const rect = new fabric.Rect({
+      width: 100,
+      height: 60,
+      stroke: "#111",
+      strokeWidth: 3,
+      scaleX: 2,
+      scaleY: 2,
+    });
+    rect._render(ctx());
+    // key encodes on-screen dims (100x60 * scale 2 = 200x120), NOT local 100x60,
+    // so the drawable is traced big and the 1:1 ctx keeps the stroke constant.
+    expect(rect.__roughKey.startsWith("200x120")).toBe(true);
+  });
+
+  test("a rect with rx traces the rounded-rect path (sketchy rounded corners)", () => {
+    enableRoughRendering();
+    setSketchyMode(true);
+    const round = new fabric.Rect({ width: 120, height: 80, rx: 16, ry: 16 });
+    const sharp = new fabric.Rect({ width: 120, height: 80 });
+    round._render(ctx());
+    sharp._render(ctx());
+    // the radius is baked into the cache key, so the rounded rect takes the
+    // gen.path(roundedRectPath) branch while the sharp one takes gen.rectangle.
+    expect(round.__roughKey).toContain("r16x16");
+    expect(sharp.__roughKey).toContain("r0x0");
+    expect(round.__roughDrawable).toBeTruthy();
+  });
+});
