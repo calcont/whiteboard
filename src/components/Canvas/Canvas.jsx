@@ -7,6 +7,7 @@ import {
   KeyBoardHandler,
   SelectionHandler,
   LabelHandler,
+  LineEndpointHandler,
   TextEventHandler,
   ZoomHandler,
   PersistenceHandler,
@@ -21,6 +22,7 @@ function Canvas() {
   // Before TextEventHandler: its text:editing:exited must run first so the
   // shape+text regroup happens before the generic empty-text cleanup.
   LabelHandler();
+  LineEndpointHandler();
   TextEventHandler();
   ZoomHandler();
   PersistenceHandler();
