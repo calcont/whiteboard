@@ -22,14 +22,21 @@ const seedFor = (obj) => {
 
 const hasFill = (f) => f && f !== "transparent" && f !== "none";
 
-const optsFor = (obj) => ({
-  seed: seedFor(obj),
-  roughness: ROUGHNESS,
-  stroke: obj.stroke || "transparent",
-  strokeWidth: obj.strokeWidth || 1,
-  fill: hasFill(obj.fill) ? obj.fill : undefined,
-  fillStyle: "solid", // sketchy outline, solid fill (hachure is a later toggle)
-});
+const optsFor = (obj) => {
+  const dashed = Array.isArray(obj.strokeDashArray);
+  return {
+    seed: seedFor(obj),
+    roughness: ROUGHNESS,
+    stroke: obj.stroke || "transparent",
+    strokeWidth: obj.strokeWidth || 1,
+    fill: hasFill(obj.fill) ? obj.fill : undefined,
+    fillStyle: "solid", // sketchy outline, solid fill (hachure is a later toggle)
+    // rough draws each stroke as TWO overlapping passes for the hand-drawn
+    // look — but with a dash that doubles/triples every dash. For a dashed
+    // stroke draw a single pass so the dashes stay clean; solid keeps both.
+    disableMultiStroke: dashed,
+  };
+};
 
 // Cache the generated drawable; only regenerate when geometry/style changes.
 const drawableFor = (obj, key, make) => {
@@ -110,7 +117,7 @@ export const enableRoughRendering = () => {
   installRough(fabric.Rect, function (ctx) {
     const w = this.width;
     const h = this.height;
-    const key = `${w}x${h}:${this.fill}:${this.stroke}:${this.strokeWidth}:${this.__roughSeed}`;
+    const key = `${w}x${h}:${this.fill}:${this.stroke}:${this.strokeWidth}:${this.strokeDashArray}:${this.__roughSeed}`;
     const d = drawableFor(this, key, () =>
       gen.rectangle(-w / 2, -h / 2, w, h, optsFor(this)),
     );
@@ -120,7 +127,7 @@ export const enableRoughRendering = () => {
   installRough(fabric.Ellipse, function (ctx) {
     const w = this.rx * 2;
     const h = this.ry * 2;
-    const key = `${w}x${h}:${this.fill}:${this.stroke}:${this.strokeWidth}:${this.__roughSeed}`;
+    const key = `${w}x${h}:${this.fill}:${this.stroke}:${this.strokeWidth}:${this.strokeDashArray}:${this.__roughSeed}`;
     const d = drawableFor(this, key, () =>
       gen.ellipse(0, 0, w, h, optsFor(this)),
     );
@@ -132,14 +139,14 @@ export const enableRoughRendering = () => {
       p.x - this.pathOffset.x,
       p.y - this.pathOffset.y,
     ]);
-    const key = `${JSON.stringify(pts)}:${this.fill}:${this.stroke}:${this.strokeWidth}:${this.__roughSeed}`;
+    const key = `${JSON.stringify(pts)}:${this.fill}:${this.stroke}:${this.strokeWidth}:${this.strokeDashArray}:${this.__roughSeed}`;
     const d = drawableFor(this, key, () => gen.polygon(pts, optsFor(this)));
     drawRough(ctx, this, d);
   });
 
   installRough(fabric.Line, function (ctx) {
     const p = this.calcLinePoints();
-    const key = `${p.x1},${p.y1},${p.x2},${p.y2}:${this.stroke}:${this.strokeWidth}:${this.__roughSeed}`;
+    const key = `${p.x1},${p.y1},${p.x2},${p.y2}:${this.stroke}:${this.strokeWidth}:${this.strokeDashArray}:${this.__roughSeed}`;
     const d = drawableFor(this, key, () =>
       gen.line(p.x1, p.y1, p.x2, p.y2, optsFor(this)),
     );

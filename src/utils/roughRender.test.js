@@ -63,3 +63,21 @@ describe("sketchy mode toggle", () => {
     expect(() => rect._render(ctx())).not.toThrow();
   });
 });
+
+test("dashed strokes are a single rough pass (no doubled dashes)", () => {
+  enableRoughRendering();
+  setSketchyMode(true);
+  const solid = new fabric.Rect({ width: 100, height: 60, stroke: "#111" });
+  const dashed = new fabric.Rect({
+    width: 100,
+    height: 60,
+    stroke: "#111",
+    strokeDashArray: [12, 8],
+  });
+  solid._render(ctx());
+  dashed._render(ctx());
+  const ops = (o) =>
+    o.__roughDrawable.sets.find((s) => s.type === "path").ops.length;
+  // multi-stroke solid draws the outline twice; dashed draws it once
+  expect(ops(dashed)).toBeLessThan(ops(solid));
+});
