@@ -11,6 +11,7 @@ import {
   ZoomHandler,
   PersistenceHandler,
   ArrowResizeHandler,
+  DarkColorHandler,
 } from "../../Handlers/EventHandlers";
 
 function Canvas() {
@@ -24,6 +25,7 @@ function Canvas() {
   ZoomHandler();
   PersistenceHandler();
   ArrowResizeHandler();
+  DarkColorHandler();
   const canvasRef = useRef(null);
   const { setCanvas } = useCanvasContext();
 

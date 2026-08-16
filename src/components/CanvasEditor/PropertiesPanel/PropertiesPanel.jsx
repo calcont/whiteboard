@@ -28,7 +28,14 @@ import {
   getLabelParts,
   isArrow,
 } from "../../../utils/shapeLabel";
+import { dimColor, isDarkTheme } from "../../../utils/themeColor";
 import "./PropertiesPanel.scss";
+
+// In dark mode a shape's fill is stored dimmed; a chosen swatch is dimmed on
+// the way onto the object, and un-dimmed on the way back into the panel (both
+// via the self-inverse dimColor) so the panel always shows the authored colour.
+const fillForObject = (fill) =>
+  isDarkTheme() && fill && fill !== "transparent" ? dimColor(fill) : fill;
 
 // Tools whose new shapes pick up the current style; the panel shows for these
 // even with nothing selected, so a style can be chosen before drawing.
@@ -112,7 +119,7 @@ const PropertiesPanel = () => {
         ? prev.fill
         : activeObject.fill === "" || activeObject.fill == null
           ? "transparent"
-          : activeObject.fill,
+          : fillForObject(activeObject.fill), // un-dim back to authored colour
       fontFamily: text
         ? activeObject.fontFamily || prev.fontFamily
         : prev.fontFamily,
@@ -157,12 +164,14 @@ const PropertiesPanel = () => {
         // Labelled shape — style the shape child (fill/stroke/width/style); the
         // text keeps its own colour, set from the ink when it was typed.
         const { shape } = getLabelParts(obj);
-        if (shape) shape.set(fab);
+        if (shape) shape.set({ ...fab, fill: fillForObject(fab.fill) });
         obj.dirty = true;
       } else if (obj.type === "group") {
         // Icon (imported SVG logo) — leave its own colours untouched.
       } else {
-        obj.set(fab);
+        // Plain shape — dim the fill in dark mode (fillForObject) so it matches
+        // how DarkColorHandler stores fills.
+        obj.set({ ...fab, fill: fillForObject(fab.fill) });
       }
     });
     canvas.requestRenderAll();
