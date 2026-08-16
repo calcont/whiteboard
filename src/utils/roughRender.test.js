@@ -1,5 +1,9 @@
 import { fabric } from "fabric";
-import { enableRoughRendering } from "./roughRender";
+import {
+  enableRoughRendering,
+  isSketchyMode,
+  setSketchyMode,
+} from "./roughRender";
 
 const ctx = () =>
   new Proxy(
@@ -35,4 +39,27 @@ test("Path is left crisp (not overridden) so logos + arrowheads stay sharp", () 
   enableRoughRendering();
   // Path keeps fabric's own _render; only the basic shapes got the rough one.
   expect(fabric.Path.prototype._render).not.toBe(fabric.Rect.prototype._render);
+});
+
+describe("sketchy mode toggle", () => {
+  afterEach(() => setSketchyMode(true)); // restore default for other tests
+
+  test("defaults on, toggles, and persists to localStorage", () => {
+    enableRoughRendering();
+    setSketchyMode(false);
+    expect(isSketchyMode()).toBe(false);
+    expect(localStorage.getItem("wb-sketchy")).toBe("false");
+    setSketchyMode(true);
+    expect(isSketchyMode()).toBe(true);
+    expect(localStorage.getItem("wb-sketchy")).toBe("true");
+  });
+
+  test("renders without throwing in both modes", () => {
+    enableRoughRendering();
+    const rect = new fabric.Rect({ width: 80, height: 50, fill: "#a5d8ff" });
+    setSketchyMode(true);
+    expect(() => rect._render(ctx())).not.toThrow();
+    setSketchyMode(false); // crisp fallback (fabric's own render)
+    expect(() => rect._render(ctx())).not.toThrow();
+  });
 });

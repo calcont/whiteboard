@@ -1,0 +1,21 @@
+@import "src/css/variables.scss";
+
+.sketchy-toggle {
+  position: absolute;
+  // Sit just to the right of the theme toggle (both anchored bottom-left).
+  left: 52px;
+  display: flex;
+
+  &__button {
+    background-color: var(--surface-bg);
+    color: var(--surface-text);
+    border-radius: var(--default-border-radius);
+    box-shadow: 0 0 var(--default-shadow-blur) var(--default-shadow-color);
+    padding: 10px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--default-theme-color);
+    }
+  }
+}

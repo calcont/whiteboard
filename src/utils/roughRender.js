@@ -71,11 +71,43 @@ const drawRough = (ctx, obj, drawable) => {
   }
 };
 
+// Global sketchy on/off. Default ON (the excalidraw look); a crisp mode serves
+// clean infra/architecture diagrams. Persisted in localStorage like the theme.
+const SKETCHY_KEY = "wb-sketchy";
+const readSketchy = () => {
+  try {
+    return localStorage.getItem(SKETCHY_KEY) !== "false";
+  } catch {
+    return true;
+  }
+};
+let sketchyEnabled = readSketchy();
+
+export const isSketchyMode = () => sketchyEnabled;
+export const setSketchyMode = (on) => {
+  sketchyEnabled = !!on;
+  try {
+    localStorage.setItem(SKETCHY_KEY, String(sketchyEnabled));
+  } catch {
+    // ignore persistence failure
+  }
+};
+
+// Install a rough _render on a shape class, keeping its crisp original as a
+// fallback for when sketchy mode is off.
+const installRough = (Klass, roughRender) => {
+  const crisp = Klass.prototype._render;
+  Klass.prototype._render = function (ctx) {
+    if (!sketchyEnabled) return crisp.call(this, ctx);
+    return roughRender.call(this, ctx);
+  };
+};
+
 export const enableRoughRendering = () => {
   if (fabric.__roughEnabled) return;
   fabric.__roughEnabled = true;
 
-  fabric.Rect.prototype._render = function (ctx) {
+  installRough(fabric.Rect, function (ctx) {
     const w = this.width;
     const h = this.height;
     const key = `${w}x${h}:${this.fill}:${this.stroke}:${this.strokeWidth}:${this.__roughSeed}`;
@@ -83,9 +115,9 @@ export const enableRoughRendering = () => {
       gen.rectangle(-w / 2, -h / 2, w, h, optsFor(this)),
     );
     drawRough(ctx, this, d);
-  };
+  });
 
-  fabric.Ellipse.prototype._render = function (ctx) {
+  installRough(fabric.Ellipse, function (ctx) {
     const w = this.rx * 2;
     const h = this.ry * 2;
     const key = `${w}x${h}:${this.fill}:${this.stroke}:${this.strokeWidth}:${this.__roughSeed}`;
@@ -93,9 +125,9 @@ export const enableRoughRendering = () => {
       gen.ellipse(0, 0, w, h, optsFor(this)),
     );
     drawRough(ctx, this, d);
-  };
+  });
 
-  fabric.Polygon.prototype._render = function (ctx) {
+  installRough(fabric.Polygon, function (ctx) {
     const pts = this.points.map((p) => [
       p.x - this.pathOffset.x,
       p.y - this.pathOffset.y,
@@ -103,14 +135,14 @@ export const enableRoughRendering = () => {
     const key = `${JSON.stringify(pts)}:${this.fill}:${this.stroke}:${this.strokeWidth}:${this.__roughSeed}`;
     const d = drawableFor(this, key, () => gen.polygon(pts, optsFor(this)));
     drawRough(ctx, this, d);
-  };
+  });
 
-  fabric.Line.prototype._render = function (ctx) {
+  installRough(fabric.Line, function (ctx) {
     const p = this.calcLinePoints();
     const key = `${p.x1},${p.y1},${p.x2},${p.y2}:${this.stroke}:${this.strokeWidth}:${this.__roughSeed}`;
     const d = drawableFor(this, key, () =>
       gen.line(p.x1, p.y1, p.x2, p.y2, optsFor(this)),
     );
     drawRough(ctx, this, d);
-  };
+  });
 };
