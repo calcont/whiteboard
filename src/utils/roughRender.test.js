@@ -64,20 +64,21 @@ describe("sketchy mode toggle", () => {
   });
 });
 
-test("dashed strokes are a single rough pass (no doubled dashes)", () => {
+test("stroke is a single rough pass (no doubled border) and rough draws no fill", () => {
   enableRoughRendering();
   setSketchyMode(true);
-  const solid = new fabric.Rect({ width: 100, height: 60, stroke: "#111" });
-  const dashed = new fabric.Rect({
+  const rect = new fabric.Rect({
     width: 100,
     height: 60,
     stroke: "#111",
-    strokeDashArray: [12, 8],
+    strokeWidth: 8,
+    fill: "#a5d8ff",
   });
-  solid._render(ctx());
-  dashed._render(ctx());
-  const ops = (o) =>
-    o.__roughDrawable.sets.find((s) => s.type === "path").ops.length;
-  // multi-stroke solid draws the outline twice; dashed draws it once
-  expect(ops(dashed)).toBeLessThan(ops(solid));
+  rect._render(ctx());
+  const sets = rect.__roughDrawable.sets;
+  // rough draws ONLY the outline (we fill the exact geometry ourselves), and
+  // that outline is a single pass — no doubled border, no bleeding fill.
+  expect(sets.every((s) => s.type === "path")).toBe(true);
+  const pathOps = sets.find((s) => s.type === "path").ops.length;
+  expect(pathOps).toBeLessThanOrEqual(10); // single pass (~8), not ~16
 });
