@@ -115,3 +115,19 @@ describe("scale compensation (constant stroke/wobble at any size)", () => {
     expect(round.__roughDrawable).toBeTruthy();
   });
 });
+
+describe("seed persistence (stable wobble across reload/undo)", () => {
+  test("the rough seed is serialised in toObject so it can be restored", () => {
+    enableRoughRendering();
+    const rect = new fabric.Rect({ width: 40, height: 20 });
+    rect.__roughSeed = 123456;
+    expect(rect.toObject().__roughSeed).toBe(123456);
+    // and a revived object carrying the seed keeps it (seedFor won't re-random)
+    const revived = new fabric.Rect({
+      width: 40,
+      height: 20,
+      __roughSeed: 777,
+    });
+    expect(revived.__roughSeed).toBe(777);
+  });
+});
