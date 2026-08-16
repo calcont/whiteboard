@@ -70,12 +70,17 @@ const traceRoundedRect = (ctx, x, y, w, h, rx, ry) => {
 // the stroke, so the fill bleeds past the border. Instead we fill the exact
 // geometry crisply (fillExact) and draw the rough outline on top. Single pass
 // (disableMultiStroke) so a thick or dashed border doesn't render doubled.
+// preserveVertices: rough jitters each segment's endpoints by default, so a
+// multi-segment outline (a rounded rect's edges + corner arcs, or a polygon's
+// sides) ends up with gaps/overshoots where the segments should meet — this
+// anchors the vertices so the outline stays closed (the Excalidraw look).
 const optsFor = (obj) => ({
   seed: seedFor(obj),
   roughness: ROUGHNESS,
   stroke: obj.stroke || "transparent",
   strokeWidth: obj.strokeWidth || 1,
   disableMultiStroke: true,
+  preserveVertices: true,
 });
 
 // Cache the generated drawable; only regenerate when geometry/style changes.
