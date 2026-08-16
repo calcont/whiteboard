@@ -38,23 +38,28 @@ describe("getStoredStyle", () => {
   });
 });
 
-describe("getStoredStyle — v3 font-size migration", () => {
-  test("default is the shrunk 16px", () => {
-    expect(getStoredStyle().fontSize).toBe(16);
-    expect(DEFAULT_STYLE.fontSize).toBe(16);
+describe("getStoredStyle — v4 font-size migration", () => {
+  test("default is 20px", () => {
+    expect(getStoredStyle().fontSize).toBe(20);
+    expect(DEFAULT_STYLE.fontSize).toBe(20);
   });
 
-  test("bumps a pre-v3 style still on the old 24px default down to 16", () => {
+  test("bumps a superseded default (24, pre-v4) up to 20", () => {
     localStorage.setItem("wb-style", JSON.stringify({ fontSize: 24, _v: 2 }));
-    expect(getStoredStyle().fontSize).toBe(16);
+    expect(getStoredStyle().fontSize).toBe(20);
   });
 
-  test("keeps a deliberately-picked size (e.g. 24) chosen at v3", () => {
-    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 24, _v: 3 }));
-    expect(getStoredStyle().fontSize).toBe(24);
+  test("bumps the v3 default (16) up to 20", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 16, _v: 3 }));
+    expect(getStoredStyle().fontSize).toBe(20);
   });
 
-  test("never touches a non-24 stored size", () => {
+  test("keeps a deliberately-picked size (e.g. 28) chosen at v4", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ fontSize: 28, _v: 4 }));
+    expect(getStoredStyle().fontSize).toBe(28);
+  });
+
+  test("never touches a non-default stored size", () => {
     localStorage.setItem("wb-style", JSON.stringify({ fontSize: 36, _v: 2 }));
     expect(getStoredStyle().fontSize).toBe(36);
   });
