@@ -3,6 +3,7 @@ export { default as MouseHandler } from "./mouseHandler";
 export { default as SelectionHandler } from "./selectionHandler";
 export { default as TextEventHandler } from "./textEventHandler";
 export { default as LabelHandler } from "./labelHandler";
+export { default as DarkColorHandler } from "./darkColorHandler";
 export { default as ZoomHandler } from "./zoomHandler";
 export { default as PersistenceHandler } from "./persistenceHandler";
 export { default as ArrowResizeHandler } from "./arrowResizeHandler";

@@ -3,6 +3,8 @@
 // canvas.currentStyle; the (non-React) tool classes read it here at create
 // time so new shapes pick up the chosen stroke/fill/width/style.
 
+import { dimColor, isDarkTheme } from "../../utils/themeColor";
+
 export const DEFAULT_STYLE = {
   stroke: "#1e1e1e", // dark reads well on the white canvas
   strokeWidth: 3,
@@ -85,9 +87,16 @@ export const toFabricStyle = (style = DEFAULT_STYLE) => ({
   objectCaching: false,
 });
 
-// Fabric-ready style the tools should apply to a new object.
-export const resolveToolStyle = (canvas) =>
-  canvas?.currentStyle || toFabricStyle(DEFAULT_STYLE);
+// Fabric-ready style the tools should apply to a new object. In dark mode the
+// (light-authored) fill is dimmed so new shapes aren't harsh on the dark board;
+// stored dimmed, and DarkColorHandler flips it back on a theme toggle.
+export const resolveToolStyle = (canvas) => {
+  const style = canvas?.currentStyle || toFabricStyle(DEFAULT_STYLE);
+  if (isDarkTheme() && style.fill) {
+    return { ...style, fill: dimColor(style.fill) };
+  }
+  return style;
+};
 
 // Fabric-ready props for a new text object (colour is the stroke swatch).
 export const toTextStyle = (style = DEFAULT_STYLE) => ({
