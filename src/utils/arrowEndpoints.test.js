@@ -1,5 +1,9 @@
 import { fabric } from "fabric";
-import { reshapeArrow, refitArrowBounds } from "./arrowEndpoints";
+import {
+  reshapeArrow,
+  refitArrowBounds,
+  setArrowEndpoints,
+} from "./arrowEndpoints";
 import { getArrowParts, isArrow } from "./shapeLabel";
 import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
 
@@ -90,5 +94,33 @@ describe("refitArrowBounds", () => {
     expect(Math.round(tailAfter.x)).toBe(Math.round(tailBefore.x));
     expect(Math.round(tailAfter.y)).toBe(Math.round(tailBefore.y));
     expect(a.scaleX).toBe(1);
+  });
+});
+
+describe("setArrowEndpoints (programmatic re-route)", () => {
+  test("sets both endpoints from scene coords and stays an arrow", () => {
+    const c = new fabric.Canvas(document.createElement("canvas"));
+    const a = arrow();
+    c.add(a);
+
+    setArrowEndpoints(a, { x: 40, y: 40 }, { x: 240, y: 180 });
+
+    const P = fabric.Point;
+    const abs = (k) => {
+      const { line } = getArrowParts(a);
+      const lp = line.calcLinePoints();
+      const off = k === "e1" ? { x: lp.x1, y: lp.y1 } : { x: lp.x2, y: lp.y2 };
+      return fabric.util.transformPoint(
+        new P(line.left + off.x, line.top + off.y),
+        a.calcTransformMatrix(),
+      );
+    };
+    const tail = abs("e1");
+    const tip = abs("e2");
+    expect(Math.round(tail.x)).toBe(40);
+    expect(Math.round(tail.y)).toBe(40);
+    expect(Math.round(tip.x)).toBe(240);
+    expect(Math.round(tip.y)).toBe(180);
+    expect(isArrow(a)).toBe(true);
   });
 });

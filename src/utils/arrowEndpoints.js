@@ -6,6 +6,21 @@ import { getArrowParts } from "./shapeLabel";
 // its line + head(s) + label IN PLACE (no group rebuild mid-drag), keeping the
 // group's centre fixed so the children keep rendering correctly. The group's
 // bounding box is re-fitted on drop.
+//
+// Extension seams (kept deliberately small — features aren't built yet):
+//  - applyEndpointsLocal() is the SINGLE place that knows how an arrow is laid
+//    out from its two endpoints. Every mutation (endpoint drag, programmatic
+//    re-route) funnels through it, so new sources of endpoint positions don't
+//    duplicate layout logic.
+//  - setArrowEndpoints(group, tailScene, tipScene) re-routes an arrow from
+//    absolute (scene) coords — the entry point a future SHAPE-BINDING feature
+//    (A3) would call from a shape's object:moving to keep a bound arrow glued.
+//    NOTE: binding also needs a *persisted* arrow<->shape reference, which the
+//    current structure-only model (no custom props) can't hold — that's the
+//    real work for A3, not the re-routing.
+//  - BENDING (A2): a bent/elbow arrow means the single `line` child becomes a
+//    multi-point polyline/path. isArrow (shapeLabel) + applyEndpointsLocal are
+//    where that generalisation would land; the head/label/refit logic stays.
 
 const angleDeg = (a, b) => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 
@@ -29,13 +44,12 @@ const localEndpoints = (group) => {
   };
 };
 
-// Move one endpoint to `local` (group-local coords) and rebuild the line, the
-// head(s) and the label around the new segment — all in group-local space.
-export const reshapeArrow = (group, key, local) => {
+// The single source of truth for arrow layout: rewrite the line, head(s) and
+// label to a straight segment between `start` and `end`, both in GROUP-LOCAL
+// coords (relative to the group centre, which is left unchanged so children
+// keep rendering). All endpoint mutations funnel through here.
+const applyEndpointsLocal = (group, start, end) => {
   const { line, heads, text } = getArrowParts(group);
-  const ends = localEndpoints(group);
-  const start = key === "e1" ? local : ends.e1;
-  const end = key === "e2" ? local : ends.e2;
 
   line.set({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
   line._setWidthHeight(); // re-derives the line's centre + bbox from the points
@@ -55,6 +69,29 @@ export const reshapeArrow = (group, key, local) => {
     text.setCoords();
   }
   group.dirty = true;
+};
+
+// Drag ONE endpoint to `local` (group-local coords), keeping the other put.
+// Used live by the control handler each frame (no bounds re-fit for speed).
+export const reshapeArrow = (group, key, local) => {
+  const ends = localEndpoints(group);
+  applyEndpointsLocal(
+    group,
+    key === "e1" ? local : ends.e1,
+    key === "e2" ? local : ends.e2,
+  );
+};
+
+// Re-route an arrow to new endpoints given in absolute (scene) coords, and
+// re-fit its bounds. The programmatic entry point (e.g. a future bound shape
+// moving) — callers just say "put the ends here" and the arrow model handles
+// the rest.
+export const setArrowEndpoints = (group, tailScene, tipScene) => {
+  const inv = fabric.util.invertTransform(group.calcTransformMatrix());
+  const toLocal = (p) =>
+    fabric.util.transformPoint(new fabric.Point(p.x, p.y), inv);
+  applyEndpointsLocal(group, toLocal(tailScene), toLocal(tipScene));
+  refitArrowBounds(group);
 };
 
 // Re-fit the group's bounding box to its (mutated) children while preserving
@@ -108,7 +145,7 @@ const makeControl = (key) =>
     positionHandler: positionHandler(key),
     actionHandler: actionHandler(key),
     actionName: "arrowEndpoint",
-    cursorStyle: "crosshair",
+    cursorStyle: "pointer",
     render: renderHandle,
     mouseUpHandler: (eventData, transform) => {
       refitArrowBounds(transform.target);
