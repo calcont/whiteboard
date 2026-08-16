@@ -1,0 +1,171 @@
+import { fabric } from "fabric";
+import rough from "roughjs";
+
+// Excalidraw-style hand-drawn rendering. We swap the crisp _render of the basic
+// shape primitives (rect / ellipse / polygon / line) for a rough.js version,
+// WITHOUT changing their `type` — so labels, dark-mode fill adaptation, hit
+// detection and reload all keep working. fabric.Path is deliberately left alone
+// so imported brand logos AND arrowheads stay crisp.
+
+const gen = rough.generator();
+const ROUGHNESS = 1.1;
+
+// Stable per-object seed so the wobble doesn't jitter every frame (rough with a
+// fixed seed is deterministic). In-memory only; a reload re-wobbles, which is
+// fine.
+const seedFor = (obj) => {
+  if (obj.__roughSeed == null) {
+    obj.__roughSeed = Math.floor(Math.random() * 2 ** 31);
+  }
+  return obj.__roughSeed;
+};
+
+const hasFill = (f) => f && f !== "transparent" && f !== "none";
+
+// Rough options for the STROKE only. We intentionally do NOT let rough draw the
+// fill — its solid fill is a separate wobbly polygon that doesn't line up with
+// the stroke, so the fill bleeds past the border. Instead we fill the exact
+// geometry crisply (fillExact) and draw the rough outline on top. Single pass
+// (disableMultiStroke) so a thick or dashed border doesn't render doubled.
+const optsFor = (obj) => ({
+  seed: seedFor(obj),
+  roughness: ROUGHNESS,
+  stroke: obj.stroke || "transparent",
+  strokeWidth: obj.strokeWidth || 1,
+  disableMultiStroke: true,
+});
+
+// Cache the generated drawable; only regenerate when geometry/style changes.
+const drawableFor = (obj, key, make) => {
+  if (obj.__roughKey !== key) {
+    obj.__roughDrawable = make();
+    obj.__roughKey = key;
+  }
+  return obj.__roughDrawable;
+};
+
+const traceOps = (ctx, ops) => {
+  ctx.beginPath();
+  for (const { op, data } of ops) {
+    if (op === "move") ctx.moveTo(data[0], data[1]);
+    else if (op === "lineTo") ctx.lineTo(data[0], data[1]);
+    else if (op === "bcurveTo")
+      ctx.bezierCurveTo(data[0], data[1], data[2], data[3], data[4], data[5]);
+  }
+};
+
+// Render a rough drawable's sets to an (already object-local) fabric context,
+// honouring the object's stroke colour/width/dash.
+const drawRough = (ctx, obj, drawable) => {
+  const o = drawable.options;
+  for (const set of drawable.sets) {
+    traceOps(ctx, set.ops);
+    if (set.type === "fillPath") {
+      ctx.fillStyle = o.fill;
+      ctx.fill();
+    } else if (set.type === "path") {
+      ctx.save();
+      ctx.strokeStyle = o.stroke;
+      ctx.lineWidth = o.strokeWidth;
+      if (Array.isArray(obj.strokeDashArray))
+        ctx.setLineDash(obj.strokeDashArray);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+};
+
+// Global sketchy on/off. Default ON (the excalidraw look); a crisp mode serves
+// clean infra/architecture diagrams. Persisted in localStorage like the theme.
+const SKETCHY_KEY = "wb-sketchy";
+const readSketchy = () => {
+  try {
+    return localStorage.getItem(SKETCHY_KEY) !== "false";
+  } catch {
+    return true;
+  }
+};
+let sketchyEnabled = readSketchy();
+
+export const isSketchyMode = () => sketchyEnabled;
+export const setSketchyMode = (on) => {
+  sketchyEnabled = !!on;
+  try {
+    localStorage.setItem(SKETCHY_KEY, String(sketchyEnabled));
+  } catch {
+    // ignore persistence failure
+  }
+};
+
+// Install a rough _render on a shape class, keeping its crisp original as a
+// fallback for when sketchy mode is off.
+const installRough = (Klass, roughRender) => {
+  const crisp = Klass.prototype._render;
+  Klass.prototype._render = function (ctx) {
+    if (!sketchyEnabled) return crisp.call(this, ctx);
+    return roughRender.call(this, ctx);
+  };
+};
+
+export const enableRoughRendering = () => {
+  if (fabric.__roughEnabled) return;
+  fabric.__roughEnabled = true;
+
+  installRough(fabric.Rect, function (ctx) {
+    const w = this.width;
+    const h = this.height;
+    if (hasFill(this.fill)) {
+      ctx.fillStyle = this.fill;
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+    }
+    const key = `${w}x${h}:${this.stroke}:${this.strokeWidth}:${this.strokeDashArray}:${this.__roughSeed}`;
+    const d = drawableFor(this, key, () =>
+      gen.rectangle(-w / 2, -h / 2, w, h, optsFor(this)),
+    );
+    drawRough(ctx, this, d);
+  });
+
+  installRough(fabric.Ellipse, function (ctx) {
+    const w = this.rx * 2;
+    const h = this.ry * 2;
+    if (hasFill(this.fill)) {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, this.rx, this.ry, 0, 0, 2 * Math.PI);
+      ctx.fillStyle = this.fill;
+      ctx.fill();
+    }
+    const key = `${w}x${h}:${this.stroke}:${this.strokeWidth}:${this.strokeDashArray}:${this.__roughSeed}`;
+    const d = drawableFor(this, key, () =>
+      gen.ellipse(0, 0, w, h, optsFor(this)),
+    );
+    drawRough(ctx, this, d);
+  });
+
+  installRough(fabric.Polygon, function (ctx) {
+    const pts = this.points.map((p) => [
+      p.x - this.pathOffset.x,
+      p.y - this.pathOffset.y,
+    ]);
+    if (hasFill(this.fill)) {
+      ctx.beginPath();
+      pts.forEach((p, i) =>
+        i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]),
+      );
+      ctx.closePath();
+      ctx.fillStyle = this.fill;
+      ctx.fill();
+    }
+    const key = `${JSON.stringify(pts)}:${this.stroke}:${this.strokeWidth}:${this.strokeDashArray}:${this.__roughSeed}`;
+    const d = drawableFor(this, key, () => gen.polygon(pts, optsFor(this)));
+    drawRough(ctx, this, d);
+  });
+
+  installRough(fabric.Line, function (ctx) {
+    const p = this.calcLinePoints();
+    const key = `${p.x1},${p.y1},${p.x2},${p.y2}:${this.stroke}:${this.strokeWidth}:${this.strokeDashArray}:${this.__roughSeed}`;
+    const d = drawableFor(this, key, () =>
+      gen.line(p.x1, p.y1, p.x2, p.y2, optsFor(this)),
+    );
+    drawRough(ctx, this, d);
+  });
+};
