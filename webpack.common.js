@@ -1,4 +1,5 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require("path");
 const webpack = require("webpack");
 const dotenv = require("dotenv");
@@ -22,10 +23,22 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "public", "index.html"),
-      // The favicon is an SVG declared directly in the template <head> and
-      // served from public/ — no raster favicon file to inject here.
+      // The favicon is an SVG declared directly in the template <head>; the
+      // CopyWebpackPlugin below emits it (and manifest.json, robots.txt) into
+      // the build. In dev they're served straight from public/ (static).
       filename: "index.html",
-      manifest: "./public/manifest.json",
+    }),
+    // Emit everything in public/ (favicon.svg, manifest.json, robots.txt, ...)
+    // into the build output — WITHOUT this the production bundle shipped no
+    // favicon at all (dev worked only because it serves public/ statically).
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, "public"),
+          to: ".",
+          globOptions: { ignore: ["**/index.html"] },
+        },
+      ],
     }),
     new webpack.DefinePlugin({
       "process.env": parseEnv(),
