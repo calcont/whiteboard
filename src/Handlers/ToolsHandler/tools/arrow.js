@@ -1,6 +1,7 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
 import { resolveToolStyle } from "../toolStyle";
+import { attachEndpointControls } from "../../../utils/arrowEndpoints";
 
 const ARROW_HEAD_PATH = "M 0 0 L 20 10 L 0 20 Z";
 
@@ -84,11 +85,10 @@ export const buildArrowGroup = (start, end, style) => {
     // transparent shapes keep convenient click-anywhere bbox selection.
     perPixelTargetFind: true,
   });
-  // Resize arrows from the corners only. Canvas uniformScaling makes corner
-  // drags scale both axes together; a *side* handle scales one axis, which
-  // shears/mirrors the rotated head. Hiding the side handles keeps every
-  // resize uniform so the head stays a clean, fixed-size triangle.
-  group.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
+  // Excalidraw-style editing: drag either endpoint to re-aim/extend the arrow,
+  // instead of scaling a bounding box. Replaces the default controls with two
+  // endpoint handles (tail + tip).
+  attachEndpointControls(group);
   return group;
 };
 
