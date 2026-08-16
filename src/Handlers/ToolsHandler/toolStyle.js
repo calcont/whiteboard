@@ -11,7 +11,7 @@ export const DEFAULT_STYLE = {
   strokeStyle: "solid", // solid | dashed | dotted
   fill: "transparent",
   fontFamily: "Comic Sans MS", // excalidraw-style hand-drawn default
-  fontSize: 16, // "M" — fits inside a default box without overflowing
+  fontSize: 20, // "M" — Excalidraw's default; readable without overflowing
   arrowHeads: "end", // "end" (single head) | "both" (double-headed)
 };
 
@@ -32,9 +32,9 @@ export const FONT_FAMILIES = [
 ];
 
 export const FONT_SIZES = [
-  { label: "S", value: 12 },
-  { label: "M", value: 16 },
-  { label: "L", value: 24 },
+  { label: "S", value: 16 },
+  { label: "M", value: 20 },
+  { label: "L", value: 28 },
 ];
 
 export const STROKE_WIDTHS = [

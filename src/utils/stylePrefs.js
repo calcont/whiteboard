@@ -8,11 +8,13 @@ import { getInitialTheme, THEME_DARK, LIGHT_INK, DARK_INK } from "./theme";
 
 const KEY = "wb-style";
 // Bumped when the default style changes in a way existing stored styles should
-// pick up. v2: default font Arial -> Comic Sans MS. v3: font-size scale shrank
-// (default 24 -> 16) so labels stop overflowing their boxes.
-const STYLE_VERSION = 3;
+// pick up. v2: default font Arial -> Comic Sans MS. v3: font-size default
+// 24 -> 16 (labels were overflowing). v4: default 16 -> 20 (16 read too small).
+const STYLE_VERSION = 4;
 const PREVIOUS_DEFAULT_FONT = "Arial";
-const PREVIOUS_DEFAULT_FONT_SIZE = 24; // the old "M"/default, pre-v3
+// Superseded default font sizes (pre-v4): the original 24 and the v3 16. Anyone
+// still parked on one of these gets bumped to the current default.
+const LEGACY_DEFAULT_FONT_SIZES = [24, 16];
 
 // Default style whose ink matches the INITIAL theme, so shapes drawn on a
 // system-dark board come out light (visible) even before any manual theme
@@ -35,11 +37,12 @@ export const getStoredStyle = () => {
     if (!parsed._v && parsed.fontFamily === PREVIOUS_DEFAULT_FONT) {
       merged.fontFamily = DEFAULT_STYLE.fontFamily;
     }
-    // v3: shrink anyone still parked on the old 24px default down to the new
-    // default. An explicitly-picked size stored at v3+ is left alone.
+    // The font-size default has moved (24 -> 16 -> 20). Bump anyone still on a
+    // superseded default up to the current one. A size deliberately chosen at
+    // the current version (stored _v >= 4) is left alone.
     if (
-      (parsed._v || 0) < 3 &&
-      parsed.fontSize === PREVIOUS_DEFAULT_FONT_SIZE
+      (parsed._v || 0) < 4 &&
+      LEGACY_DEFAULT_FONT_SIZES.includes(parsed.fontSize)
     ) {
       merged.fontSize = DEFAULT_STYLE.fontSize;
     }
