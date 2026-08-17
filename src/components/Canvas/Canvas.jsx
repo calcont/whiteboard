@@ -2,10 +2,6 @@ import React, { useEffect, useRef } from "react";
 import { fabric } from "fabric";
 import "fabric-history";
 import { useCanvasContext } from "../../hooks/";
-import { enableRoughRendering } from "../../utils/roughRender";
-
-// Swap the basic shapes' render for a hand-drawn (rough.js) one, once.
-enableRoughRendering();
 import {
   MouseHandler,
   KeyBoardHandler,
