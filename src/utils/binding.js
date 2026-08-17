@@ -52,9 +52,10 @@ const bboxContainsPoint = (shape, p, margin = 0) => {
   );
 };
 
-// Point on the shape's border along the ray from its centre toward `toward`.
-// Clips the direction vector to the bounding box so the arrow touches the edge
-// rather than burying its head in the shape's middle.
+// Point on the shape's border along the ray from its centre toward `toward`, so
+// the arrow touches the actual outline (not the middle). Ellipses/circles use a
+// true ray-ellipse intersection; everything else clips the ray to the bounding
+// box (exact for rectangles; a close approximation for diamonds/polygons/icons).
 export const borderPoint = (shape, toward) => {
   const c = shape.getCenterPoint();
   const dx = toward.x - c.x;
@@ -63,10 +64,15 @@ export const borderPoint = (shape, toward) => {
   const b = sceneBBox(shape);
   const hw = b.width / 2;
   const hh = b.height / 2;
-  const t = Math.min(
-    dx === 0 ? Infinity : hw / Math.abs(dx),
-    dy === 0 ? Infinity : hh / Math.abs(dy),
-  );
+  const t =
+    shape.type === "ellipse" || shape.type === "circle"
+      ? // ray-ellipse: scale the direction so it lands exactly on the curve,
+        // otherwise the tip stops on the bounding square and leaves a gap.
+        1 / Math.hypot(dx / hw, dy / hh)
+      : Math.min(
+          dx === 0 ? Infinity : hw / Math.abs(dx),
+          dy === 0 ? Infinity : hh / Math.abs(dy),
+        );
   return { x: c.x + dx * t, y: c.y + dy * t };
 };
 

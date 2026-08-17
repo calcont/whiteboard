@@ -75,6 +75,25 @@ describe("borderPoint", () => {
     // straight up -> top edge centre (100, 70)
     expect(borderPoint(r, { x: 100, y: -100 })).toEqual({ x: 100, y: 70 });
   });
+
+  test("an ellipse lands on its curve, not the bounding box corner", () => {
+    // centre (100,100), rx 50, ry 30 (strokeWidth 0 -> bbox == geometry)
+    const e = new fabric.Ellipse({
+      left: 50,
+      top: 70,
+      rx: 50,
+      ry: 30,
+      strokeWidth: 0,
+    });
+    // straight right -> the right vertex (150,100)
+    const right = borderPoint(e, { x: 400, y: 100 });
+    expect(Math.round(right.x)).toBe(150);
+    expect(Math.round(right.y)).toBe(100);
+    // diagonal -> a point that actually satisfies the ellipse equation (~1)
+    const p = borderPoint(e, { x: 400, y: 400 });
+    const on = ((p.x - 100) / 50) ** 2 + ((p.y - 100) / 30) ** 2;
+    expect(on).toBeCloseTo(1, 2);
+  });
 });
 
 describe("shapeUnderPoint", () => {
