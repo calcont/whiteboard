@@ -24,6 +24,45 @@ import { getArrowParts } from "./shapeLabel";
 
 const angleDeg = (a, b) => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 
+// Orthogonal (elbow) route between two points: a right-angled path. Routes along
+// the dominant axis first, bending at the midpoint (a clean Z). Collapses to a
+// straight segment when the points share a row/column.
+export const elbowRoute = (s, e) => {
+  const dx = e.x - s.x;
+  const dy = e.y - s.y;
+  if (Math.abs(dx) < 1 || Math.abs(dy) < 1)
+    return [
+      { x: s.x, y: s.y },
+      { x: e.x, y: e.y },
+    ];
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    const mx = s.x + dx / 2;
+    return [
+      { x: s.x, y: s.y },
+      { x: mx, y: s.y },
+      { x: mx, y: e.y },
+      { x: e.x, y: e.y },
+    ];
+  }
+  const my = s.y + dy / 2;
+  return [
+    { x: s.x, y: s.y },
+    { x: s.x, y: my },
+    { x: e.x, y: my },
+    { x: e.x, y: e.y },
+  ];
+};
+
+// Position an elbow polyline so its points render at their exact group-local
+// coords (fabric otherwise offsets a polyline by its pathOffset). Set the route,
+// recompute dimensions, then pin left/top to the new pathOffset.
+export const layoutElbowPolyline = (poly, route) => {
+  poly.set({ points: route.map((p) => ({ x: p.x, y: p.y })) });
+  poly._setPositionDimensions({});
+  poly.set({ left: poly.pathOffset.x, top: poly.pathOffset.y });
+  poly.setCoords();
+};
+
 const IDENTITY = [1, 0, 0, 1, 0, 0];
 // The group's full object->screen matrix. Guards the case where the group
 // isn't on a canvas yet (buildArrowGroup calls setCoords() before canvas.add,
@@ -37,11 +76,28 @@ const screenMatrix = (group) =>
 // Endpoint positions in group-local coordinates (relative to the group centre).
 const localEndpoints = (group) => {
   const { line } = getArrowParts(group);
+  if (line.type === "polyline") {
+    // Elbow: points already live in group-local coords (see layoutElbowPolyline).
+    const pts = line.points;
+    return {
+      e1: { x: pts[0].x, y: pts[0].y },
+      e2: { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y },
+    };
+  }
   const lp = line.calcLinePoints();
   return {
     e1: { x: line.left + lp.x1, y: line.top + lp.y1 }, // tail (line start)
     e2: { x: line.left + lp.x2, y: line.top + lp.y2 }, // tip (line end)
   };
+};
+
+// Arrow endpoints in absolute (scene) coords — handles line or elbow polyline.
+export const sceneEndpoints = (group) => {
+  const { e1, e2 } = localEndpoints(group);
+  const m = group.calcTransformMatrix();
+  const toScene = (p) =>
+    fabric.util.transformPoint(new fabric.Point(p.x, p.y), m);
+  return { tail: toScene(e1), tip: toScene(e2) };
 };
 
 // The single source of truth for arrow layout: rewrite the line, head(s) and
@@ -50,22 +106,43 @@ const localEndpoints = (group) => {
 // keep rendering). All endpoint mutations funnel through here.
 const applyEndpointsLocal = (group, start, end) => {
   const { line, heads, text } = getArrowParts(group);
+  const elbow = line.type === "polyline";
 
-  line.set({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
-  line._setWidthHeight(); // re-derives the line's centre + bbox from the points
-  line.setCoords();
+  // The route the head/label follow: a straight [start,end] or the elbow path.
+  const route = elbow ? elbowRoute(start, end) : [start, end];
 
-  // heads[0] sits at the tip (line end); a second head (double-ended) at tail.
+  if (elbow) {
+    layoutElbowPolyline(line, route);
+  } else {
+    line.set({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
+    line._setWidthHeight(); // re-derives the line's centre + bbox from the points
+    line.setCoords();
+  }
+
+  // heads[0] sits at the tip, aimed along the LAST segment; a second head
+  // (double-ended) sits at the tail, aimed along the FIRST segment (reversed).
   if (heads[0]) {
-    heads[0].set({ left: end.x, top: end.y, angle: angleDeg(start, end) });
+    heads[0].set({
+      left: end.x,
+      top: end.y,
+      angle: angleDeg(route[route.length - 2], end),
+    });
     heads[0].setCoords();
   }
   if (heads[1]) {
-    heads[1].set({ left: start.x, top: start.y, angle: angleDeg(end, start) });
+    heads[1].set({
+      left: start.x,
+      top: start.y,
+      angle: angleDeg(route[1], start),
+    });
     heads[1].setCoords();
   }
   if (text) {
-    text.set({ left: (start.x + end.x) / 2, top: (start.y + end.y) / 2 });
+    // Straight: segment midpoint. Elbow: the middle vertex of the route.
+    const mid = elbow
+      ? route[Math.floor(route.length / 2)]
+      : { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    text.set({ left: mid.x, top: mid.y });
     text.setCoords();
   }
   group.dirty = true;

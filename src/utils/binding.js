@@ -1,6 +1,6 @@
 import { fabric } from "fabric";
-import { isArrow, getArrowParts } from "./shapeLabel";
-import { setArrowEndpoints } from "./arrowEndpoints";
+import { isArrow } from "./shapeLabel";
+import { setArrowEndpoints, sceneEndpoints } from "./arrowEndpoints";
 
 // Arrow <-> shape binding (eraser.io style). An arrow endpoint can be "bound" to
 // a shape by that shape's stable id; when the shape moves or resizes we re-route
@@ -114,18 +114,9 @@ export const boundArrows = (canvas, shapeId) =>
         isArrow(o) && (o.startBinding === shapeId || o.endBinding === shapeId),
     );
 
-// Current arrow endpoints in scene coords (tail = line start, tip = line end).
-const arrowEndpointsScene = (arrow) => {
-  const { line } = getArrowParts(arrow);
-  const lp = line.calcLinePoints();
-  const m = arrow.calcTransformMatrix();
-  const toScene = (x, y) =>
-    fabric.util.transformPoint(
-      new fabric.Point(line.left + x, line.top + y),
-      m,
-    );
-  return { tail: toScene(lp.x1, lp.y1), tip: toScene(lp.x2, lp.y2) };
-};
+// Current arrow endpoints in scene coords (delegates to the arrow-layout helper,
+// which handles both a straight line and an elbow polyline connector).
+const arrowEndpointsScene = (arrow) => sceneEndpoints(arrow);
 
 // Scene position of one arrow end ("start" = tail, "end" = tip).
 export const arrowEndScene = (arrow, end) => {

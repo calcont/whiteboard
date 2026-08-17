@@ -1,7 +1,13 @@
 import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
 import { resolveToolStyle } from "../toolStyle";
-import { attachEndpointControls } from "../../../utils/arrowEndpoints";
+import {
+  attachEndpointControls,
+  elbowRoute,
+  setArrowEndpoints,
+  sceneEndpoints,
+} from "../../../utils/arrowEndpoints";
+import { getArrowParts, isElbowArrow } from "../../../utils/shapeLabel";
 import { bindArrowOnDraw, shapeUnderPoint } from "../../../utils/binding";
 import {
   showBindHighlight,
@@ -36,7 +42,8 @@ const makeHead = (at, angle, color) =>
 // (a second head at start). Exported so the resize handler and the properties
 // panel can rebuild an arrow without scaling — and distorting — the head(s).
 export const buildArrowGroup = (start, end, style) => {
-  const line = new fabric.Line([start.x, start.y, end.x, end.y], {
+  const elbow = style.arrowType === "elbow";
+  const connStyle = {
     stroke: style.stroke,
     strokeWidth: style.strokeWidth,
     strokeDashArray: style.strokeDashArray || null,
@@ -46,13 +53,19 @@ export const buildArrowGroup = (start, end, style) => {
     hasControls: false,
     hasBorders: false,
     selectable: false,
-  });
+  };
+  // The connector: a straight line, or an orthogonally-routed polyline (elbow).
+  const line = elbow
+    ? new fabric.Polyline(elbowRoute(start, end), { ...connStyle, fill: "" })
+    : new fabric.Line([start.x, start.y, end.x, end.y], connStyle);
+  // Head aims along the last route segment (= start->end for a straight arrow).
+  const route = elbow ? elbowRoute(start, end) : [start, end];
   const children = [
     line,
-    makeHead(end, angleBetween(start, end), style.stroke),
+    makeHead(end, angleBetween(route[route.length - 2], end), style.stroke),
   ];
   if (style.heads === "both") {
-    children.push(makeHead(start, angleBetween(end, start), style.stroke));
+    children.push(makeHead(start, angleBetween(route[1], start), style.stroke));
   }
   // Optional centred text label, anchored to the line's midpoint. Carried
   // through rebuilds (resize) so a labelled arrow keeps its label; a non-
@@ -90,11 +103,61 @@ export const buildArrowGroup = (start, end, style) => {
     // transparent shapes keep convenient click-anywhere bbox selection.
     perPixelTargetFind: true,
   });
+  // An elbow polyline is built in absolute coords; re-lay it in group-local
+  // space (and re-fit bounds) so its points/endpoints are consistent with the
+  // rest of the arrow model.
+  if (elbow)
+    setArrowEndpoints(
+      group,
+      { x: start.x, y: start.y },
+      { x: end.x, y: end.y },
+    );
   // Excalidraw-style editing: drag either endpoint to re-aim/extend the arrow,
   // instead of scaling a bounding box. Replaces the default controls with two
   // endpoint handles (tail + tip).
   attachEndpointControls(group);
   return group;
+};
+
+// Binding fields carried across a rebuild so a rebuilt arrow stays bound.
+const BINDING_FIELDS = [
+  "id",
+  "startBinding",
+  "endBinding",
+  "startAnchor",
+  "endAnchor",
+];
+
+// Rebuild an existing arrow between its current endpoints, preserving its style,
+// heads, elbow/straight type, label and bindings — with `overrides` applied
+// (e.g. { arrowType: "elbow" } or { heads: "both" }). The single rebuild path
+// for the properties panel and the resize handler, so all of them handle elbow
+// arrows and keep bindings. Does NOT touch the canvas — the caller swaps it in.
+export const rebuildArrow = (group, overrides = {}) => {
+  const { tail, tip } = sceneEndpoints(group);
+  const { line, heads, text } = getArrowParts(group);
+  const arrow = buildArrowGroup(tail, tip, {
+    stroke: line.stroke,
+    strokeWidth: line.strokeWidth,
+    strokeDashArray: line.strokeDashArray,
+    heads: heads.length === 2 ? "both" : "end",
+    arrowType: isElbowArrow(group) ? "elbow" : "straight",
+    label: text
+      ? {
+          text: text.text,
+          fontFamily: text.fontFamily,
+          fontSize: text.fontSize,
+          fill: text.fill,
+          backgroundColor: text.backgroundColor,
+        }
+      : null,
+    ...overrides,
+  });
+  BINDING_FIELDS.forEach((f) => {
+    if (group[f] !== undefined) arrow[f] = group[f];
+  });
+  arrow.setCoords();
+  return arrow;
 };
 
 export class Arrow extends Tool {
@@ -117,6 +180,7 @@ export class Arrow extends Tool {
     this.origY = this.pointer.y;
     this.style = resolveToolStyle(canvas);
     this.heads = canvas.currentArrowHeads === "both" ? "both" : "end";
+    this.arrowType = canvas.currentArrowType === "elbow" ? "elbow" : "straight";
 
     // Live preview: a plain line + head that follow the cursor; on mouse-up
     // they're replaced by a proper arrow group (buildArrowGroup).
@@ -195,7 +259,11 @@ export class Arrow extends Tool {
     const arrow = buildArrowGroup(
       { x: this.origX, y: this.origY },
       { x: this.pointer.x, y: this.pointer.y },
-      { ...(this.style || resolveToolStyle(canvas)), heads: this.heads },
+      {
+        ...(this.style || resolveToolStyle(canvas)),
+        heads: this.heads,
+        arrowType: this.arrowType,
+      },
     );
     arrow.setCoords();
     canvas.add(arrow);

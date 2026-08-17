@@ -3,9 +3,53 @@ import {
   reshapeArrow,
   refitArrowBounds,
   setArrowEndpoints,
+  elbowRoute,
 } from "./arrowEndpoints";
-import { getArrowParts, isArrow } from "./shapeLabel";
+import { getArrowParts, isArrow, isElbowArrow } from "./shapeLabel";
 import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
+
+describe("elbowRoute (orthogonal routing)", () => {
+  test("mostly-horizontal points bend at the mid-x (H then V then H)", () => {
+    const r = elbowRoute({ x: 0, y: 0 }, { x: 200, y: 60 });
+    expect(r).toEqual([
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 60 },
+      { x: 200, y: 60 },
+    ]);
+    // every segment is axis-aligned (a right angle at each bend)
+    for (let i = 1; i < r.length; i += 1)
+      expect(r[i].x === r[i - 1].x || r[i].y === r[i - 1].y).toBe(true);
+  });
+
+  test("mostly-vertical points bend at the mid-y", () => {
+    const r = elbowRoute({ x: 0, y: 0 }, { x: 60, y: 200 });
+    expect(r[1]).toEqual({ x: 0, y: 100 });
+    expect(r[2]).toEqual({ x: 60, y: 100 });
+  });
+
+  test("aligned points collapse to a straight two-point segment", () => {
+    expect(elbowRoute({ x: 0, y: 0 }, { x: 200, y: 0 })).toHaveLength(2);
+  });
+});
+
+describe("isElbowArrow", () => {
+  test("true for an elbow arrow, false for a straight one", () => {
+    const straight = buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { stroke: "#000", strokeWidth: 2, arrowType: "straight" },
+    );
+    const elbow = buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 200, y: 120 },
+      { stroke: "#000", strokeWidth: 2, arrowType: "elbow" },
+    );
+    expect(isElbowArrow(straight)).toBe(false);
+    expect(isElbowArrow(elbow)).toBe(true);
+    expect(isArrow(elbow)).toBe(true); // an elbow is still an arrow
+  });
+});
 
 const arrow = (label) =>
   buildArrowGroup(
