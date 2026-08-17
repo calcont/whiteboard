@@ -6,9 +6,10 @@ import { fabric } from "fabric";
 // (excludeFromExport) and flagged __nonBindable so they can't target themselves.
 // Kept on canvas.__bindHL; cleared on drop.
 
-const STROKE = "#6366f1"; // soft indigo
-const FILL = "rgba(99,102,241,0.09)"; // faint tint, not a heavy border
-const PAD = 4;
+// A thin accent outline that hugs the shape's border (eraser.io-style hover
+// affordance) — no fill, just the border "lighting up".
+const STROKE = "#6965db"; // clean violet-indigo accent
+const PAD = 2;
 
 const makeRect = (shape) => {
   const b = shape.getBoundingRect(true, true);
@@ -17,11 +18,11 @@ const makeRect = (shape) => {
     top: b.top - PAD,
     width: b.width + PAD * 2,
     height: b.height + PAD * 2,
-    rx: 14,
-    ry: 14,
-    fill: FILL,
+    rx: 12,
+    ry: 12,
+    fill: "transparent",
     stroke: STROKE,
-    strokeWidth: 1.5,
+    strokeWidth: 2,
     selectable: false,
     evented: false,
     excludeFromExport: true,
