@@ -58,6 +58,10 @@ describe("isBindable", () => {
     expect(isBindable(new fabric.Line([0, 0, 10, 0]))).toBe(false);
     expect(isBindable(new fabric.IText("x"))).toBe(false);
   });
+
+  test("an object flagged __nonBindable (e.g. the bind highlight) is skipped", () => {
+    expect(isBindable(rect({ __nonBindable: true }))).toBe(false);
+  });
 });
 
 describe("borderPoint", () => {
@@ -84,6 +88,15 @@ describe("shapeUnderPoint", () => {
     const r = rect({ left: 50, top: 50 });
     c.add(r);
     expect(shapeUnderPoint(c, { x: 100, y: 80 }, r)).toBe(null);
+  });
+
+  test("exclude may be an array (arrow + its preview objects)", () => {
+    const c = makeCanvas();
+    const r = rect({ left: 50, top: 50 });
+    const line = new fabric.Line([0, 0, 10, 0]);
+    c.add(r, line);
+    expect(shapeUnderPoint(c, { x: 100, y: 80 }, [line, r])).toBe(null);
+    expect(shapeUnderPoint(c, { x: 100, y: 80 }, [line])).toBe(r);
   });
 
   test("binds to a point just outside the edge (within BIND_MARGIN)", () => {

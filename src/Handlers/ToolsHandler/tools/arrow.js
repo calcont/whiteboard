@@ -2,7 +2,11 @@ import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
 import { resolveToolStyle } from "../toolStyle";
 import { attachEndpointControls } from "../../../utils/arrowEndpoints";
-import { bindArrowOnDraw } from "../../../utils/binding";
+import { bindArrowOnDraw, shapeUnderPoint } from "../../../utils/binding";
+import {
+  showBindHighlight,
+  clearBindHighlight,
+} from "../../../utils/bindingHighlight";
 
 const ARROW_HEAD_PATH = "M 0 0 L 20 10 L 0 20 Z";
 
@@ -162,9 +166,19 @@ export class Arrow extends Tool {
       this.arrowHeadStart.angle = angleBetween(this.pointer, origin);
       this.arrowHeadStart.setCoords();
     }
+    // Live binding affordance: highlight the shape the moving endpoint is over,
+    // excluding the transient preview objects so they don't count as targets.
+    const target = shapeUnderPoint(canvas, this.pointer, [
+      this.line,
+      this.arrowHead,
+      this.arrowHeadStart,
+    ]);
+    if (target) showBindHighlight(canvas, target);
+    else clearBindHighlight(canvas);
   }
 
   done(canvas) {
+    clearBindHighlight(canvas);
     // Use the arrow's actual length, not just its horizontal extent — a
     // vertical/steep arrow has a small x-delta and was being discarded as if
     // it were a stray click, so it never appeared.

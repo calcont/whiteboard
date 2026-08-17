@@ -29,7 +29,7 @@ export const ensureId = (obj) => {
 // imported icons (groups) all qualify.
 const NON_BINDABLE = new Set(["line", "i-text", "text", "textbox"]);
 export const isBindable = (o) =>
-  !!o && !isArrow(o) && !NON_BINDABLE.has(o.type);
+  !!o && !o.__nonBindable && !isArrow(o) && !NON_BINDABLE.has(o.type);
 
 // How far outside a shape an arrow endpoint can land and still bind. People draw
 // arrows TO a box's edge (or just past it), not deep inside — without this slack
@@ -118,12 +118,14 @@ export const rerouteArrow = (canvas, arrow) => {
 
 // --- bind on draw ---------------------------------------------------------
 // Topmost bindable shape whose bbox contains `point` (scene coords), skipping
-// the arrow being drawn.
+// `exclude` (a single object or an array — e.g. the arrow being drawn plus its
+// transient preview line/head, which must not count as binding targets).
 export const shapeUnderPoint = (canvas, point, exclude) => {
+  const skip = Array.isArray(exclude) ? exclude : exclude ? [exclude] : [];
   const objs = canvas.getObjects();
   for (let i = objs.length - 1; i >= 0; i -= 1) {
     const o = objs[i];
-    if (o === exclude || !isBindable(o)) continue;
+    if (skip.includes(o) || !isBindable(o)) continue;
     if (bboxContainsPoint(o, point, BIND_MARGIN)) return o;
   }
   return null;
