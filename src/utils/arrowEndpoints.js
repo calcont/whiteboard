@@ -118,12 +118,21 @@ const positionHandler = (key) =>
     );
   };
 
+// e1 = tail = the arrow's "start" end; e2 = tip = the "end" end.
+const endOf = (key) => (key === "e1" ? "start" : "end");
+
 const actionHandler = (key) =>
   function (eventData, transform, x, y) {
     const group = transform.target;
     const inv = fabric.util.invertTransform(screenMatrix(group));
     const local = fabric.util.transformPoint(new fabric.Point(x, y), inv);
     reshapeArrow(group, key, local);
+    // Let binding react live (highlight the shape under the dragged endpoint).
+    if (group.canvas)
+      group.canvas.fire("arrow:endpoint:moving", {
+        arrow: group,
+        end: endOf(key),
+      });
     return true;
   };
 
@@ -148,7 +157,14 @@ const makeControl = (key) =>
     cursorStyle: "pointer",
     render: renderHandle,
     mouseUpHandler: (eventData, transform) => {
-      refitArrowBounds(transform.target);
+      const group = transform.target;
+      refitArrowBounds(group);
+      // Commit binding: bind if dropped on a shape, unbind if in empty space.
+      if (group.canvas)
+        group.canvas.fire("arrow:endpoint:up", {
+          arrow: group,
+          end: endOf(key),
+        });
       return true;
     },
   });

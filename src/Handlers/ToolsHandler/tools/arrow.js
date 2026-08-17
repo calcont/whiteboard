@@ -2,6 +2,11 @@ import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
 import { resolveToolStyle } from "../toolStyle";
 import { attachEndpointControls } from "../../../utils/arrowEndpoints";
+import { bindArrowOnDraw, shapeUnderPoint } from "../../../utils/binding";
+import {
+  showBindHighlight,
+  clearBindHighlight,
+} from "../../../utils/bindingHighlight";
 
 const ARROW_HEAD_PATH = "M 0 0 L 20 10 L 0 20 Z";
 
@@ -161,9 +166,20 @@ export class Arrow extends Tool {
       this.arrowHeadStart.angle = angleBetween(this.pointer, origin);
       this.arrowHeadStart.setCoords();
     }
+    // Live binding affordance: highlight BOTH the source (start) shape and the
+    // shape the moving endpoint is over, excluding the transient preview objects.
+    const preview = [this.line, this.arrowHead, this.arrowHeadStart];
+    const src = shapeUnderPoint(
+      canvas,
+      { x: this.origX, y: this.origY },
+      preview,
+    );
+    const dst = shapeUnderPoint(canvas, this.pointer, preview);
+    showBindHighlight(canvas, [src, dst]);
   }
 
   done(canvas) {
+    clearBindHighlight(canvas);
     // Use the arrow's actual length, not just its horizontal extent — a
     // vertical/steep arrow has a small x-delta and was being discarded as if
     // it were a stray click, so it never appeared.
@@ -183,5 +199,13 @@ export class Arrow extends Tool {
     );
     arrow.setCoords();
     canvas.add(arrow);
+    // Bind either end that was dropped on a shape, and snap it to the border so
+    // the arrow stays glued when that shape later moves (eraser.io style).
+    bindArrowOnDraw(
+      canvas,
+      arrow,
+      { x: this.origX, y: this.origY },
+      { x: this.pointer.x, y: this.pointer.y },
+    );
   }
 }

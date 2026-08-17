@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { fabric } from "fabric";
 import "fabric-history";
 import { useCanvasContext } from "../../hooks/";
+import { enableBindingPersistence } from "../../utils/binding";
 import {
   MouseHandler,
   KeyBoardHandler,
@@ -12,8 +13,13 @@ import {
   ZoomHandler,
   PersistenceHandler,
   ArrowResizeHandler,
+  ArrowBindingHandler,
   DarkColorHandler,
 } from "../../Handlers/EventHandlers";
+
+// Persist arrow<->shape binding fields (id/startBinding/endBinding) on every
+// object so bindings survive reload and undo/redo. Once, at module load.
+enableBindingPersistence();
 
 function Canvas() {
   MouseHandler();
@@ -27,6 +33,7 @@ function Canvas() {
   ZoomHandler();
   PersistenceHandler();
   ArrowResizeHandler();
+  ArrowBindingHandler();
   DarkColorHandler();
   const canvasRef = useRef(null);
   const { setCanvas } = useCanvasContext();
