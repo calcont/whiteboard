@@ -1,0 +1,155 @@
+import { fabric } from "fabric";
+import { isArrow, getArrowParts } from "./shapeLabel";
+import { setArrowEndpoints } from "./arrowEndpoints";
+
+// Arrow <-> shape binding (eraser.io style). An arrow endpoint can be "bound" to
+// a shape by that shape's stable id; when the shape moves or resizes we re-route
+// the arrow so the bound end stays glued to the shape's border, facing the other
+// end. The re-route funnels through setArrowEndpoints (utils/arrowEndpoints), the
+// single arrow-layout entry point.
+//
+// Bindings live as three persisted fields (see enableBindingPersistence):
+//   shape.id                      — stable identity for a binding target
+//   arrow.startBinding / .endBinding — the bound shape's id (or undefined)
+
+// --- stable ids -----------------------------------------------------------
+let counter = 0;
+const genId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `wb-${Math.random().toString(36).slice(2)}-${(counter += 1)}`;
+
+export const ensureId = (obj) => {
+  if (!obj.id) obj.id = genId();
+  return obj.id;
+};
+
+// A shape that can be a binding target: anything that isn't an arrow, a bare
+// line, or loose text. Rects/ellipses/diamonds/polygons, labelled shapes and
+// imported icons (groups) all qualify.
+const NON_BINDABLE = new Set(["line", "i-text", "text", "textbox"]);
+export const isBindable = (o) =>
+  !!o && !isArrow(o) && !NON_BINDABLE.has(o.type);
+
+// --- geometry -------------------------------------------------------------
+// The shape's absolute (scene) axis-aligned bounding box. Good enough for v1
+// across rect/ellipse/diamond/polygon and labelled groups.
+const sceneBBox = (shape) => shape.getBoundingRect(true, true);
+
+const bboxContainsPoint = (shape, p) => {
+  const b = sceneBBox(shape);
+  return (
+    p.x >= b.left &&
+    p.x <= b.left + b.width &&
+    p.y >= b.top &&
+    p.y <= b.top + b.height
+  );
+};
+
+// Point on the shape's border along the ray from its centre toward `toward`.
+// Clips the direction vector to the bounding box so the arrow touches the edge
+// rather than burying its head in the shape's middle.
+export const borderPoint = (shape, toward) => {
+  const c = shape.getCenterPoint();
+  const dx = toward.x - c.x;
+  const dy = toward.y - c.y;
+  if (dx === 0 && dy === 0) return { x: c.x, y: c.y };
+  const b = sceneBBox(shape);
+  const hw = b.width / 2;
+  const hh = b.height / 2;
+  const t = Math.min(
+    dx === 0 ? Infinity : hw / Math.abs(dx),
+    dy === 0 ? Infinity : hh / Math.abs(dy),
+  );
+  return { x: c.x + dx * t, y: c.y + dy * t };
+};
+
+// --- lookups --------------------------------------------------------------
+const shapeById = (canvas, id) =>
+  id ? canvas.getObjects().find((o) => o.id === id) || null : null;
+
+export const boundArrows = (canvas, shapeId) =>
+  canvas
+    .getObjects()
+    .filter(
+      (o) =>
+        isArrow(o) && (o.startBinding === shapeId || o.endBinding === shapeId),
+    );
+
+// Current arrow endpoints in scene coords (tail = line start, tip = line end).
+const arrowEndpointsScene = (arrow) => {
+  const { line } = getArrowParts(arrow);
+  const lp = line.calcLinePoints();
+  const m = arrow.calcTransformMatrix();
+  const toScene = (x, y) =>
+    fabric.util.transformPoint(
+      new fabric.Point(line.left + x, line.top + y),
+      m,
+    );
+  return { tail: toScene(lp.x1, lp.y1), tip: toScene(lp.x2, lp.y2) };
+};
+
+// --- re-route -------------------------------------------------------------
+// Recompute one arrow's endpoints from its bindings. A bound end anchors to its
+// shape's border (facing the other end); an unbound end keeps its position. A
+// binding whose shape no longer exists is treated as unbound. Returns true if a
+// bound end was re-routed.
+export const rerouteArrow = (canvas, arrow) => {
+  const startShape = shapeById(canvas, arrow.startBinding);
+  const endShape = shapeById(canvas, arrow.endBinding);
+  if (!startShape && !endShape) return false;
+
+  const ends = arrowEndpointsScene(arrow);
+  const startAim = endShape ? endShape.getCenterPoint() : ends.tip;
+  const endAim = startShape ? startShape.getCenterPoint() : ends.tail;
+
+  const tail = startShape ? borderPoint(startShape, startAim) : ends.tail;
+  const tip = endShape ? borderPoint(endShape, endAim) : ends.tip;
+
+  setArrowEndpoints(arrow, tail, tip);
+  return true;
+};
+
+// --- bind on draw ---------------------------------------------------------
+// Topmost bindable shape whose bbox contains `point` (scene coords), skipping
+// the arrow being drawn.
+export const shapeUnderPoint = (canvas, point, exclude) => {
+  const objs = canvas.getObjects();
+  for (let i = objs.length - 1; i >= 0; i -= 1) {
+    const o = objs[i];
+    if (o === exclude || !isBindable(o)) continue;
+    if (bboxContainsPoint(o, point)) return o;
+  }
+  return null;
+};
+
+// After an arrow is drawn, bind whichever end landed inside a shape and snap the
+// bound end(s) to the border. tailScene/tipScene are the draw start/end points.
+export const bindArrowOnDraw = (canvas, arrow, tailScene, tipScene) => {
+  const startShape = shapeUnderPoint(canvas, tailScene, arrow);
+  const endShape = shapeUnderPoint(canvas, tipScene, arrow);
+  if (startShape) arrow.startBinding = ensureId(startShape);
+  if (endShape) arrow.endBinding = ensureId(endShape);
+  if (startShape || endShape) {
+    ensureId(arrow);
+    rerouteArrow(canvas, arrow);
+  }
+  return { startShape, endShape };
+};
+
+// --- persistence ----------------------------------------------------------
+// Serialise the binding fields on every object so bindings survive reload and
+// undo/redo (both go through toObject/loadFromJSON). Idempotent.
+export const enableBindingPersistence = () => {
+  if (fabric.__bindingPersist) return;
+  fabric.__bindingPersist = true;
+  const base = fabric.Object.prototype.toObject;
+  fabric.Object.prototype.toObject = function (propertiesToInclude) {
+    return base.call(this, [
+      "id",
+      "startBinding",
+      "endBinding",
+      ...(propertiesToInclude || []),
+    ]);
+  };
+};

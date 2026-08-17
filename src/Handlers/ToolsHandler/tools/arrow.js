@@ -2,6 +2,7 @@ import { fabric } from "fabric";
 import { Tool } from "../toolGeneric";
 import { resolveToolStyle } from "../toolStyle";
 import { attachEndpointControls } from "../../../utils/arrowEndpoints";
+import { bindArrowOnDraw } from "../../../utils/binding";
 
 const ARROW_HEAD_PATH = "M 0 0 L 20 10 L 0 20 Z";
 
@@ -183,5 +184,13 @@ export class Arrow extends Tool {
     );
     arrow.setCoords();
     canvas.add(arrow);
+    // Bind either end that was dropped on a shape, and snap it to the border so
+    // the arrow stays glued when that shape later moves (eraser.io style).
+    bindArrowOnDraw(
+      canvas,
+      arrow,
+      { x: this.origX, y: this.origY },
+      { x: this.pointer.x, y: this.pointer.y },
+    );
   }
 }
