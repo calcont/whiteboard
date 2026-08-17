@@ -8,6 +8,7 @@ import {
   rerouteArrow,
   bindArrowOnDraw,
   enableBindingPersistence,
+  BIND_MARGIN,
 } from "./binding";
 import { getArrowParts } from "./shapeLabel";
 import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
@@ -83,6 +84,16 @@ describe("shapeUnderPoint", () => {
     const r = rect({ left: 50, top: 50 });
     c.add(r);
     expect(shapeUnderPoint(c, { x: 100, y: 80 }, r)).toBe(null);
+  });
+
+  test("binds to a point just outside the edge (within BIND_MARGIN)", () => {
+    const c = makeCanvas();
+    const r = rect({ left: 50, top: 50 }); // right edge x=150
+    c.add(r);
+    // people draw arrows TO the edge; a point a few px past it still binds
+    expect(shapeUnderPoint(c, { x: 150 + BIND_MARGIN - 4, y: 80 })).toBe(r);
+    // but well beyond the margin does not
+    expect(shapeUnderPoint(c, { x: 150 + BIND_MARGIN + 20, y: 80 })).toBe(null);
   });
 });
 

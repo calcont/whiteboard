@@ -31,18 +31,24 @@ const NON_BINDABLE = new Set(["line", "i-text", "text", "textbox"]);
 export const isBindable = (o) =>
   !!o && !isArrow(o) && !NON_BINDABLE.has(o.type);
 
+// How far outside a shape an arrow endpoint can land and still bind. People draw
+// arrows TO a box's edge (or just past it), not deep inside — without this slack
+// the endpoint misses the bbox and nothing binds. The bound end then snaps to
+// the border anyway (rerouteArrow), so a little generosity here is free.
+export const BIND_MARGIN = 24;
+
 // --- geometry -------------------------------------------------------------
 // The shape's absolute (scene) axis-aligned bounding box. Good enough for v1
 // across rect/ellipse/diamond/polygon and labelled groups.
 const sceneBBox = (shape) => shape.getBoundingRect(true, true);
 
-const bboxContainsPoint = (shape, p) => {
+const bboxContainsPoint = (shape, p, margin = 0) => {
   const b = sceneBBox(shape);
   return (
-    p.x >= b.left &&
-    p.x <= b.left + b.width &&
-    p.y >= b.top &&
-    p.y <= b.top + b.height
+    p.x >= b.left - margin &&
+    p.x <= b.left + b.width + margin &&
+    p.y >= b.top - margin &&
+    p.y <= b.top + b.height + margin
   );
 };
 
@@ -118,7 +124,7 @@ export const shapeUnderPoint = (canvas, point, exclude) => {
   for (let i = objs.length - 1; i >= 0; i -= 1) {
     const o = objs[i];
     if (o === exclude || !isBindable(o)) continue;
-    if (bboxContainsPoint(o, point)) return o;
+    if (bboxContainsPoint(o, point, BIND_MARGIN)) return o;
   }
   return null;
 };
