@@ -166,15 +166,16 @@ export class Arrow extends Tool {
       this.arrowHeadStart.angle = angleBetween(this.pointer, origin);
       this.arrowHeadStart.setCoords();
     }
-    // Live binding affordance: highlight the shape the moving endpoint is over,
-    // excluding the transient preview objects so they don't count as targets.
-    const target = shapeUnderPoint(canvas, this.pointer, [
-      this.line,
-      this.arrowHead,
-      this.arrowHeadStart,
-    ]);
-    if (target) showBindHighlight(canvas, target);
-    else clearBindHighlight(canvas);
+    // Live binding affordance: highlight BOTH the source (start) shape and the
+    // shape the moving endpoint is over, excluding the transient preview objects.
+    const preview = [this.line, this.arrowHead, this.arrowHeadStart];
+    const src = shapeUnderPoint(
+      canvas,
+      { x: this.origX, y: this.origY },
+      preview,
+    );
+    const dst = shapeUnderPoint(canvas, this.pointer, preview);
+    showBindHighlight(canvas, [src, dst]);
   }
 
   done(canvas) {

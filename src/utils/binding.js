@@ -70,6 +70,32 @@ export const borderPoint = (shape, toward) => {
   return { x: c.x + dx * t, y: c.y + dy * t };
 };
 
+// --- anchor (which point on the shape the arrow attaches to) --------------
+// Store the attach point as a fraction of the shape's half-extents from its
+// centre ({fx,fy} in [-1,1]). This is resolution-independent, so the arrow
+// keeps attaching to the SAME side/corner as the shape moves or resizes —
+// letting an arrow connect at any reachable border point, not just the centre.
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+const anchorOf = (shape, scenePoint) => {
+  const c = shape.getCenterPoint();
+  const b = sceneBBox(shape);
+  return {
+    fx: clamp((scenePoint.x - c.x) / (b.width / 2 || 1), -1, 1),
+    fy: clamp((scenePoint.y - c.y) / (b.height / 2 || 1), -1, 1),
+  };
+};
+
+// The scene point an anchor currently resolves to (centre + fraction*half).
+const anchorTarget = (shape, anchor) => {
+  const c = shape.getCenterPoint();
+  const b = sceneBBox(shape);
+  return {
+    x: c.x + anchor.fx * (b.width / 2),
+    y: c.y + anchor.fy * (b.height / 2),
+  };
+};
+
 // --- lookups --------------------------------------------------------------
 const shapeById = (canvas, id) =>
   id ? canvas.getObjects().find((o) => o.id === id) || null : null;
@@ -95,6 +121,12 @@ const arrowEndpointsScene = (arrow) => {
   return { tail: toScene(lp.x1, lp.y1), tip: toScene(lp.x2, lp.y2) };
 };
 
+// Scene position of one arrow end ("start" = tail, "end" = tip).
+export const arrowEndScene = (arrow, end) => {
+  const e = arrowEndpointsScene(arrow);
+  return end === "start" ? e.tail : e.tip;
+};
+
 // --- re-route -------------------------------------------------------------
 // Recompute one arrow's endpoints from its bindings. A bound end anchors to its
 // shape's border (facing the other end); an unbound end keeps its position. A
@@ -106,8 +138,25 @@ export const rerouteArrow = (canvas, arrow) => {
   if (!startShape && !endShape) return false;
 
   const ends = arrowEndpointsScene(arrow);
-  const startAim = endShape ? endShape.getCenterPoint() : ends.tip;
-  const endAim = startShape ? startShape.getCenterPoint() : ends.tail;
+  // Aim each bound end at its stored anchor point (so it keeps its attach
+  // side/corner). A near-centre anchor is ambiguous, so fall back to facing the
+  // other end — which snaps to a clean edge instead of burying it in the middle.
+  const meaningful = (a) =>
+    a && (Math.abs(a.fx) > 0.05 || Math.abs(a.fy) > 0.05);
+  const startAim = startShape
+    ? meaningful(arrow.startAnchor)
+      ? anchorTarget(startShape, arrow.startAnchor)
+      : endShape
+        ? endShape.getCenterPoint()
+        : ends.tip
+    : null;
+  const endAim = endShape
+    ? meaningful(arrow.endAnchor)
+      ? anchorTarget(endShape, arrow.endAnchor)
+      : startShape
+        ? startShape.getCenterPoint()
+        : ends.tail
+    : null;
 
   const tail = startShape ? borderPoint(startShape, startAim) : ends.tail;
   const tip = endShape ? borderPoint(endShape, endAim) : ends.tip;
@@ -131,17 +180,31 @@ export const shapeUnderPoint = (canvas, point, exclude) => {
   return null;
 };
 
-// After an arrow is drawn, bind whichever end landed inside a shape and snap the
-// bound end(s) to the border. tailScene/tipScene are the draw start/end points.
+// Field names for an end ("start" = tail/e1, "end" = tip/e2).
+const bindingField = (end) => (end === "start" ? "startBinding" : "endBinding");
+const anchorField = (end) => (end === "start" ? "startAnchor" : "endAnchor");
+
+// Bind one end of an arrow to a shape, anchoring at where the endpoint landed.
+export const bindEnd = (arrow, end, shape, scenePoint) => {
+  arrow[bindingField(end)] = ensureId(shape);
+  arrow[anchorField(end)] = anchorOf(shape, scenePoint);
+  ensureId(arrow);
+};
+
+// Unbind one end (e.g. its endpoint was dragged into empty space).
+export const unbindEnd = (arrow, end) => {
+  arrow[bindingField(end)] = undefined;
+  arrow[anchorField(end)] = undefined;
+};
+
+// After an arrow is drawn, bind whichever end landed on a shape (anchored at the
+// drawn point) and snap it to the border. tailScene/tipScene are the draw ends.
 export const bindArrowOnDraw = (canvas, arrow, tailScene, tipScene) => {
   const startShape = shapeUnderPoint(canvas, tailScene, arrow);
   const endShape = shapeUnderPoint(canvas, tipScene, arrow);
-  if (startShape) arrow.startBinding = ensureId(startShape);
-  if (endShape) arrow.endBinding = ensureId(endShape);
-  if (startShape || endShape) {
-    ensureId(arrow);
-    rerouteArrow(canvas, arrow);
-  }
+  if (startShape) bindEnd(arrow, "start", startShape, tailScene);
+  if (endShape) bindEnd(arrow, "end", endShape, tipScene);
+  if (startShape || endShape) rerouteArrow(canvas, arrow);
   return { startShape, endShape };
 };
 
@@ -157,6 +220,8 @@ export const enableBindingPersistence = () => {
       "id",
       "startBinding",
       "endBinding",
+      "startAnchor",
+      "endAnchor",
       ...(propertiesToInclude || []),
     ]);
   };

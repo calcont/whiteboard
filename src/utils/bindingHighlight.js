@@ -1,57 +1,67 @@
 import { fabric } from "fabric";
 
-// Live "this will bind" affordance: while an arrow is being drawn, the shape its
-// endpoint is over gets a highlighted outline (like Excalidraw), so you can see
-// the connection will be made before releasing. The highlight is a transient,
-// non-interactive overlay — never selectable, never persisted (excludeFromExport)
-// — kept on canvas.__bindHighlight and cleared on drop.
+// Live "this will bind" affordance: while an arrow is drawn or an endpoint is
+// dragged, the shape(s) it will connect to get a soft highlight (like
+// Excalidraw). Highlights are transient, non-interactive, never persisted
+// (excludeFromExport) and flagged __nonBindable so they can't target themselves.
+// Kept on canvas.__bindHL; cleared on drop.
 
-const HL_COLOR = "#4f46e5"; // indigo accent (matches the endpoint handles)
-const PAD = 5;
+const STROKE = "#6366f1"; // soft indigo
+const FILL = "rgba(99,102,241,0.09)"; // faint tint, not a heavy border
+const PAD = 4;
 
-export const showBindHighlight = (canvas, shape) => {
-  if (!shape) return clearBindHighlight(canvas);
+const makeRect = (shape) => {
   const b = shape.getBoundingRect(true, true);
-  const props = {
+  return new fabric.Rect({
     left: b.left - PAD,
     top: b.top - PAD,
     width: b.width + PAD * 2,
     height: b.height + PAD * 2,
-  };
-  let hl = canvas.__bindHighlight;
-  if (!hl) {
-    hl = new fabric.Rect({
-      ...props,
-      rx: 16,
-      ry: 16,
-      fill: "transparent",
-      stroke: HL_COLOR,
-      strokeWidth: 3,
-      selectable: false,
-      evented: false,
-      excludeFromExport: true,
-      __nonBindable: true,
-      originX: "left",
-      originY: "top",
-    });
-    canvas.__bindHighlight = hl;
-    canvas.add(hl);
-  } else {
-    hl.set(props);
-    if (canvas.getObjects().indexOf(hl) < 0) canvas.add(hl);
-  }
-  canvas.bringToFront(hl);
-  hl.setCoords();
+    rx: 14,
+    ry: 14,
+    fill: FILL,
+    stroke: STROKE,
+    strokeWidth: 1.5,
+    selectable: false,
+    evented: false,
+    excludeFromExport: true,
+    __nonBindable: true,
+    originX: "left",
+    originY: "top",
+  });
+};
+
+const sameSet = (a, b) =>
+  a.length === b.length && a.every((s, i) => s === b[i]);
+
+// Highlight exactly `shapes` (a shape, an array, or falsy to clear). Skips the
+// rebuild when the set is unchanged so a drag doesn't churn objects each frame.
+export const showBindHighlight = (canvas, shapes) => {
+  const list = [
+    ...new Set((Array.isArray(shapes) ? shapes : [shapes]).filter(Boolean)),
+  ];
+  if (canvas.__bindHLShapes && sameSet(canvas.__bindHLShapes, list)) return;
+  clearBindHighlight(canvas);
+  if (!list.length) return;
+  const rects = list.map((s) => {
+    const r = makeRect(s);
+    canvas.add(r);
+    canvas.bringToFront(r);
+    return r;
+  });
+  canvas.__bindHL = rects;
+  canvas.__bindHLShapes = list;
   canvas.requestRenderAll();
-  return hl;
 };
 
 export const clearBindHighlight = (canvas) => {
-  const hl = canvas && canvas.__bindHighlight;
-  if (hl) {
-    canvas.remove(hl);
-    canvas.__bindHighlight = null;
+  const arr = canvas && canvas.__bindHL;
+  if (arr && arr.length) {
+    arr.forEach((r) => canvas.remove(r));
     canvas.requestRenderAll();
   }
-  return null;
+  if (canvas) {
+    canvas.__bindHL = [];
+    canvas.__bindHLShapes = [];
+  }
 };

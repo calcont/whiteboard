@@ -7,6 +7,9 @@ import {
   shapeUnderPoint,
   rerouteArrow,
   bindArrowOnDraw,
+  bindEnd,
+  unbindEnd,
+  arrowEndScene,
   enableBindingPersistence,
   BIND_MARGIN,
 } from "./binding";
@@ -147,6 +150,43 @@ describe("rerouteArrow", () => {
     const a = arrow({ x: 0, y: 0 }, { x: 50, y: 0 });
     c.add(a);
     expect(rerouteArrow(c, a)).toBe(false);
+  });
+
+  test("anchored end attaches at the anchored side (e.g. the top edge)", () => {
+    const c = makeCanvas();
+    const r = rect({ left: 50, top: 270 }); // centre (100,300), top edge y=270
+    ensureId(r);
+    const a = arrow({ x: 100, y: 100 }, { x: 500, y: 100 });
+    // bind the tail anchored to the TOP of the rect (a point above its centre)
+    bindEnd(a, "start", r, { x: 100, y: 270 });
+    c.add(r, a);
+    rerouteArrow(c, a);
+    const { tail } = ends(a);
+    expect(Math.round(tail.x)).toBe(100); // horizontally centred
+    expect(Math.round(tail.y)).toBe(270); // on the TOP edge, not the side
+  });
+});
+
+describe("bindEnd / unbindEnd", () => {
+  test("bindEnd sets the binding + anchor; unbindEnd clears them", () => {
+    const c = makeCanvas();
+    const r = rect({ left: 50, top: 270 });
+    const a = arrow({ x: 500, y: 300 }, { x: 700, y: 300 });
+    c.add(r, a);
+    bindEnd(a, "start", r, { x: 120, y: 300 });
+    expect(a.startBinding).toBe(r.id);
+    expect(a.startAnchor).toBeTruthy();
+    unbindEnd(a, "start");
+    expect(a.startBinding).toBeUndefined();
+    expect(a.startAnchor).toBeUndefined();
+  });
+});
+
+describe("arrowEndScene", () => {
+  test("returns tail for 'start' and tip for 'end'", () => {
+    const a = arrow({ x: 100, y: 200 }, { x: 400, y: 200 });
+    expect(Math.round(arrowEndScene(a, "start").x)).toBe(100);
+    expect(Math.round(arrowEndScene(a, "end").x)).toBe(400);
   });
 });
 
