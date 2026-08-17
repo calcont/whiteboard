@@ -39,8 +39,8 @@ export const FONT_SIZES = [
 
 export const STROKE_WIDTHS = [
   { label: "Thin", value: 2 },
-  { label: "Medium", value: 4 },
-  { label: "Bold", value: 8 },
+  { label: "Medium", value: 3 },
+  { label: "Bold", value: 6 },
 ];
 
 export const STROKE_STYLES = ["solid", "dashed", "dotted"];

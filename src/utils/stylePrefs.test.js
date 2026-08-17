@@ -83,3 +83,16 @@ describe("getStoredStyle — off-preset sizes snap to the nearest preset", () =>
     expect(getStoredStyle().fontSize).toBe(16);
   });
 });
+
+describe("getStoredStyle — stroke width snaps to the nearest preset", () => {
+  // Presets: 2/3/6. The default (3) is a preset so the Width control highlights.
+  test("default strokeWidth (3) is a preset and is kept", () => {
+    expect(getStoredStyle().strokeWidth).toBe(3);
+    expect(DEFAULT_STYLE.strokeWidth).toBe(3);
+  });
+
+  test("a legacy width (8) snaps to the nearest preset (6)", () => {
+    localStorage.setItem("wb-style", JSON.stringify({ strokeWidth: 8, _v: 4 }));
+    expect(getStoredStyle().strokeWidth).toBe(6);
+  });
+});
