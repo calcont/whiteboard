@@ -34,19 +34,13 @@ function ArrowBindingHandler() {
       canvas.requestRenderAll();
     };
 
-    // The other (already-bound) end's shape, so we can highlight the source too.
-    const otherShape = (arrow, end) => {
-      const id = end === "start" ? arrow.endBinding : arrow.startBinding;
-      return id ? canvas.getObjects().find((o) => o.id === id) : null;
-    };
-
-    // Dragging an arrow endpoint: highlight the shape it's over (+ the source).
+    // Dragging ONE endpoint: highlight only the shape THAT endpoint is over
+    // (the other end isn't changing, so highlighting it too just adds clutter).
     const onEndpointMoving = (opt) => {
       const { arrow, end } = opt || {};
       if (!arrow) return;
       const p = arrowEndScene(arrow, end);
-      const target = shapeUnderPoint(canvas, p, [arrow]);
-      showBindHighlight(canvas, [target, otherShape(arrow, end)]);
+      showBindHighlight(canvas, shapeUnderPoint(canvas, p, [arrow]));
     };
 
     // Dropping an arrow endpoint: bind it if over a shape, else unbind it.
@@ -62,15 +56,21 @@ function ArrowBindingHandler() {
       canvas.requestRenderAll();
     };
 
+    // Catch-all: any mouse release clears a stray highlight, so it can never
+    // get stuck (e.g. if an endpoint drag ends without its control's mouse-up).
+    const onMouseUp = () => clearBindHighlight(canvas);
+
     canvas.on("object:moving", onShapeChange);
     canvas.on("object:scaling", onShapeChange);
     canvas.on("arrow:endpoint:moving", onEndpointMoving);
     canvas.on("arrow:endpoint:up", onEndpointUp);
+    canvas.on("mouse:up", onMouseUp);
     return () => {
       canvas.off("object:moving", onShapeChange);
       canvas.off("object:scaling", onShapeChange);
       canvas.off("arrow:endpoint:moving", onEndpointMoving);
       canvas.off("arrow:endpoint:up", onEndpointUp);
+      canvas.off("mouse:up", onMouseUp);
     };
   }, [canvas]);
 }
