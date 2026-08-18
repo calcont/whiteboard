@@ -6,29 +6,44 @@ import { fabric } from "fabric";
 // (excludeFromExport) and flagged __nonBindable so they can't target themselves.
 // Kept on canvas.__bindHL; cleared on drop.
 
-// A thin accent outline that hugs the shape's border (eraser.io-style hover
-// affordance) — no fill, just the border "lighting up".
+// An additional border layer drawn ON the target's exact outline (no padding),
+// so the shape's own border "lights up" (Excalidraw-style). Shape-aware: an
+// ellipse target gets an ellipse outline; a rounded rect matches its radius.
 const STROKE = "#6965db"; // clean violet-indigo accent
-const PAD = 2;
 
-const makeRect = (shape) => {
-  const b = shape.getBoundingRect(true, true);
+const overlayProps = {
+  fill: "transparent",
+  stroke: STROKE,
+  strokeWidth: 2,
+  selectable: false,
+  evented: false,
+  excludeFromExport: true,
+  __nonBindable: true,
+  originX: "left",
+  originY: "top",
+};
+
+const makeOverlay = (shape) => {
+  const b = shape.getBoundingRect(true, true); // exact scene bbox (incl. stroke)
+  if (shape.type === "ellipse" || shape.type === "circle") {
+    return new fabric.Ellipse({
+      ...overlayProps,
+      left: b.left,
+      top: b.top,
+      rx: b.width / 2,
+      ry: b.height / 2,
+    });
+  }
+  // Match the shape's rounded corners when it has them (rect); else hug tight.
+  const rx = shape.rx ? shape.rx * Math.abs(shape.scaleX || 1) : 6;
   return new fabric.Rect({
-    left: b.left - PAD,
-    top: b.top - PAD,
-    width: b.width + PAD * 2,
-    height: b.height + PAD * 2,
-    rx: 12,
-    ry: 12,
-    fill: "transparent",
-    stroke: STROKE,
-    strokeWidth: 2,
-    selectable: false,
-    evented: false,
-    excludeFromExport: true,
-    __nonBindable: true,
-    originX: "left",
-    originY: "top",
+    ...overlayProps,
+    left: b.left,
+    top: b.top,
+    width: b.width,
+    height: b.height,
+    rx,
+    ry: rx,
   });
 };
 
@@ -45,7 +60,7 @@ export const showBindHighlight = (canvas, shapes) => {
   clearBindHighlight(canvas);
   if (!list.length) return;
   const rects = list.map((s) => {
-    const r = makeRect(s);
+    const r = makeOverlay(s);
     canvas.add(r);
     canvas.bringToFront(r);
     return r;

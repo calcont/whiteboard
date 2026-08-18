@@ -31,11 +31,10 @@ const NON_BINDABLE = new Set(["line", "i-text", "text", "textbox"]);
 export const isBindable = (o) =>
   !!o && !o.__nonBindable && !isArrow(o) && !NON_BINDABLE.has(o.type);
 
-// How far outside a shape an arrow endpoint can land and still bind. People draw
-// arrows TO a box's edge (or just past it), not deep inside — without this slack
-// the endpoint misses the bbox and nothing binds. The bound end then snaps to
-// the border anyway (rerouteArrow), so a little generosity here is free.
-export const BIND_MARGIN = 24;
+// How far outside a shape an arrow endpoint can land and still bind — a small
+// "on the border" tolerance so dropping right at the edge binds, without
+// engaging (and highlighting) while the endpoint is still well away from it.
+export const BIND_MARGIN = 8;
 
 // --- geometry -------------------------------------------------------------
 // The shape's absolute (scene) axis-aligned bounding box. Good enough for v1
