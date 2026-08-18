@@ -24,6 +24,24 @@ import { getArrowParts } from "./shapeLabel";
 
 const angleDeg = (a, b) => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 
+// The arrowhead PATH ("M 0 0 L 20 10 L 0 20 Z") has its tip vertex half its
+// length ahead of the path's centre. Placing the centre AT the endpoint makes the
+// visible tip overshoot by that much — and, when the end is bound to a shape,
+// poke inside it. HEAD_TIP_INSET is that half-length; headCenterFor returns where
+// the head's centre must sit (backed off along the incoming segment prev->tip) so
+// the tip lands exactly on `tip`.
+export const HEAD_TIP_INSET = 10;
+export const headCenterFor = (tip, prev) => {
+  const dx = tip.x - prev.x;
+  const dy = tip.y - prev.y;
+  const len = Math.hypot(dx, dy);
+  if (!len) return { x: tip.x, y: tip.y };
+  return {
+    x: tip.x - (dx / len) * HEAD_TIP_INSET,
+    y: tip.y - (dy / len) * HEAD_TIP_INSET,
+  };
+};
+
 // Orthogonal (elbow) route between two points: a right-angled path. Routes along
 // the dominant axis first, bending at the midpoint (a clean Z). Collapses to a
 // straight segment when the points share a row/column.
@@ -121,20 +139,16 @@ const applyEndpointsLocal = (group, start, end) => {
 
   // heads[0] sits at the tip, aimed along the LAST segment; a second head
   // (double-ended) sits at the tail, aimed along the FIRST segment (reversed).
+  // The head's CENTRE is backed off so its tip lands exactly on the endpoint.
   if (heads[0]) {
-    heads[0].set({
-      left: end.x,
-      top: end.y,
-      angle: angleDeg(route[route.length - 2], end),
-    });
+    const prev = route[route.length - 2];
+    const cen = headCenterFor(end, prev);
+    heads[0].set({ left: cen.x, top: cen.y, angle: angleDeg(prev, end) });
     heads[0].setCoords();
   }
   if (heads[1]) {
-    heads[1].set({
-      left: start.x,
-      top: start.y,
-      angle: angleDeg(route[1], start),
-    });
+    const cen = headCenterFor(start, route[1]);
+    heads[1].set({ left: cen.x, top: cen.y, angle: angleDeg(route[1], start) });
     heads[1].setCoords();
   }
   if (text) {

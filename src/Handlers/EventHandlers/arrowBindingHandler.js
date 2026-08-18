@@ -34,6 +34,19 @@ function ArrowBindingHandler() {
       canvas.requestRenderAll();
     };
 
+    // A bound arrow that is itself moved/nudged (even a click that registers a
+    // tiny drag) would otherwise drag its bound end off into empty space — the
+    // "it goes to a different position" bug. On drop, snap any bound end back onto
+    // its shape; the free end keeps wherever the drag left it. We reroute on
+    // object:modified (drop), not live: mid-drag the reroute would fight fabric's
+    // own translation of the very group being dragged.
+    const onArrowMoved = (opt) => {
+      const t = opt && opt.target;
+      if (!t || !isArrow(t) || (!t.startBinding && !t.endBinding)) return;
+      rerouteArrow(canvas, t);
+      canvas.requestRenderAll();
+    };
+
     // Dragging ONE endpoint: highlight only the shape THAT endpoint is over
     // (the other end isn't changing, so highlighting it too just adds clutter).
     const onEndpointMoving = (opt) => {
@@ -62,12 +75,14 @@ function ArrowBindingHandler() {
 
     canvas.on("object:moving", onShapeChange);
     canvas.on("object:scaling", onShapeChange);
+    canvas.on("object:modified", onArrowMoved);
     canvas.on("arrow:endpoint:moving", onEndpointMoving);
     canvas.on("arrow:endpoint:up", onEndpointUp);
     canvas.on("mouse:up", onMouseUp);
     return () => {
       canvas.off("object:moving", onShapeChange);
       canvas.off("object:scaling", onShapeChange);
+      canvas.off("object:modified", onArrowMoved);
       canvas.off("arrow:endpoint:moving", onEndpointMoving);
       canvas.off("arrow:endpoint:up", onEndpointUp);
       canvas.off("mouse:up", onMouseUp);

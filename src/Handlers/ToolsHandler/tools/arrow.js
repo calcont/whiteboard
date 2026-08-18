@@ -6,6 +6,7 @@ import {
   elbowRoute,
   setArrowEndpoints,
   sceneEndpoints,
+  headCenterFor,
 } from "../../../utils/arrowEndpoints";
 import { getArrowParts, isElbowArrow } from "../../../utils/shapeLabel";
 import { bindArrowOnDraw, shapeUnderPoint } from "../../../utils/binding";
@@ -59,13 +60,21 @@ export const buildArrowGroup = (start, end, style) => {
     ? new fabric.Polyline(elbowRoute(start, end), { ...connStyle, fill: "" })
     : new fabric.Line([start.x, start.y, end.x, end.y], connStyle);
   // Head aims along the last route segment (= start->end for a straight arrow).
+  // Its centre is backed off so the tip vertex sits exactly on the endpoint.
   const route = elbow ? elbowRoute(start, end) : [start, end];
+  const prev = route[route.length - 2];
   const children = [
     line,
-    makeHead(end, angleBetween(route[route.length - 2], end), style.stroke),
+    makeHead(headCenterFor(end, prev), angleBetween(prev, end), style.stroke),
   ];
   if (style.heads === "both") {
-    children.push(makeHead(start, angleBetween(route[1], start), style.stroke));
+    children.push(
+      makeHead(
+        headCenterFor(start, route[1]),
+        angleBetween(route[1], start),
+        style.stroke,
+      ),
+    );
   }
   // Optional centred text label, anchored to the line's midpoint. Carried
   // through rebuilds (resize) so a labelled arrow keeps its label; a non-
@@ -222,11 +231,17 @@ export class Arrow extends Tool {
     const origin = { x: this.origX, y: this.origY };
     this.line.set({ x2: this.pointer.x, y2: this.pointer.y });
     this.line.setCoords();
-    this.arrowHead.left = this.pointer.x;
-    this.arrowHead.top = this.pointer.y;
+    // Back the head off so its tip (not centre) tracks the cursor — matching the
+    // final arrow, so the preview doesn't visibly shift on drop.
+    const headCen = headCenterFor(this.pointer, origin);
+    this.arrowHead.left = headCen.x;
+    this.arrowHead.top = headCen.y;
     this.arrowHead.angle = angleBetween(origin, this.pointer);
     this.arrowHead.setCoords();
     if (this.arrowHeadStart) {
+      const startCen = headCenterFor(origin, this.pointer);
+      this.arrowHeadStart.left = startCen.x;
+      this.arrowHeadStart.top = startCen.y;
       this.arrowHeadStart.angle = angleBetween(this.pointer, origin);
       this.arrowHeadStart.setCoords();
     }

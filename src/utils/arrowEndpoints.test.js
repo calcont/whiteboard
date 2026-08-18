@@ -4,6 +4,7 @@ import {
   refitArrowBounds,
   setArrowEndpoints,
   elbowRoute,
+  headCenterFor,
 } from "./arrowEndpoints";
 import { getArrowParts, isArrow, isElbowArrow } from "./shapeLabel";
 import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
@@ -30,6 +31,29 @@ describe("elbowRoute (orthogonal routing)", () => {
 
   test("aligned points collapse to a straight two-point segment", () => {
     expect(elbowRoute({ x: 0, y: 0 }, { x: 200, y: 0 })).toHaveLength(2);
+  });
+});
+
+describe("headCenterFor (arrowhead sits ON the endpoint, not past it)", () => {
+  test("backs the centre off the tip by the head half-length, along the segment", () => {
+    // horizontal segment (0,0)->(100,0): centre pulled 10 left of the tip
+    expect(headCenterFor({ x: 100, y: 0 }, { x: 0, y: 0 })).toEqual({
+      x: 90,
+      y: 0,
+    });
+  });
+
+  test("normalises diagonal segments (offset magnitude stays the head length)", () => {
+    const c = headCenterFor({ x: 30, y: 40 }, { x: 0, y: 0 }); // 3-4-5 => len 50
+    expect(Math.round(c.x)).toBe(24); // 30 - (30/50)*10
+    expect(Math.round(c.y)).toBe(32); // 40 - (40/50)*10
+  });
+
+  test("degenerate (tip == prev) returns the tip unchanged (no divide-by-zero)", () => {
+    expect(headCenterFor({ x: 5, y: 5 }, { x: 5, y: 5 })).toEqual({
+      x: 5,
+      y: 5,
+    });
   });
 });
 
@@ -84,9 +108,11 @@ describe("reshapeArrow", () => {
     expect(Math.round(after.e1.y)).toBe(Math.round(before.e1.y));
 
     const { heads, text } = getArrowParts(a);
-    // single head sits at the tip
-    expect(Math.round(heads[0].left)).toBe(Math.round(target.x));
-    expect(Math.round(heads[0].top)).toBe(Math.round(target.y));
+    // single head is backed off the tip so its VISIBLE point lands on the tip
+    // (its centre is HEAD_TIP_INSET back along the tail->tip segment).
+    const cen = headCenterFor(target, after.e1);
+    expect(Math.round(heads[0].left)).toBe(Math.round(cen.x));
+    expect(Math.round(heads[0].top)).toBe(Math.round(cen.y));
     // label re-centres on the new midpoint
     expect(Math.round(text.left)).toBe(Math.round((after.e1.x + target.x) / 2));
     expect(Math.round(text.top)).toBe(Math.round((after.e1.y + target.y) / 2));
