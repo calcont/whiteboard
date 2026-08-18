@@ -13,7 +13,6 @@ import {
   enableBindingPersistence,
   BIND_MARGIN,
 } from "./binding";
-import { getArrowParts } from "./shapeLabel";
 import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
 
 const makeCanvas = () => new fabric.Canvas(document.createElement("canvas"));
@@ -31,18 +30,12 @@ const rect = (o = {}) =>
 const arrow = (start, end) =>
   buildArrowGroup(start, end, { stroke: "#111", strokeWidth: 2, heads: "end" });
 
-// Tail/tip of an arrow in scene coords (mirrors the module's internal helper).
-const ends = (a) => {
-  const { line } = getArrowParts(a);
-  const lp = line.calcLinePoints();
-  const m = a.calcTransformMatrix();
-  const p = (x, y) =>
-    fabric.util.transformPoint(
-      new fabric.Point(line.left + x, line.top + y),
-      m,
-    );
-  return { tail: p(lp.x1, lp.y1), tip: p(lp.x2, lp.y2) };
-};
+// Tail/tip of an arrow in scene coords — the module's own logical endpoints
+// (the head TIP for a headed end, not the shortened connector terminal).
+const ends = (a) => ({
+  tail: arrowEndScene(a, "start"),
+  tip: arrowEndScene(a, "end"),
+});
 
 describe("ensureId", () => {
   test("assigns a stable id and is idempotent", () => {

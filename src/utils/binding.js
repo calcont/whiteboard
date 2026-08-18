@@ -39,7 +39,39 @@ export const BIND_MARGIN = 8;
 // --- geometry -------------------------------------------------------------
 // The shape's absolute (scene) axis-aligned bounding box. Good enough for v1
 // across rect/ellipse/diamond/polygon and labelled groups.
-const sceneBBox = (shape) => shape.getBoundingRect(true, true);
+//
+// While a shape is part of an activeSelection (a multi-select drag), fabric v5's
+// getBoundingRect(true) returns coords RELATIVE to the selection — the shape's
+// own transform matrix doesn't include the parent group. Transform that bbox by
+// the group's matrix to recover absolute scene coords, so an arrow bound to a
+// shape that is being dragged inside a selection re-routes to the right place.
+const sceneBBox = (shape) => {
+  const b = shape.getBoundingRect(true, true);
+  if (!shape.group) return b;
+  const m = shape.group.calcTransformMatrix();
+  const tl = fabric.util.transformPoint(new fabric.Point(b.left, b.top), m);
+  const br = fabric.util.transformPoint(
+    new fabric.Point(b.left + b.width, b.top + b.height),
+    m,
+  );
+  return {
+    left: Math.min(tl.x, br.x),
+    top: Math.min(tl.y, br.y),
+    width: Math.abs(br.x - tl.x),
+    height: Math.abs(br.y - tl.y),
+  };
+};
+
+// The shape's centre in ABSOLUTE scene coords. Derived from the (absolute) bbox
+// rather than getCenterPoint() on purpose: for a shape that is momentarily part
+// of an activeSelection, getCenterPoint() returns coords relative to the
+// selection, which would mis-place a re-routed arrow while the group is dragged.
+// The bbox centre equals the geometric centre for our shapes (bbox is symmetric
+// about it, even when rotated).
+const sceneCenter = (shape) => {
+  const b = sceneBBox(shape);
+  return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+};
 
 const bboxContainsPoint = (shape, p, margin = 0) => {
   const b = sceneBBox(shape);
@@ -56,7 +88,7 @@ const bboxContainsPoint = (shape, p, margin = 0) => {
 // true ray-ellipse intersection; everything else clips the ray to the bounding
 // box (exact for rectangles; a close approximation for diamonds/polygons/icons).
 export const borderPoint = (shape, toward) => {
-  const c = shape.getCenterPoint();
+  const c = sceneCenter(shape);
   const dx = toward.x - c.x;
   const dy = toward.y - c.y;
   if (dx === 0 && dy === 0) return { x: c.x, y: c.y };
@@ -83,7 +115,7 @@ export const borderPoint = (shape, toward) => {
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 const anchorOf = (shape, scenePoint) => {
-  const c = shape.getCenterPoint();
+  const c = sceneCenter(shape);
   const b = sceneBBox(shape);
   return {
     fx: clamp((scenePoint.x - c.x) / (b.width / 2 || 1), -1, 1),
@@ -93,7 +125,7 @@ const anchorOf = (shape, scenePoint) => {
 
 // The scene point an anchor currently resolves to (centre + fraction*half).
 const anchorTarget = (shape, anchor) => {
-  const c = shape.getCenterPoint();
+  const c = sceneCenter(shape);
   const b = sceneBBox(shape);
   return {
     x: c.x + anchor.fx * (b.width / 2),
@@ -143,14 +175,14 @@ export const rerouteArrow = (canvas, arrow) => {
     ? meaningful(arrow.startAnchor)
       ? anchorTarget(startShape, arrow.startAnchor)
       : endShape
-        ? endShape.getCenterPoint()
+        ? sceneCenter(endShape)
         : ends.tip
     : null;
   const endAim = endShape
     ? meaningful(arrow.endAnchor)
       ? anchorTarget(endShape, arrow.endAnchor)
       : startShape
-        ? startShape.getCenterPoint()
+        ? sceneCenter(startShape)
         : ends.tail
     : null;
 

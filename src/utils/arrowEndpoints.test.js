@@ -5,6 +5,7 @@ import {
   setArrowEndpoints,
   elbowRoute,
   headCenterFor,
+  headTipOf,
 } from "./arrowEndpoints";
 import { getArrowParts, isArrow, isElbowArrow } from "./shapeLabel";
 import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
@@ -82,15 +83,38 @@ const arrow = (label) =>
     { stroke: "#000", strokeWidth: 2, ...(label ? { label } : {}) },
   );
 
-// Endpoint positions in group-local coords (relative to the group centre).
+// Endpoint positions in group-local coords (relative to the group centre). The
+// logical endpoint of a headed end is the head's TIP (the connector line stops
+// short at the head centre), mirroring the module's own localEndpoints.
 const localEnds = (a) => {
-  const { line } = getArrowParts(a);
+  const { line, heads } = getArrowParts(a);
   const lp = line.calcLinePoints();
-  return {
-    e1: { x: line.left + lp.x1, y: line.top + lp.y1 },
-    e2: { x: line.left + lp.x2, y: line.top + lp.y2 },
-  };
+  const e1 = heads[1]
+    ? headTipOf(heads[1])
+    : { x: line.left + lp.x1, y: line.top + lp.y1 };
+  const e2 = heads[0]
+    ? headTipOf(heads[0])
+    : { x: line.left + lp.x2, y: line.top + lp.y2 };
+  return { e1, e2 };
 };
+
+describe("connector stops short of the head tip (no line poking past it)", () => {
+  test("the line's terminal is HEAD_TIP_INSET behind the logical tip", () => {
+    const a = arrow();
+    reshapeArrow(a, "e2", { x: 100, y: 0 });
+    const { line, heads } = getArrowParts(a);
+    const lp = line.calcLinePoints();
+    const lineEnd = { x: line.left + lp.x2, y: line.top + lp.y2 };
+    const tip = headTipOf(heads[0]);
+    // logical tip is the head's point; the drawn line ends ~10 units before it
+    expect(Math.round(tip.x)).toBe(100);
+    expect(Math.round(Math.hypot(tip.x - lineEnd.x, tip.y - lineEnd.y))).toBe(
+      10,
+    );
+    // and the line never reaches (let alone passes) the tip
+    expect(lineEnd.x).toBeLessThan(tip.x);
+  });
+});
 
 describe("reshapeArrow", () => {
   test("moves the dragged endpoint, keeps the other, follows head + label", () => {
@@ -142,11 +166,9 @@ describe("refitArrowBounds", () => {
     c.add(a);
     const P = fabric.Point;
     const abs = (k) => {
-      const { line } = getArrowParts(a);
-      const lp = line.calcLinePoints();
-      const off = k === "e1" ? { x: lp.x1, y: lp.y1 } : { x: lp.x2, y: lp.y2 };
+      const p = localEnds(a)[k];
       return fabric.util.transformPoint(
-        new P(line.left + off.x, line.top + off.y),
+        new P(p.x, p.y),
         a.calcTransformMatrix(),
       );
     };
@@ -177,11 +199,9 @@ describe("setArrowEndpoints (programmatic re-route)", () => {
 
     const P = fabric.Point;
     const abs = (k) => {
-      const { line } = getArrowParts(a);
-      const lp = line.calcLinePoints();
-      const off = k === "e1" ? { x: lp.x1, y: lp.y1 } : { x: lp.x2, y: lp.y2 };
+      const p = localEnds(a)[k];
       return fabric.util.transformPoint(
-        new P(line.left + off.x, line.top + off.y),
+        new P(p.x, p.y),
         a.calcTransformMatrix(),
       );
     };

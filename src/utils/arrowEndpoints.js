@@ -42,6 +42,18 @@ export const headCenterFor = (tip, prev) => {
   };
 };
 
+// The scene/group-local point of a head's visible tip vertex, from its centre
+// (left/top) and angle. The logical arrow endpoint for a headed end IS this tip
+// (the connector line stops short at the head centre — see applyEndpointsLocal —
+// so it never poked past the head's narrowing point).
+export const headTipOf = (head) => {
+  const a = (head.angle * Math.PI) / 180;
+  return {
+    x: head.left + HEAD_TIP_INSET * Math.cos(a),
+    y: head.top + HEAD_TIP_INSET * Math.sin(a),
+  };
+};
+
 // Orthogonal (elbow) route between two points: a right-angled path. Routes along
 // the dominant axis first, bending at the midpoint (a clean Z). Collapses to a
 // straight segment when the points share a row/column.
@@ -92,21 +104,27 @@ const screenMatrix = (group) =>
   );
 
 // Endpoint positions in group-local coordinates (relative to the group centre).
+// For an end that carries a head, the logical endpoint is the head's TIP vertex
+// (the visible point), NOT the connector's terminal — the connector is drawn
+// short of the tip so it doesn't poke through. heads[0] = tip end (e2),
+// heads[1] = tail end (e1) on a double-headed arrow.
 const localEndpoints = (group) => {
-  const { line } = getArrowParts(group);
+  const { line, heads } = getArrowParts(group);
+  let e1;
+  let e2;
   if (line.type === "polyline") {
     // Elbow: points already live in group-local coords (see layoutElbowPolyline).
     const pts = line.points;
-    return {
-      e1: { x: pts[0].x, y: pts[0].y },
-      e2: { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y },
-    };
+    e1 = { x: pts[0].x, y: pts[0].y };
+    e2 = { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y };
+  } else {
+    const lp = line.calcLinePoints();
+    e1 = { x: line.left + lp.x1, y: line.top + lp.y1 }; // tail (line start)
+    e2 = { x: line.left + lp.x2, y: line.top + lp.y2 }; // tip (line end)
   }
-  const lp = line.calcLinePoints();
-  return {
-    e1: { x: line.left + lp.x1, y: line.top + lp.y1 }, // tail (line start)
-    e2: { x: line.left + lp.x2, y: line.top + lp.y2 }, // tip (line end)
-  };
+  if (heads[0]) e2 = headTipOf(heads[0]);
+  if (heads[1]) e1 = headTipOf(heads[1]);
+  return { e1, e2 };
 };
 
 // Arrow endpoints in absolute (scene) coords — handles line or elbow polyline.
@@ -129,27 +147,43 @@ const applyEndpointsLocal = (group, start, end) => {
   // The route the head/label follow: a straight [start,end] or the elbow path.
   const route = elbow ? elbowRoute(start, end) : [start, end];
 
-  if (elbow) {
-    layoutElbowPolyline(line, route);
-  } else {
-    line.set({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
-    line._setWidthHeight(); // re-derives the line's centre + bbox from the points
-    line.setCoords();
-  }
-
   // heads[0] sits at the tip, aimed along the LAST segment; a second head
   // (double-ended) sits at the tail, aimed along the FIRST segment (reversed).
-  // The head's CENTRE is backed off so its tip lands exactly on the endpoint.
+  // The head's CENTRE is backed off so its tip vertex lands exactly on the
+  // endpoint. The CONNECTOR then stops at that centre (not the tip), so the line
+  // is fully hidden under the head and never pokes past its narrowing point.
+  const tipPrev = route[route.length - 2];
+  const headEnd = heads[0] ? headCenterFor(end, tipPrev) : null;
+  const headStart = heads[1] ? headCenterFor(start, route[1]) : null;
   if (heads[0]) {
-    const prev = route[route.length - 2];
-    const cen = headCenterFor(end, prev);
-    heads[0].set({ left: cen.x, top: cen.y, angle: angleDeg(prev, end) });
+    heads[0].set({
+      left: headEnd.x,
+      top: headEnd.y,
+      angle: angleDeg(tipPrev, end),
+    });
     heads[0].setCoords();
   }
   if (heads[1]) {
-    const cen = headCenterFor(start, route[1]);
-    heads[1].set({ left: cen.x, top: cen.y, angle: angleDeg(route[1], start) });
+    heads[1].set({
+      left: headStart.x,
+      top: headStart.y,
+      angle: angleDeg(route[1], start),
+    });
     heads[1].setCoords();
+  }
+
+  // Connector route: same shape, but each headed end pulled in to the head centre.
+  const cStart = headStart || start;
+  const cEnd = headEnd || end;
+  if (elbow) {
+    const croute = route.map((p) => ({ x: p.x, y: p.y }));
+    croute[0] = cStart;
+    croute[croute.length - 1] = cEnd;
+    layoutElbowPolyline(line, croute);
+  } else {
+    line.set({ x1: cStart.x, y1: cStart.y, x2: cEnd.x, y2: cEnd.y });
+    line._setWidthHeight(); // re-derives the line's centre + bbox from the points
+    line.setCoords();
   }
   if (text) {
     // Straight: segment midpoint. Elbow: the middle vertex of the route.

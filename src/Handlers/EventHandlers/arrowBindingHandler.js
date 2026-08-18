@@ -21,35 +21,46 @@ function ArrowBindingHandler() {
   useEffect(() => {
     if (!canvas) return undefined;
 
-    // A shape with bound arrows moved/resized -> re-route those arrows live. We
+    // Shape(s) with bound arrows moved/resized -> re-route those arrows live. We
     // react to object:moving/scaling (not object:modified) so the final
     // positions are in place when fabric-history snapshots on drop — undo
-    // restores shape + arrows together with no extra history plumbing.
+    // restores shape + arrows together with no extra history plumbing. A
+    // multi-select drag reports the target as an activeSelection, so fan out to
+    // every selected shape (else arrows between selected shapes are left behind).
     const onShapeChange = (opt) => {
       const t = opt && opt.target;
-      if (!t || isArrow(t) || t.type === "activeSelection" || !t.id) return;
-      const arrows = boundArrows(canvas, t.id);
-      if (!arrows.length) return;
+      if (!t || isArrow(t)) return;
+      const shapes = t.type === "activeSelection" ? t.getObjects() : [t];
+      const arrows = new Set();
+      shapes.forEach((s) => {
+        if (s && s.id) boundArrows(canvas, s.id).forEach((a) => arrows.add(a));
+      });
+      if (!arrows.size) return;
       arrows.forEach((a) => rerouteArrow(canvas, a));
       canvas.requestRenderAll();
     };
 
-    // A bound arrow that is itself moved/nudged (even a click that registers a
-    // tiny drag) would otherwise drag its bound end off into empty space — the
-    // "it goes to a different position" bug. On drop, snap any bound end back onto
-    // its shape; the free end keeps wherever the drag left it. We reroute on
-    // object:modified (drop), not live: mid-drag the reroute would fight fabric's
-    // own translation of the very group being dragged.
+    // A bound arrow that is itself moved: re-evaluate each bound end against
+    // where it now sits. Still over its shape -> stay glued (a tiny nudge doesn't
+    // leave a floating end); dragged onto a different shape -> rebind to it;
+    // dragged into empty space -> unbind and leave it there. This lets a bound
+    // arrow be MOVED off a shape instead of springing back to the binding.
     //
-    // BUT an endpoint drag ALSO ends in object:modified (action "arrowEndpoint"),
-    // and it manages its own (un)binding via arrow:endpoint:up. Rerouting here
-    // would snap a just-dragged-off endpoint back onto the shape before that runs,
-    // making it impossible to unbind — so skip endpoint-drag modifications.
+    // An endpoint drag ALSO ends in object:modified (action "arrowEndpoint") but
+    // owns its own (un)binding via arrow:endpoint:up — skip it, or we'd fight it.
     const onArrowMoved = (opt) => {
       const t = opt && opt.target;
       if (!t || !isArrow(t) || (!t.startBinding && !t.endBinding)) return;
       if (opt.action === "arrowEndpoint") return;
-      rerouteArrow(canvas, t);
+      ["start", "end"].forEach((end) => {
+        const boundId = end === "start" ? t.startBinding : t.endBinding;
+        if (!boundId) return;
+        const p = arrowEndScene(t, end);
+        const shape = shapeUnderPoint(canvas, p, [t]);
+        if (shape) bindEnd(t, end, shape, p);
+        else unbindEnd(t, end);
+      });
+      if (t.startBinding || t.endBinding) rerouteArrow(canvas, t);
       canvas.requestRenderAll();
     };
 

@@ -112,15 +112,11 @@ export const buildArrowGroup = (start, end, style) => {
     // transparent shapes keep convenient click-anywhere bbox selection.
     perPixelTargetFind: true,
   });
-  // An elbow polyline is built in absolute coords; re-lay it in group-local
-  // space (and re-fit bounds) so its points/endpoints are consistent with the
-  // rest of the arrow model.
-  if (elbow)
-    setArrowEndpoints(
-      group,
-      { x: start.x, y: start.y },
-      { x: end.x, y: end.y },
-    );
+  // Re-lay the connector in group-local space (and re-fit bounds) through the
+  // single layout path, so its points/endpoints are consistent with the rest of
+  // the arrow model — an elbow polyline needs it (built in absolute coords), and
+  // a straight line needs the head-tip shortening applyEndpointsLocal applies.
+  setArrowEndpoints(group, { x: start.x, y: start.y }, { x: end.x, y: end.y });
   // Excalidraw-style editing: drag either endpoint to re-aim/extend the arrow,
   // instead of scaling a bounding box. Replaces the default controls with two
   // endpoint handles (tail + tip).
@@ -229,17 +225,25 @@ export class Arrow extends Tool {
     }
     this.pointer = canvas.getPointer(event.e);
     const origin = { x: this.origX, y: this.origY };
-    this.line.set({ x2: this.pointer.x, y2: this.pointer.y });
-    this.line.setCoords();
-    // Back the head off so its tip (not centre) tracks the cursor — matching the
-    // final arrow, so the preview doesn't visibly shift on drop.
+    // Back the head off so its tip (not centre) tracks the cursor, and stop the
+    // line at the head centre so it's hidden under the head (not poking past the
+    // tip) — matching the final arrow, so the preview doesn't shift on drop.
     const headCen = headCenterFor(this.pointer, origin);
+    const startCen = this.arrowHeadStart
+      ? headCenterFor(origin, this.pointer)
+      : origin;
+    this.line.set({
+      x1: startCen.x,
+      y1: startCen.y,
+      x2: headCen.x,
+      y2: headCen.y,
+    });
+    this.line.setCoords();
     this.arrowHead.left = headCen.x;
     this.arrowHead.top = headCen.y;
     this.arrowHead.angle = angleBetween(origin, this.pointer);
     this.arrowHead.setCoords();
     if (this.arrowHeadStart) {
-      const startCen = headCenterFor(origin, this.pointer);
       this.arrowHeadStart.left = startCen.x;
       this.arrowHeadStart.top = startCen.y;
       this.arrowHeadStart.angle = angleBetween(this.pointer, origin);
