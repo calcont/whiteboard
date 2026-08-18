@@ -40,11 +40,23 @@ function ArrowBindingHandler() {
       canvas.requestRenderAll();
     };
 
-    // A bound arrow that is itself moved: re-evaluate each bound end against
-    // where it now sits. Still over its shape -> stay glued (a tiny nudge doesn't
-    // leave a floating end); dragged onto a different shape -> rebind to it;
-    // dragged into empty space -> unbind and leave it there. This lets a bound
-    // arrow be MOVED off a shape instead of springing back to the binding.
+    // While a bound arrow is itself being dragged, keep each bound end glued to
+    // its shape's border LIVE (every frame), so the arrowhead glides on the
+    // border instead of following the cursor into the shape and then snapping
+    // back on release — that snap was the "padding between cursor and arrowhead".
+    // refit=false: mid-drag we must NOT reset the group's bounds, or we'd fight
+    // fabric's own translate (bounds are re-fitted on drop, below).
+    const onArrowMoving = (opt) => {
+      const t = opt && opt.target;
+      if (!t || !isArrow(t) || (!t.startBinding && !t.endBinding)) return;
+      rerouteArrow(canvas, t, false);
+      canvas.requestRenderAll();
+    };
+
+    // On drop, re-evaluate each bound end against where it landed: still over its
+    // shape -> stay glued; dragged onto a different shape -> rebind; dragged into
+    // empty space -> unbind (so a bound arrow can be pulled off, not just pinned).
+    // Then a final reroute re-fits the bounds.
     //
     // An endpoint drag ALSO ends in object:modified (action "arrowEndpoint") but
     // owns its own (un)binding via arrow:endpoint:up — skip it, or we'd fight it.
@@ -91,6 +103,7 @@ function ArrowBindingHandler() {
     const onMouseUp = () => clearBindHighlight(canvas);
 
     canvas.on("object:moving", onShapeChange);
+    canvas.on("object:moving", onArrowMoving);
     canvas.on("object:scaling", onShapeChange);
     canvas.on("object:modified", onArrowMoved);
     canvas.on("arrow:endpoint:moving", onEndpointMoving);
@@ -98,6 +111,7 @@ function ArrowBindingHandler() {
     canvas.on("mouse:up", onMouseUp);
     return () => {
       canvas.off("object:moving", onShapeChange);
+      canvas.off("object:moving", onArrowMoving);
       canvas.off("object:scaling", onShapeChange);
       canvas.off("object:modified", onArrowMoved);
       canvas.off("arrow:endpoint:moving", onEndpointMoving);

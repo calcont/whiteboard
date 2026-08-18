@@ -159,8 +159,9 @@ export const arrowEndScene = (arrow, end) => {
 // Recompute one arrow's endpoints from its bindings. A bound end anchors to its
 // shape's border (facing the other end); an unbound end keeps its position. A
 // binding whose shape no longer exists is treated as unbound. Returns true if a
-// bound end was re-routed.
-export const rerouteArrow = (canvas, arrow) => {
+// bound end was re-routed. Pass refit=false while the arrow itself is being
+// dragged (see setArrowEndpoints) — the bounds are re-fitted once on drop.
+export const rerouteArrow = (canvas, arrow, refit = true) => {
   const startShape = shapeById(canvas, arrow.startBinding);
   const endShape = shapeById(canvas, arrow.endBinding);
   if (!startShape && !endShape) return false;
@@ -189,7 +190,7 @@ export const rerouteArrow = (canvas, arrow) => {
   const tail = startShape ? borderPoint(startShape, startAim) : ends.tail;
   const tip = endShape ? borderPoint(endShape, endAim) : ends.tip;
 
-  setArrowEndpoints(arrow, tail, tip);
+  setArrowEndpoints(arrow, tail, tip, refit);
   return true;
 };
 

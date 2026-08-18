@@ -208,15 +208,20 @@ export const reshapeArrow = (group, key, local) => {
 };
 
 // Re-route an arrow to new endpoints given in absolute (scene) coords, and
-// re-fit its bounds. The programmatic entry point (e.g. a future bound shape
-// moving) — callers just say "put the ends here" and the arrow model handles
-// the rest.
-export const setArrowEndpoints = (group, tailScene, tipScene) => {
+// (by default) re-fit its bounds. The programmatic entry point (e.g. a bound
+// shape moving) — callers just say "put the ends here".
+//
+// Pass refit=false while the arrow ITSELF is being dragged: refitArrowBounds
+// resets the group's left/top, which fabric then clobbers with its own
+// translate each frame — leaving the geometry fighting the drag. Skipping the
+// refit re-positions only the children (keeping a bound end glued to its border
+// as the group translates); the bounds are re-fitted once on drop.
+export const setArrowEndpoints = (group, tailScene, tipScene, refit = true) => {
   const inv = fabric.util.invertTransform(group.calcTransformMatrix());
   const toLocal = (p) =>
     fabric.util.transformPoint(new fabric.Point(p.x, p.y), inv);
   applyEndpointsLocal(group, toLocal(tailScene), toLocal(tipScene));
-  refitArrowBounds(group);
+  if (refit) refitArrowBounds(group);
 };
 
 // Re-fit the group's bounding box to its (mutated) children while preserving

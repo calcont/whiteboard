@@ -213,4 +213,25 @@ describe("setArrowEndpoints (programmatic re-route)", () => {
     expect(Math.round(tip.y)).toBe(180);
     expect(isArrow(a)).toBe(true);
   });
+
+  test("refit=false still positions the endpoints (live drag path)", () => {
+    const c = new fabric.Canvas(document.createElement("canvas"));
+    const a = arrow();
+    c.add(a);
+
+    setArrowEndpoints(a, { x: 60, y: 60 }, { x: 260, y: 200 }, false);
+
+    const P = fabric.Point;
+    const abs = (k) => {
+      const p = localEnds(a)[k];
+      return fabric.util.transformPoint(
+        new P(p.x, p.y),
+        a.calcTransformMatrix(),
+      );
+    };
+    const tip = abs("e2");
+    expect(Math.round(tip.x)).toBe(260);
+    expect(Math.round(tip.y)).toBe(200);
+    expect(isArrow(a)).toBe(true);
+  });
 });
