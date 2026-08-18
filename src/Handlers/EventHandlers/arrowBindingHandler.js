@@ -40,9 +40,15 @@ function ArrowBindingHandler() {
     // its shape; the free end keeps wherever the drag left it. We reroute on
     // object:modified (drop), not live: mid-drag the reroute would fight fabric's
     // own translation of the very group being dragged.
+    //
+    // BUT an endpoint drag ALSO ends in object:modified (action "arrowEndpoint"),
+    // and it manages its own (un)binding via arrow:endpoint:up. Rerouting here
+    // would snap a just-dragged-off endpoint back onto the shape before that runs,
+    // making it impossible to unbind — so skip endpoint-drag modifications.
     const onArrowMoved = (opt) => {
       const t = opt && opt.target;
       if (!t || !isArrow(t) || (!t.startBinding && !t.endBinding)) return;
+      if (opt.action === "arrowEndpoint") return;
       rerouteArrow(canvas, t);
       canvas.requestRenderAll();
     };
