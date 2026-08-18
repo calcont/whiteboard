@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { fabric } from "fabric";
 import { Tooltip } from "@mui/material";
 import {
   ChevronsUp,
@@ -19,14 +18,16 @@ import {
   FONT_FAMILIES,
   FONT_SIZES,
   ARROW_HEAD_OPTIONS,
+  ARROW_TYPE_OPTIONS,
   toFabricStyle,
   toTextStyle,
 } from "../../../Handlers/ToolsHandler/toolStyle";
-import { buildArrowGroup } from "../../../Handlers/ToolsHandler/tools/arrow";
+import { rebuildArrow } from "../../../Handlers/ToolsHandler/tools/arrow";
 import {
   isLabeledShape,
   getLabelParts,
   isArrow,
+  isElbowArrow,
 } from "../../../utils/shapeLabel";
 import { dimColor, isDarkTheme } from "../../../utils/themeColor";
 import "./PropertiesPanel.scss";
@@ -89,8 +90,10 @@ const PropertiesPanel = () => {
     if (!canvas) return;
     canvas.currentStyle = toFabricStyle(style);
     canvas.currentTextStyle = toTextStyle(style);
-    // Arrowheads aren't a fabric prop — expose it separately for the arrow tool.
+    // Arrowheads / arrow-type aren't fabric props — expose them separately for
+    // the arrow tool to read at draw time.
     canvas.currentArrowHeads = style.arrowHeads;
+    canvas.currentArrowType = style.arrowType;
     if (canvas.freeDrawingBrush) {
       canvas.freeDrawingBrush.color = style.stroke;
     }
@@ -204,59 +207,35 @@ const PropertiesPanel = () => {
     applyToActive(next);
   };
 
-  // Arrowheads can't be set with obj.set() — the head is a child object — so a
-  // selected arrow is rebuilt with the new config. Also updates the default for
-  // the next drawn arrow.
-  const setArrowHeads = (mode) => {
-    const next = { ...styleRef.current, arrowHeads: mode };
-    styleRef.current = next;
-    setStyle(next);
+  // An arrow's heads/type live in its child structure, so they can't be set with
+  // obj.set() — the selected arrow is rebuilt (preserving endpoints, label and
+  // bindings) via rebuildArrow. Records one history entry + persistence save.
+  const rebuildActiveArrow = (overrides) => {
     if (!canvas || !isArrowObject(activeObject)) return;
-
     const group = activeObject;
-    const line = group._objects.find((c) => c.type === "line");
-    const textChild = group._objects.find((c) => isText(c));
-    const matrix = group.calcTransformMatrix();
-    const lp = line.calcLinePoints();
-    const p1 = fabric.util.transformPoint(
-      new fabric.Point(line.left + lp.x1, line.top + lp.y1),
-      matrix,
-    );
-    const p2 = fabric.util.transformPoint(
-      new fabric.Point(line.left + lp.x2, line.top + lp.y2),
-      matrix,
-    );
-    const arrow = buildArrowGroup(
-      { x: p1.x, y: p1.y },
-      { x: p2.x, y: p2.y },
-      {
-        stroke: line.stroke,
-        strokeWidth: line.strokeWidth,
-        strokeDashArray: line.strokeDashArray,
-        heads: mode,
-        // Preserve a label when toggling the head style.
-        label: textChild
-          ? {
-              text: textChild.text,
-              fontFamily: textChild.fontFamily,
-              fontSize: textChild.fontSize,
-              fill: textChild.fill,
-              backgroundColor: textChild.backgroundColor,
-            }
-          : null,
-      },
-    );
-
+    const arrow = rebuildArrow(group, overrides);
     const supportsHistory = typeof canvas._historySaveAction === "function";
     if (supportsHistory) canvas.historyProcessing = true;
     canvas.remove(group);
     canvas.add(arrow);
-    arrow.setCoords();
     canvas.setActiveObject(arrow);
     if (supportsHistory) canvas.historyProcessing = false;
     canvas.requestRenderAll();
-    // One history entry (and a persistence save) for the head change.
     canvas.fire("object:modified", { target: arrow });
+  };
+
+  const setArrowHeads = (mode) => {
+    const next = { ...styleRef.current, arrowHeads: mode };
+    styleRef.current = next;
+    setStyle(next);
+    rebuildActiveArrow({ heads: mode });
+  };
+
+  const setArrowType = (type) => {
+    const next = { ...styleRef.current, arrowType: type };
+    styleRef.current = next;
+    setStyle(next);
+    rebuildActiveArrow({ arrowType: type });
   };
 
   // Reorder the selection's z-index. sendToBack/sendBackwards process in
@@ -302,6 +281,13 @@ const PropertiesPanel = () => {
   const arrowContext =
     activeTool === TOOL_CONSTANTS.ARROW || selectedArrowHeads !== null;
   const activeHeads = selectedArrowHeads || style.arrowHeads;
+  // Straight vs elbow — reflects the selected arrow's own routing, else default.
+  const selectedArrowType = isArrowObject(activeObject)
+    ? isElbowArrow(activeObject)
+      ? "elbow"
+      : "straight"
+    : null;
+  const activeArrowType = selectedArrowType || style.arrowType;
 
   // An icon (imported logo) has no editable colour/width/style — it keeps its
   // own artwork — so the panel shows only its position/layer controls.
@@ -501,6 +487,28 @@ const PropertiesPanel = () => {
                   )}
                 </button>
               </Tooltip>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {arrowContext && (
+        <div className="properties-panel__group">
+          <span className="properties-panel__label">Arrow type</span>
+          <div className="properties-panel__row">
+            {ARROW_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                className={
+                  activeArrowType === opt.id
+                    ? "properties-panel__btn active"
+                    : "properties-panel__btn"
+                }
+                onClick={() => setArrowType(opt.id)}
+              >
+                {opt.label}
+              </button>
             ))}
           </div>
         </div>

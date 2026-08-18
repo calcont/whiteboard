@@ -1,6 +1,6 @@
 import { fabric } from "fabric";
-import { isArrow, getArrowParts } from "./shapeLabel";
-import { setArrowEndpoints } from "./arrowEndpoints";
+import { isArrow } from "./shapeLabel";
+import { setArrowEndpoints, sceneEndpoints } from "./arrowEndpoints";
 
 // Arrow <-> shape binding (eraser.io style). An arrow endpoint can be "bound" to
 // a shape by that shape's stable id; when the shape moves or resizes we re-route
@@ -31,16 +31,47 @@ const NON_BINDABLE = new Set(["line", "i-text", "text", "textbox"]);
 export const isBindable = (o) =>
   !!o && !o.__nonBindable && !isArrow(o) && !NON_BINDABLE.has(o.type);
 
-// How far outside a shape an arrow endpoint can land and still bind. People draw
-// arrows TO a box's edge (or just past it), not deep inside — without this slack
-// the endpoint misses the bbox and nothing binds. The bound end then snaps to
-// the border anyway (rerouteArrow), so a little generosity here is free.
-export const BIND_MARGIN = 24;
+// How far outside a shape an arrow endpoint can land and still bind — a small
+// "on the border" tolerance so dropping right at the edge binds, without
+// engaging (and highlighting) while the endpoint is still well away from it.
+export const BIND_MARGIN = 8;
 
 // --- geometry -------------------------------------------------------------
 // The shape's absolute (scene) axis-aligned bounding box. Good enough for v1
 // across rect/ellipse/diamond/polygon and labelled groups.
-const sceneBBox = (shape) => shape.getBoundingRect(true, true);
+//
+// While a shape is part of an activeSelection (a multi-select drag), fabric v5's
+// getBoundingRect(true) returns coords RELATIVE to the selection — the shape's
+// own transform matrix doesn't include the parent group. Transform that bbox by
+// the group's matrix to recover absolute scene coords, so an arrow bound to a
+// shape that is being dragged inside a selection re-routes to the right place.
+const sceneBBox = (shape) => {
+  const b = shape.getBoundingRect(true, true);
+  if (!shape.group) return b;
+  const m = shape.group.calcTransformMatrix();
+  const tl = fabric.util.transformPoint(new fabric.Point(b.left, b.top), m);
+  const br = fabric.util.transformPoint(
+    new fabric.Point(b.left + b.width, b.top + b.height),
+    m,
+  );
+  return {
+    left: Math.min(tl.x, br.x),
+    top: Math.min(tl.y, br.y),
+    width: Math.abs(br.x - tl.x),
+    height: Math.abs(br.y - tl.y),
+  };
+};
+
+// The shape's centre in ABSOLUTE scene coords. Derived from the (absolute) bbox
+// rather than getCenterPoint() on purpose: for a shape that is momentarily part
+// of an activeSelection, getCenterPoint() returns coords relative to the
+// selection, which would mis-place a re-routed arrow while the group is dragged.
+// The bbox centre equals the geometric centre for our shapes (bbox is symmetric
+// about it, even when rotated).
+const sceneCenter = (shape) => {
+  const b = sceneBBox(shape);
+  return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+};
 
 const bboxContainsPoint = (shape, p, margin = 0) => {
   const b = sceneBBox(shape);
@@ -57,7 +88,7 @@ const bboxContainsPoint = (shape, p, margin = 0) => {
 // true ray-ellipse intersection; everything else clips the ray to the bounding
 // box (exact for rectangles; a close approximation for diamonds/polygons/icons).
 export const borderPoint = (shape, toward) => {
-  const c = shape.getCenterPoint();
+  const c = sceneCenter(shape);
   const dx = toward.x - c.x;
   const dy = toward.y - c.y;
   if (dx === 0 && dy === 0) return { x: c.x, y: c.y };
@@ -84,7 +115,7 @@ export const borderPoint = (shape, toward) => {
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 const anchorOf = (shape, scenePoint) => {
-  const c = shape.getCenterPoint();
+  const c = sceneCenter(shape);
   const b = sceneBBox(shape);
   return {
     fx: clamp((scenePoint.x - c.x) / (b.width / 2 || 1), -1, 1),
@@ -94,7 +125,7 @@ const anchorOf = (shape, scenePoint) => {
 
 // The scene point an anchor currently resolves to (centre + fraction*half).
 const anchorTarget = (shape, anchor) => {
-  const c = shape.getCenterPoint();
+  const c = sceneCenter(shape);
   const b = sceneBBox(shape);
   return {
     x: c.x + anchor.fx * (b.width / 2),
@@ -114,18 +145,9 @@ export const boundArrows = (canvas, shapeId) =>
         isArrow(o) && (o.startBinding === shapeId || o.endBinding === shapeId),
     );
 
-// Current arrow endpoints in scene coords (tail = line start, tip = line end).
-const arrowEndpointsScene = (arrow) => {
-  const { line } = getArrowParts(arrow);
-  const lp = line.calcLinePoints();
-  const m = arrow.calcTransformMatrix();
-  const toScene = (x, y) =>
-    fabric.util.transformPoint(
-      new fabric.Point(line.left + x, line.top + y),
-      m,
-    );
-  return { tail: toScene(lp.x1, lp.y1), tip: toScene(lp.x2, lp.y2) };
-};
+// Current arrow endpoints in scene coords (delegates to the arrow-layout helper,
+// which handles both a straight line and an elbow polyline connector).
+const arrowEndpointsScene = (arrow) => sceneEndpoints(arrow);
 
 // Scene position of one arrow end ("start" = tail, "end" = tip).
 export const arrowEndScene = (arrow, end) => {
@@ -137,8 +159,9 @@ export const arrowEndScene = (arrow, end) => {
 // Recompute one arrow's endpoints from its bindings. A bound end anchors to its
 // shape's border (facing the other end); an unbound end keeps its position. A
 // binding whose shape no longer exists is treated as unbound. Returns true if a
-// bound end was re-routed.
-export const rerouteArrow = (canvas, arrow) => {
+// bound end was re-routed. Pass refit=false while the arrow itself is being
+// dragged (see setArrowEndpoints) — the bounds are re-fitted once on drop.
+export const rerouteArrow = (canvas, arrow, refit = true) => {
   const startShape = shapeById(canvas, arrow.startBinding);
   const endShape = shapeById(canvas, arrow.endBinding);
   if (!startShape && !endShape) return false;
@@ -153,21 +176,21 @@ export const rerouteArrow = (canvas, arrow) => {
     ? meaningful(arrow.startAnchor)
       ? anchorTarget(startShape, arrow.startAnchor)
       : endShape
-        ? endShape.getCenterPoint()
+        ? sceneCenter(endShape)
         : ends.tip
     : null;
   const endAim = endShape
     ? meaningful(arrow.endAnchor)
       ? anchorTarget(endShape, arrow.endAnchor)
       : startShape
-        ? startShape.getCenterPoint()
+        ? sceneCenter(startShape)
         : ends.tail
     : null;
 
   const tail = startShape ? borderPoint(startShape, startAim) : ends.tail;
   const tip = endShape ? borderPoint(endShape, endAim) : ends.tip;
 
-  setArrowEndpoints(arrow, tail, tip);
+  setArrowEndpoints(arrow, tail, tip, refit);
   return true;
 };
 
