@@ -3,9 +3,78 @@ import {
   reshapeArrow,
   refitArrowBounds,
   setArrowEndpoints,
+  elbowRoute,
+  headCenterFor,
+  headTipOf,
 } from "./arrowEndpoints";
-import { getArrowParts, isArrow } from "./shapeLabel";
+import { getArrowParts, isArrow, isElbowArrow } from "./shapeLabel";
 import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
+
+describe("elbowRoute (orthogonal routing)", () => {
+  test("mostly-horizontal points bend at the mid-x (H then V then H)", () => {
+    const r = elbowRoute({ x: 0, y: 0 }, { x: 200, y: 60 });
+    expect(r).toEqual([
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 60 },
+      { x: 200, y: 60 },
+    ]);
+    // every segment is axis-aligned (a right angle at each bend)
+    for (let i = 1; i < r.length; i += 1)
+      expect(r[i].x === r[i - 1].x || r[i].y === r[i - 1].y).toBe(true);
+  });
+
+  test("mostly-vertical points bend at the mid-y", () => {
+    const r = elbowRoute({ x: 0, y: 0 }, { x: 60, y: 200 });
+    expect(r[1]).toEqual({ x: 0, y: 100 });
+    expect(r[2]).toEqual({ x: 60, y: 100 });
+  });
+
+  test("aligned points collapse to a straight two-point segment", () => {
+    expect(elbowRoute({ x: 0, y: 0 }, { x: 200, y: 0 })).toHaveLength(2);
+  });
+});
+
+describe("headCenterFor (arrowhead sits ON the endpoint, not past it)", () => {
+  test("backs the centre off the tip by the head half-length, along the segment", () => {
+    // horizontal segment (0,0)->(100,0): centre pulled 10 left of the tip
+    expect(headCenterFor({ x: 100, y: 0 }, { x: 0, y: 0 })).toEqual({
+      x: 90,
+      y: 0,
+    });
+  });
+
+  test("normalises diagonal segments (offset magnitude stays the head length)", () => {
+    const c = headCenterFor({ x: 30, y: 40 }, { x: 0, y: 0 }); // 3-4-5 => len 50
+    expect(Math.round(c.x)).toBe(24); // 30 - (30/50)*10
+    expect(Math.round(c.y)).toBe(32); // 40 - (40/50)*10
+  });
+
+  test("degenerate (tip == prev) returns the tip unchanged (no divide-by-zero)", () => {
+    expect(headCenterFor({ x: 5, y: 5 }, { x: 5, y: 5 })).toEqual({
+      x: 5,
+      y: 5,
+    });
+  });
+});
+
+describe("isElbowArrow", () => {
+  test("true for an elbow arrow, false for a straight one", () => {
+    const straight = buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { stroke: "#000", strokeWidth: 2, arrowType: "straight" },
+    );
+    const elbow = buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 200, y: 120 },
+      { stroke: "#000", strokeWidth: 2, arrowType: "elbow" },
+    );
+    expect(isElbowArrow(straight)).toBe(false);
+    expect(isElbowArrow(elbow)).toBe(true);
+    expect(isArrow(elbow)).toBe(true); // an elbow is still an arrow
+  });
+});
 
 const arrow = (label) =>
   buildArrowGroup(
@@ -14,15 +83,38 @@ const arrow = (label) =>
     { stroke: "#000", strokeWidth: 2, ...(label ? { label } : {}) },
   );
 
-// Endpoint positions in group-local coords (relative to the group centre).
+// Endpoint positions in group-local coords (relative to the group centre). The
+// logical endpoint of a headed end is the head's TIP (the connector line stops
+// short at the head centre), mirroring the module's own localEndpoints.
 const localEnds = (a) => {
-  const { line } = getArrowParts(a);
+  const { line, heads } = getArrowParts(a);
   const lp = line.calcLinePoints();
-  return {
-    e1: { x: line.left + lp.x1, y: line.top + lp.y1 },
-    e2: { x: line.left + lp.x2, y: line.top + lp.y2 },
-  };
+  const e1 = heads[1]
+    ? headTipOf(heads[1])
+    : { x: line.left + lp.x1, y: line.top + lp.y1 };
+  const e2 = heads[0]
+    ? headTipOf(heads[0])
+    : { x: line.left + lp.x2, y: line.top + lp.y2 };
+  return { e1, e2 };
 };
+
+describe("connector stops short of the head tip (no line poking past it)", () => {
+  test("the line's terminal is HEAD_TIP_INSET behind the logical tip", () => {
+    const a = arrow();
+    reshapeArrow(a, "e2", { x: 100, y: 0 });
+    const { line, heads } = getArrowParts(a);
+    const lp = line.calcLinePoints();
+    const lineEnd = { x: line.left + lp.x2, y: line.top + lp.y2 };
+    const tip = headTipOf(heads[0]);
+    // logical tip is the head's point; the drawn line ends ~10 units before it
+    expect(Math.round(tip.x)).toBe(100);
+    expect(Math.round(Math.hypot(tip.x - lineEnd.x, tip.y - lineEnd.y))).toBe(
+      10,
+    );
+    // and the line never reaches (let alone passes) the tip
+    expect(lineEnd.x).toBeLessThan(tip.x);
+  });
+});
 
 describe("reshapeArrow", () => {
   test("moves the dragged endpoint, keeps the other, follows head + label", () => {
@@ -40,9 +132,11 @@ describe("reshapeArrow", () => {
     expect(Math.round(after.e1.y)).toBe(Math.round(before.e1.y));
 
     const { heads, text } = getArrowParts(a);
-    // single head sits at the tip
-    expect(Math.round(heads[0].left)).toBe(Math.round(target.x));
-    expect(Math.round(heads[0].top)).toBe(Math.round(target.y));
+    // single head is backed off the tip so its VISIBLE point lands on the tip
+    // (its centre is HEAD_TIP_INSET back along the tail->tip segment).
+    const cen = headCenterFor(target, after.e1);
+    expect(Math.round(heads[0].left)).toBe(Math.round(cen.x));
+    expect(Math.round(heads[0].top)).toBe(Math.round(cen.y));
     // label re-centres on the new midpoint
     expect(Math.round(text.left)).toBe(Math.round((after.e1.x + target.x) / 2));
     expect(Math.round(text.top)).toBe(Math.round((after.e1.y + target.y) / 2));
@@ -72,11 +166,9 @@ describe("refitArrowBounds", () => {
     c.add(a);
     const P = fabric.Point;
     const abs = (k) => {
-      const { line } = getArrowParts(a);
-      const lp = line.calcLinePoints();
-      const off = k === "e1" ? { x: lp.x1, y: lp.y1 } : { x: lp.x2, y: lp.y2 };
+      const p = localEnds(a)[k];
       return fabric.util.transformPoint(
-        new P(line.left + off.x, line.top + off.y),
+        new P(p.x, p.y),
         a.calcTransformMatrix(),
       );
     };
@@ -107,11 +199,9 @@ describe("setArrowEndpoints (programmatic re-route)", () => {
 
     const P = fabric.Point;
     const abs = (k) => {
-      const { line } = getArrowParts(a);
-      const lp = line.calcLinePoints();
-      const off = k === "e1" ? { x: lp.x1, y: lp.y1 } : { x: lp.x2, y: lp.y2 };
+      const p = localEnds(a)[k];
       return fabric.util.transformPoint(
-        new P(line.left + off.x, line.top + off.y),
+        new P(p.x, p.y),
         a.calcTransformMatrix(),
       );
     };
@@ -121,6 +211,27 @@ describe("setArrowEndpoints (programmatic re-route)", () => {
     expect(Math.round(tail.y)).toBe(40);
     expect(Math.round(tip.x)).toBe(240);
     expect(Math.round(tip.y)).toBe(180);
+    expect(isArrow(a)).toBe(true);
+  });
+
+  test("refit=false still positions the endpoints (live drag path)", () => {
+    const c = new fabric.Canvas(document.createElement("canvas"));
+    const a = arrow();
+    c.add(a);
+
+    setArrowEndpoints(a, { x: 60, y: 60 }, { x: 260, y: 200 }, false);
+
+    const P = fabric.Point;
+    const abs = (k) => {
+      const p = localEnds(a)[k];
+      return fabric.util.transformPoint(
+        new P(p.x, p.y),
+        a.calcTransformMatrix(),
+      );
+    };
+    const tip = abs("e2");
+    expect(Math.round(tip.x)).toBe(260);
+    expect(Math.round(tip.y)).toBe(200);
     expect(isArrow(a)).toBe(true);
   });
 });

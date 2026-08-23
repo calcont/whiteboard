@@ -13,12 +13,19 @@ export const DEFAULT_STYLE = {
   fontFamily: "Comic Sans MS", // excalidraw-style hand-drawn default
   fontSize: 20, // "M" — Excalidraw's default; readable without overflowing
   arrowHeads: "end", // "end" (single head) | "both" (double-headed)
+  arrowType: "straight", // "straight" | "elbow" (orthogonal, right-angle route)
 };
 
 // Arrowhead configurations offered for the arrow tool.
 export const ARROW_HEAD_OPTIONS = [
   { id: "end", label: "Single-headed" },
   { id: "both", label: "Double-headed" },
+];
+
+// Arrow routing offered for the arrow tool: straight line vs elbow (orthogonal).
+export const ARROW_TYPE_OPTIONS = [
+  { id: "straight", label: "Straight" },
+  { id: "elbow", label: "Elbow" },
 ];
 
 export const FONT_FAMILIES = [
@@ -39,8 +46,8 @@ export const FONT_SIZES = [
 
 export const STROKE_WIDTHS = [
   { label: "Thin", value: 2 },
-  { label: "Medium", value: 4 },
-  { label: "Bold", value: 8 },
+  { label: "Medium", value: 3 },
+  { label: "Bold", value: 6 },
 ];
 
 export const STROKE_STYLES = ["solid", "dashed", "dotted"];

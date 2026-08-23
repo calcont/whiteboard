@@ -24,13 +24,17 @@ export const getLabelParts = (group) => ({
   text: group._objects.find((c) => TEXT_TYPES.has(c.type)),
 });
 
-// An arrow is a group of one line + one or two heads (paths), and now an
+// The connector child is a straight `line` OR (for an elbow arrow) an
+// orthogonally-routed `polyline`. Detected structurally either way.
+const isConnector = (c) => c.type === "line" || c.type === "polyline";
+
+// An arrow is a group of one connector + one or two heads (paths), and an
 // OPTIONAL text label. Detected structurally (single source of truth, imported
 // by the resize handler and properties panel) so an arrow stays an arrow whether
 // or not it carries a label, and survives undo/reload without custom props.
 export const isArrow = (o) => {
   if (!o || o.type !== "group" || !o._objects) return false;
-  const lines = o._objects.filter((c) => c.type === "line");
+  const lines = o._objects.filter(isConnector);
   const heads = o._objects.filter((c) => c.type === "path");
   const texts = o._objects.filter((c) => TEXT_TYPES.has(c.type));
   return (
@@ -43,10 +47,14 @@ export const isArrow = (o) => {
 };
 
 export const getArrowParts = (group) => ({
-  line: group._objects.find((c) => c.type === "line"),
+  line: group._objects.find(isConnector),
   heads: group._objects.filter((c) => c.type === "path"),
   text: group._objects.find((c) => TEXT_TYPES.has(c.type)) || null,
 });
+
+// True when the arrow's connector is an elbow (orthogonal polyline).
+export const isElbowArrow = (o) =>
+  isArrow(o) && getArrowParts(o).line.type === "polyline";
 
 // The board's current background colour, used to mask the arrow line behind a
 // label (excalidraw-style) so the line doesn't strike through the text. Falls

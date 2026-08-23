@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { fabric } from "fabric";
 import { useCanvasContext } from "../../hooks";
-import { buildArrowGroup } from "../ToolsHandler/tools/arrow";
+import { rebuildArrow } from "../ToolsHandler/tools/arrow";
 import { isArrow, counterScaleArrowDecorations } from "../../utils/shapeLabel";
 
 // Arrow detection (line + 1-2 heads, optional text label) is centralised in
@@ -25,66 +25,11 @@ function ArrowResizeHandler() {
     // Rebuild one scaled arrow group at scale 1 between its real endpoints,
     // preserving its head config (single vs double). Returns the fresh arrow
     // (already swapped onto the canvas).
+    // rebuildArrow reads the arrow's real (scaled) endpoints and rebuilds a
+    // fresh, unscaled arrow between them — preserving heads, straight/elbow type,
+    // label and bindings, and handling the line-or-polyline connector.
     const rebuildScaledArrow = (group) => {
-      const line = group._objects.find((c) => c.type === "line");
-      const heads = group._objects.filter((c) => c.type === "path");
-      const textChild = group._objects.find(
-        (c) => c.type === "textbox" || c.type === "i-text" || c.type === "text",
-      );
-      const matrix = group.calcTransformMatrix();
-      // Derive both endpoints from the line's real endpoints — NOT the group's
-      // bounding box: a head inflates the bbox, so an opposite-corner tail sits
-      // off the line and tilts a horizontal arrow on drop. calcLinePoints() is
-      // relative to the line's centre; add its left/top (relative to the group
-      // centre) then map to absolute.
-      const lp = line.calcLinePoints();
-      const end1 = fabric.util.transformPoint(
-        new fabric.Point(line.left + lp.x1, line.top + lp.y1),
-        matrix,
-      );
-      const end2 = fabric.util.transformPoint(
-        new fabric.Point(line.left + lp.x2, line.top + lp.y2),
-        matrix,
-      );
-
-      let tail;
-      let tip;
-      if (heads.length === 2) {
-        // Double-headed: symmetric, so either endpoint can be the "end".
-        tail = end1;
-        tip = end2;
-      } else {
-        // Single-headed: the tip is the endpoint nearest the head.
-        const headAbs = fabric.util.transformPoint(
-          new fabric.Point(heads[0].left, heads[0].top),
-          matrix,
-        );
-        const d1 = Math.hypot(end1.x - headAbs.x, end1.y - headAbs.y);
-        const d2 = Math.hypot(end2.x - headAbs.x, end2.y - headAbs.y);
-        tip = d1 < d2 ? end1 : end2;
-        tail = d1 < d2 ? end2 : end1;
-      }
-
-      const arrow = buildArrowGroup(
-        { x: tail.x, y: tail.y },
-        { x: tip.x, y: tip.y },
-        {
-          stroke: line.stroke,
-          strokeWidth: line.strokeWidth,
-          strokeDashArray: line.strokeDashArray,
-          heads: heads.length === 2 ? "both" : "end",
-          // Preserve a label across the rebuild, re-centred on the new midpoint.
-          label: textChild
-            ? {
-                text: textChild.text,
-                fontFamily: textChild.fontFamily,
-                fontSize: textChild.fontSize,
-                fill: textChild.fill,
-                backgroundColor: textChild.backgroundColor,
-              }
-            : null,
-        },
-      );
+      const arrow = rebuildArrow(group);
       canvas.remove(group);
       canvas.add(arrow);
       arrow.setCoords();

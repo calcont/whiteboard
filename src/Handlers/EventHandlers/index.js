@@ -8,3 +8,4 @@ export { default as DarkColorHandler } from "./darkColorHandler";
 export { default as ZoomHandler } from "./zoomHandler";
 export { default as PersistenceHandler } from "./persistenceHandler";
 export { default as ArrowResizeHandler } from "./arrowResizeHandler";
+export { default as ArrowBindingHandler } from "./arrowBindingHandler";
