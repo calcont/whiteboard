@@ -83,11 +83,55 @@ export const elbowRoute = (s, e) => {
   ];
 };
 
+// Radius of the rounded corners on an elbow arrow (eraser.io/Excalidraw style).
+export const ELBOW_CORNER_RADIUS = 12;
+
+// Expand a sharp orthogonal route into one with ROUNDED corners: each interior
+// vertex becomes a short quadratic-bezier fillet (the corner is the control
+// point), approximated by a few points so the plain polyline renders as a smooth
+// rounded elbow. The FIRST and LAST points are left exactly on the endpoints, so
+// localEndpoints (which reads points[0]/points[last]) is unaffected. The fillet
+// radius is capped to half the shorter adjacent segment so short legs don't kink.
+const roundRoute = (route, radius) => {
+  if (route.length <= 2) return route.map((p) => ({ x: p.x, y: p.y }));
+  const out = [{ x: route[0].x, y: route[0].y }];
+  for (let i = 1; i < route.length - 1; i += 1) {
+    const a = route[i - 1];
+    const b = route[i];
+    const c = route[i + 1];
+    const v1 = { x: a.x - b.x, y: a.y - b.y };
+    const v2 = { x: c.x - b.x, y: c.y - b.y };
+    const l1 = Math.hypot(v1.x, v1.y) || 1;
+    const l2 = Math.hypot(v2.x, v2.y) || 1;
+    const r = Math.min(radius, l1 / 2, l2 / 2);
+    if (r < 0.5) {
+      out.push({ x: b.x, y: b.y });
+      continue;
+    }
+    const p1 = { x: b.x + (v1.x / l1) * r, y: b.y + (v1.y / l1) * r };
+    const p2 = { x: b.x + (v2.x / l2) * r, y: b.y + (v2.y / l2) * r };
+    const steps = 4;
+    out.push(p1);
+    for (let s = 1; s < steps; s += 1) {
+      const t = s / steps;
+      const mt = 1 - t;
+      out.push({
+        x: mt * mt * p1.x + 2 * mt * t * b.x + t * t * p2.x,
+        y: mt * mt * p1.y + 2 * mt * t * b.y + t * t * p2.y,
+      });
+    }
+    out.push(p2);
+  }
+  out.push({ x: route[route.length - 1].x, y: route[route.length - 1].y });
+  return out;
+};
+
 // Position an elbow polyline so its points render at their exact group-local
-// coords (fabric otherwise offsets a polyline by its pathOffset). Set the route,
-// recompute dimensions, then pin left/top to the new pathOffset.
+// coords (fabric otherwise offsets a polyline by its pathOffset). Round the
+// route's corners, set the points, recompute dimensions, then pin left/top to
+// the new pathOffset.
 export const layoutElbowPolyline = (poly, route) => {
-  poly.set({ points: route.map((p) => ({ x: p.x, y: p.y })) });
+  poly.set({ points: roundRoute(route, ELBOW_CORNER_RADIUS) });
   poly._setPositionDimensions({});
   poly.set({ left: poly.pathOffset.x, top: poly.pathOffset.y });
   poly.setCoords();

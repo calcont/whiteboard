@@ -74,6 +74,18 @@ describe("isElbowArrow", () => {
     expect(isElbowArrow(elbow)).toBe(true);
     expect(isArrow(elbow)).toBe(true); // an elbow is still an arrow
   });
+
+  test("the elbow connector has rounded corners (fillet points beyond the sharp route)", () => {
+    const elbow = buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 200, y: 120 },
+      { stroke: "#000", strokeWidth: 2, arrowType: "elbow" },
+    );
+    const { line } = getArrowParts(elbow);
+    expect(line.type).toBe("polyline");
+    // a sharp Z is 4 points; rounding each interior bend adds fillet points
+    expect(line.points.length).toBeGreaterThan(4);
+  });
 });
 
 const arrow = (label) =>

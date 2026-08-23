@@ -56,8 +56,14 @@ export const buildArrowGroup = (start, end, style) => {
     selectable: false,
   };
   // The connector: a straight line, or an orthogonally-routed polyline (elbow).
+  // The elbow uses round joins/caps so its (rounded) corners render smoothly.
   const line = elbow
-    ? new fabric.Polyline(elbowRoute(start, end), { ...connStyle, fill: "" })
+    ? new fabric.Polyline(elbowRoute(start, end), {
+        ...connStyle,
+        fill: "",
+        strokeLineJoin: "round",
+        strokeLineCap: "round",
+      })
     : new fabric.Line([start.x, start.y, end.x, end.y], connStyle);
   // Head aims along the last route segment (= start->end for a straight arrow).
   // Its centre is backed off so the tip vertex sits exactly on the endpoint.

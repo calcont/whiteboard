@@ -160,10 +160,11 @@ const PropertiesPanel = () => {
         });
       } else if (isArrowObject(obj)) {
         // An arrow group doesn't propagate style to its children, so apply to
-        // each: line-like children take the stroke/width/dash; the filled
-        // head(s) take the stroke colour as their fill.
+        // each: the connector (a straight `line` OR an elbow `polyline`) takes
+        // the stroke/width/dash; the filled head(s) take the stroke colour as
+        // their fill.
         obj._objects.forEach((child) => {
-          if (child.type === "line") {
+          if (child.type === "line" || child.type === "polyline") {
             child.set({
               stroke: fab.stroke,
               strokeWidth: fab.strokeWidth,
