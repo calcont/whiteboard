@@ -87,6 +87,29 @@ describe("borderPoint", () => {
     const on = ((p.x - 100) / 50) ** 2 + ((p.y - 100) / 30) ** 2;
     expect(on).toBeCloseTo(1, 2);
   });
+
+  test("a diamond (polygon) lands on its slanted edge, not the bbox corner", () => {
+    // a diamond with vertices 50 out along each axis (centre at the local origin)
+    const d = new fabric.Polygon(
+      [
+        { x: 0, y: -50 },
+        { x: 50, y: 0 },
+        { x: 0, y: 50 },
+        { x: -50, y: 0 },
+      ],
+      { left: 50, top: 50, strokeWidth: 0 },
+    );
+    const c = new fabric.Canvas(document.createElement("canvas"));
+    c.add(d);
+    const bb = d.getBoundingRect(true, true);
+    const cx = bb.left + bb.width / 2;
+    const cy = bb.top + bb.height / 2;
+    // aim toward the bottom-right: the bbox clip would give the corner (taxi 100),
+    // the real edge is the line |dx|+|dy| = 50 from the centre.
+    const p = borderPoint(d, { x: cx + 300, y: cy + 300 });
+    expect(Math.round(Math.abs(p.x - cx) + Math.abs(p.y - cy))).toBe(50);
+    expect(p.x).toBeLessThan(bb.left + bb.width - 1); // not the bbox corner
+  });
 });
 
 describe("shapeUnderPoint", () => {

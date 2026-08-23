@@ -83,15 +83,59 @@ const bboxContainsPoint = (shape, p, margin = 0) => {
   );
 };
 
+// A polygon's vertices in ABSOLUTE scene coords (handles a shape momentarily
+// inside an activeSelection by folding in the group's matrix — see sceneBBox).
+const scenePolygonPoints = (poly) => {
+  const own = poly.calcTransformMatrix();
+  const m = poly.group
+    ? fabric.util.multiplyTransformMatrices(
+        poly.group.calcTransformMatrix(),
+        own,
+      )
+    : own;
+  const off = poly.pathOffset || { x: 0, y: 0 };
+  return poly.points.map((p) =>
+    fabric.util.transformPoint(new fabric.Point(p.x - off.x, p.y - off.y), m),
+  );
+};
+
+// Where the ray from `c` toward `t` first crosses the polygon outline (nearest
+// forward edge intersection), or null if it somehow misses. Lets an arrow touch
+// a diamond/hexagon's actual slanted edge instead of its bounding-box corner.
+const rayPolygonBorder = (verts, c, t) => {
+  const dx = t.x - c.x;
+  const dy = t.y - c.y;
+  let best = null;
+  for (let i = 0; i < verts.length; i += 1) {
+    const a = verts[i];
+    const b = verts[(i + 1) % verts.length];
+    const ex = b.x - a.x;
+    const ey = b.y - a.y;
+    const den = ex * dy - dx * ey;
+    if (Math.abs(den) < 1e-9) continue; // ray parallel to this edge
+    const rt = (ex * (a.y - c.y) - ey * (a.x - c.x)) / den; // dist along the ray
+    const u = (dx * (a.y - c.y) - dy * (a.x - c.x)) / den; // pos along the edge
+    if (rt > 1e-6 && u >= -1e-6 && u <= 1 + 1e-6 && (!best || rt < best.rt)) {
+      best = { rt, x: c.x + dx * rt, y: c.y + dy * rt };
+    }
+  }
+  return best ? { x: best.x, y: best.y } : null;
+};
+
 // Point on the shape's border along the ray from its centre toward `toward`, so
 // the arrow touches the actual outline (not the middle). Ellipses/circles use a
-// true ray-ellipse intersection; everything else clips the ray to the bounding
-// box (exact for rectangles; a close approximation for diamonds/polygons/icons).
+// true ray-ellipse intersection; polygons (diamond/hexagon) use a ray-polygon
+// intersection against their real edges; everything else clips the ray to the
+// bounding box (exact for rectangles; a close approximation for icons/groups).
 export const borderPoint = (shape, toward) => {
   const c = sceneCenter(shape);
   const dx = toward.x - c.x;
   const dy = toward.y - c.y;
   if (dx === 0 && dy === 0) return { x: c.x, y: c.y };
+  if (shape.type === "polygon" && Array.isArray(shape.points)) {
+    const hit = rayPolygonBorder(scenePolygonPoints(shape), c, toward);
+    if (hit) return hit;
+  }
   const b = sceneBBox(shape);
   const hw = b.width / 2;
   const hh = b.height / 2;
