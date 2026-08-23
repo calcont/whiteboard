@@ -54,10 +54,42 @@ export const headTipOf = (head) => {
   };
 };
 
-// Orthogonal (elbow) route between two points: a right-angled path. Routes along
-// the dominant axis first, bending at the midpoint (a clean Z). Collapses to a
-// straight segment when the points share a row/column.
-export const elbowRoute = (s, e) => {
+// Drop duplicate and collinear points so a route is the minimal set of corners
+// (keeps roundRoute from filleting non-corners, and elbows from kinking).
+const cleanRoute = (pts) => {
+  const dedup = [];
+  pts.forEach((p) => {
+    const last = dedup[dedup.length - 1];
+    if (last && Math.abs(last.x - p.x) < 0.5 && Math.abs(last.y - p.y) < 0.5)
+      return;
+    dedup.push({ x: p.x, y: p.y });
+  });
+  if (dedup.length <= 2) return dedup;
+  const out = [dedup[0]];
+  for (let i = 1; i < dedup.length - 1; i += 1) {
+    const a = dedup[i - 1];
+    const b = dedup[i];
+    const c = dedup[i + 1];
+    const cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    if (Math.abs(cross) < 1e-6) continue; // collinear -> drop the middle point
+    out.push(b);
+  }
+  out.push(dedup[dedup.length - 1]);
+  return out;
+};
+
+// The dominant axis direction from `from` toward `to`, as an axis unit vector.
+const axisToward = (from, to) => {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  return Math.abs(dx) >= Math.abs(dy)
+    ? { x: Math.sign(dx) || 1, y: 0 }
+    : { x: 0, y: Math.sign(dy) || 1 };
+};
+
+// The plain dominant-axis mid-bend Z — used when no port directions are known
+// (a free-drawn elbow, or a live endpoint drag).
+const simpleElbow = (s, e) => {
   const dx = e.x - s.x;
   const dy = e.y - s.y;
   if (Math.abs(dx) < 1 || Math.abs(dy) < 1)
@@ -81,6 +113,57 @@ export const elbowRoute = (s, e) => {
     { x: e.x, y: my },
     { x: e.x, y: e.y },
   ];
+};
+
+// Smart orthogonal route between two PORTS — a point plus the axis direction the
+// path must leave it by (the outward normal of the shape edge it's bound to). It
+// stubs out perpendicular to each edge, then connects the stubs with a clean
+// right-angled path, so the arrow leaves/enters each shape square-on (the
+// eraser.io/Excalidraw look) instead of cutting diagonally to a mid-point.
+const STUB = 22;
+const smartElbow = (s, ds, e, de) => {
+  const dist = Math.hypot(e.x - s.x, e.y - s.y);
+  const m = Math.min(STUB, Math.max(6, dist * 0.4));
+  const a = { x: s.x + ds.x * m, y: s.y + ds.y * m };
+  const b = { x: e.x + de.x * m, y: e.y + de.y * m };
+  const aH = ds.x !== 0;
+  const bH = de.x !== 0;
+  const mid = [];
+  if (aH && bH) {
+    const facing =
+      Math.sign(b.x - a.x) === ds.x && Math.sign(a.x - b.x) === de.x;
+    if (facing) {
+      const mx = (a.x + b.x) / 2;
+      mid.push({ x: mx, y: a.y }, { x: mx, y: b.y });
+    } else {
+      const my = (a.y + b.y) / 2;
+      mid.push({ x: a.x, y: my }, { x: b.x, y: my });
+    }
+  } else if (!aH && !bH) {
+    const facing =
+      Math.sign(b.y - a.y) === ds.y && Math.sign(a.y - b.y) === de.y;
+    if (facing) {
+      const my = (a.y + b.y) / 2;
+      mid.push({ x: a.x, y: my }, { x: b.x, y: my });
+    } else {
+      const mx = (a.x + b.x) / 2;
+      mid.push({ x: mx, y: a.y }, { x: mx, y: b.y });
+    }
+  } else if (aH) {
+    mid.push({ x: b.x, y: a.y }); // A horizontal, B vertical -> one corner
+  } else {
+    mid.push({ x: a.x, y: b.y }); // A vertical, B horizontal -> one corner
+  }
+  return cleanRoute([s, a, ...mid, b, e]);
+};
+
+// Orthogonal (elbow) route between two points. With port directions (ds/de — the
+// outward edge normals of bound shapes) it routes smartly with perpendicular
+// exits; without them it falls back to the plain dominant-axis mid-bend. A
+// missing single direction is derived from the geometry.
+export const elbowRoute = (s, e, ds, de) => {
+  if (!ds && !de) return simpleElbow(s, e);
+  return smartElbow(s, ds || axisToward(s, e), e, de || axisToward(e, s));
 };
 
 // Radius of the rounded corners on an elbow arrow (eraser.io/Excalidraw style).
@@ -189,7 +272,12 @@ const applyEndpointsLocal = (group, start, end) => {
   const elbow = line.type === "polyline";
 
   // The route the head/label follow: a straight [start,end] or the elbow path.
-  const route = elbow ? elbowRoute(start, end) : [start, end];
+  // A bound elbow carries its ports' exit directions (startDir/endDir, set by
+  // binding's rerouteArrow) so it leaves each shape square-on; a free elbow has
+  // none and falls back to the plain mid-bend.
+  const route = elbow
+    ? elbowRoute(start, end, group.startDir, group.endDir)
+    : [start, end];
 
   // heads[0] sits at the tip, aimed along the LAST segment; a second head
   // (double-ended) sits at the tail, aimed along the FIRST segment (reversed).

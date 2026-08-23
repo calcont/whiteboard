@@ -177,6 +177,20 @@ const anchorTarget = (shape, anchor) => {
   };
 };
 
+// The outward edge normal at a border point, as an axis unit vector — which side
+// of the shape the arrow leaves by. Feeds the smart elbow router so the arrow
+// exits perpendicular to that edge (eraser.io/Excalidraw). Picks the dominant
+// axis of the point's position within the bbox.
+const exitDir = (shape, borderPt) => {
+  const c = sceneCenter(shape);
+  const b = sceneBBox(shape);
+  const rx = (borderPt.x - c.x) / (b.width / 2 || 1);
+  const ry = (borderPt.y - c.y) / (b.height / 2 || 1);
+  return Math.abs(rx) >= Math.abs(ry)
+    ? { x: Math.sign(rx) || 1, y: 0 }
+    : { x: 0, y: Math.sign(ry) || 1 };
+};
+
 // --- lookups --------------------------------------------------------------
 const shapeById = (canvas, id) =>
   id ? canvas.getObjects().find((o) => o.id === id) || null : null;
@@ -234,6 +248,11 @@ export const rerouteArrow = (canvas, arrow, refit = true) => {
   const tail = startShape ? borderPoint(startShape, startAim) : ends.tail;
   const tip = endShape ? borderPoint(endShape, endAim) : ends.tip;
 
+  // Record each bound end's exit direction so the elbow router leaves the shape
+  // square-on. An unbound end has none (the router derives it from geometry).
+  arrow.startDir = startShape ? exitDir(startShape, tail) : undefined;
+  arrow.endDir = endShape ? exitDir(endShape, tip) : undefined;
+
   setArrowEndpoints(arrow, tail, tip, refit);
   return true;
 };
@@ -264,10 +283,13 @@ export const bindEnd = (arrow, end, shape, scenePoint) => {
   ensureId(arrow);
 };
 
-// Unbind one end (e.g. its endpoint was dragged into empty space).
+// Unbind one end (e.g. its endpoint was dragged into empty space). Also clears
+// that end's cached exit direction so the router doesn't keep steering by a
+// stale edge normal.
 export const unbindEnd = (arrow, end) => {
   arrow[bindingField(end)] = undefined;
   arrow[anchorField(end)] = undefined;
+  arrow[end === "start" ? "startDir" : "endDir"] = undefined;
 };
 
 // After an arrow is drawn, bind whichever end landed on a shape (anchored at the
