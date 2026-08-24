@@ -1,6 +1,11 @@
 import { fabric } from "fabric";
 import { isArrow, isElbowArrow } from "./shapeLabel";
 import { setArrowEndpoints, sceneEndpoints } from "./arrowEndpoints";
+import { routeWithObstacles } from "./orthRoute";
+
+// How close two facing ports must be (on the perpendicular axis) to snap into a
+// straight run instead of showing a tiny jog.
+const ALIGN_TOL = 20;
 
 // Arrow <-> shape binding (eraser.io style). An arrow endpoint can be "bound" to
 // a shape by that shape's stable id; when the shape moves or resizes we re-route
@@ -194,6 +199,28 @@ const edgeMidpoint = (shape, dir) => {
   return borderPoint(shape, { x: c.x + dir.x * 1e4, y: c.y + dir.y * 1e4 });
 };
 
+// Scene bounding boxes of the shapes an elbow must route AROUND — every bindable
+// shape (including the arrow's own two ends, so it can't coil back inside them),
+// limited to those near the tail→tip region so pathfinding stays cheap.
+const obstacleRects = (canvas, tail, tip) => {
+  const pad = 220;
+  const rx1 = Math.min(tail.x, tip.x) - pad;
+  const ry1 = Math.min(tail.y, tip.y) - pad;
+  const rx2 = Math.max(tail.x, tip.x) + pad;
+  const ry2 = Math.max(tail.y, tip.y) + pad;
+  return canvas
+    .getObjects()
+    .filter((o) => isBindable(o))
+    .map((o) => sceneBBox(o))
+    .filter(
+      (b) =>
+        b.left < rx2 &&
+        b.left + b.width > rx1 &&
+        b.top < ry2 &&
+        b.top + b.height > ry1,
+    );
+};
+
 // --- lookups --------------------------------------------------------------
 const shapeById = (canvas, id) =>
   id ? canvas.getObjects().find((o) => o.id === id) || null : null;
@@ -237,13 +264,40 @@ export const rerouteArrow = (canvas, arrow, refit = true) => {
   if (isElbowArrow(arrow)) {
     const sc = startShape ? sceneCenter(startShape) : null;
     const ec = endShape ? sceneCenter(endShape) : null;
-    const sDir = startShape ? facingDir(sc, ec || ends.tip) : undefined;
-    const eDir = endShape ? facingDir(ec, sc || ends.tail) : undefined;
-    const tail = startShape ? edgeMidpoint(startShape, sDir) : ends.tail;
-    const tip = endShape ? edgeMidpoint(endShape, eDir) : ends.tip;
+    const sDir = startShape
+      ? facingDir(sc, ec || ends.tip)
+      : facingDir(ends.tail, ends.tip);
+    const eDir = endShape
+      ? facingDir(ec, sc || ends.tail)
+      : facingDir(ends.tip, ends.tail);
+    const tail = startShape ? edgeMidpoint(startShape, sDir) : { ...ends.tail };
+    const tip = endShape ? edgeMidpoint(endShape, eDir) : { ...ends.tip };
+    // Opposite-facing ports that are nearly aligned: snap the perpendicular
+    // coord equal so a few-px offset doesn't produce a tiny jog.
+    if (sDir.x === -eDir.x && sDir.y === -eDir.y) {
+      if (sDir.x !== 0 && Math.abs(tail.y - tip.y) <= ALIGN_TOL) {
+        const y = (tail.y + tip.y) / 2;
+        tail.y = y;
+        tip.y = y;
+      } else if (sDir.y !== 0 && Math.abs(tail.x - tip.x) <= ALIGN_TOL) {
+        const x = (tail.x + tip.x) / 2;
+        tail.x = x;
+        tip.x = x;
+      }
+    }
     arrow.startDir = sDir;
     arrow.endDir = eDir;
-    setArrowEndpoints(arrow, tail, tip, refit);
+    // Route around every nearby shape (incl. both endpoints) so the arrow never
+    // cuts through a box or coils back inside its own ends. Falls back to the
+    // built-in mid-bend when pathfinding can't connect the ports.
+    const route = routeWithObstacles(
+      tail,
+      sDir,
+      tip,
+      eDir,
+      obstacleRects(canvas, tail, tip),
+    );
+    setArrowEndpoints(arrow, tail, tip, refit, route);
     return true;
   }
 

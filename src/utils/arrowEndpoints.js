@@ -267,17 +267,20 @@ export const sceneEndpoints = (group) => {
 // label to a straight segment between `start` and `end`, both in GROUP-LOCAL
 // coords (relative to the group centre, which is left unchanged so children
 // keep rendering). All endpoint mutations funnel through here.
-const applyEndpointsLocal = (group, start, end) => {
+const applyEndpointsLocal = (group, start, end, presetRoute) => {
   const { line, heads, text } = getArrowParts(group);
   const elbow = line.type === "polyline";
 
-  // The route the head/label follow: a straight [start,end] or the elbow path.
-  // A bound elbow carries its ports' exit directions (startDir/endDir, set by
-  // binding's rerouteArrow) so it leaves each shape square-on; a free elbow has
-  // none and falls back to the plain mid-bend.
-  const route = elbow
-    ? elbowRoute(start, end, group.startDir, group.endDir)
-    : [start, end];
+  // The route the head/label follow. A caller (binding's obstacle-aware router)
+  // may hand in a ready LOCAL route; otherwise a bound elbow uses its ports' exit
+  // directions (startDir/endDir) for a perpendicular mid-bend, and a straight
+  // arrow is just [start,end].
+  const route =
+    presetRoute && presetRoute.length >= 2
+      ? presetRoute
+      : elbow
+        ? elbowRoute(start, end, group.startDir, group.endDir)
+        : [start, end];
 
   // heads[0] sits at the tip, aimed along the LAST segment; a second head
   // (double-ended) sits at the tail, aimed along the FIRST segment (reversed).
@@ -348,11 +351,22 @@ export const reshapeArrow = (group, key, local) => {
 // translate each frame — leaving the geometry fighting the drag. Skipping the
 // refit re-positions only the children (keeping a bound end glued to its border
 // as the group translates); the bounds are re-fitted once on drop.
-export const setArrowEndpoints = (group, tailScene, tipScene, refit = true) => {
+// sceneRoute (optional) is a full pre-computed orthogonal path in SCENE coords
+// (from binding's obstacle-aware router); it's converted to local and used
+// verbatim for the connector instead of the built-in mid-bend.
+export const setArrowEndpoints = (
+  group,
+  tailScene,
+  tipScene,
+  refit = true,
+  sceneRoute = null,
+) => {
   const inv = fabric.util.invertTransform(group.calcTransformMatrix());
   const toLocal = (p) =>
     fabric.util.transformPoint(new fabric.Point(p.x, p.y), inv);
-  applyEndpointsLocal(group, toLocal(tailScene), toLocal(tipScene));
+  const localRoute =
+    sceneRoute && sceneRoute.length >= 2 ? sceneRoute.map(toLocal) : null;
+  applyEndpointsLocal(group, toLocal(tailScene), toLocal(tipScene), localRoute);
   if (refit) refitArrowBounds(group);
 };
 
