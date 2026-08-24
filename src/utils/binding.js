@@ -1,6 +1,10 @@
 import { fabric } from "fabric";
 import { isArrow, isElbowArrow } from "./shapeLabel";
-import { setArrowEndpoints, sceneEndpoints } from "./arrowEndpoints";
+import {
+  setArrowEndpoints,
+  sceneEndpoints,
+  ARROW_GEOM_FIELD,
+} from "./arrowEndpoints";
 import { routeWithObstacles } from "./orthRoute";
 
 // How close two facing ports must be (on the perpendicular axis) to snap into a
@@ -388,6 +392,7 @@ export const enableBindingPersistence = () => {
       "endBinding",
       "startAnchor",
       "endAnchor",
+      ARROW_GEOM_FIELD, // logical endpoints — the arrow's stored geometry
       ...(propertiesToInclude || []),
     ]);
   };
