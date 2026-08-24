@@ -163,7 +163,9 @@ const PropertiesPanel = () => {
         // each: line-like children take the stroke/width/dash; the filled
         // head(s) take the stroke colour as their fill.
         obj._objects.forEach((child) => {
-          if (child.type === "line") {
+          // "line" = straight connector, "polyline" = elbow connector — both
+          // take the stroke/width/dash (an elbow arrow was being skipped).
+          if (child.type === "line" || child.type === "polyline") {
             child.set({
               stroke: fab.stroke,
               strokeWidth: fab.strokeWidth,
