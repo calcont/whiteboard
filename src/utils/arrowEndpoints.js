@@ -54,10 +54,42 @@ export const headTipOf = (head) => {
   };
 };
 
-// Orthogonal (elbow) route between two points: a right-angled path. Routes along
-// the dominant axis first, bending at the midpoint (a clean Z). Collapses to a
-// straight segment when the points share a row/column.
-export const elbowRoute = (s, e) => {
+// Drop duplicate and collinear points so a route is the minimal set of corners
+// (keeps roundRoute from filleting non-corners, and elbows from kinking).
+const cleanRoute = (pts) => {
+  const dedup = [];
+  pts.forEach((p) => {
+    const last = dedup[dedup.length - 1];
+    if (last && Math.abs(last.x - p.x) < 0.5 && Math.abs(last.y - p.y) < 0.5)
+      return;
+    dedup.push({ x: p.x, y: p.y });
+  });
+  if (dedup.length <= 2) return dedup;
+  const out = [dedup[0]];
+  for (let i = 1; i < dedup.length - 1; i += 1) {
+    const a = dedup[i - 1];
+    const b = dedup[i];
+    const c = dedup[i + 1];
+    const cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    if (Math.abs(cross) < 1e-6) continue; // collinear -> drop the middle point
+    out.push(b);
+  }
+  out.push(dedup[dedup.length - 1]);
+  return out;
+};
+
+// The dominant axis direction from `from` toward `to`, as an axis unit vector.
+const axisToward = (from, to) => {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  return Math.abs(dx) >= Math.abs(dy)
+    ? { x: Math.sign(dx) || 1, y: 0 }
+    : { x: 0, y: Math.sign(dy) || 1 };
+};
+
+// The plain dominant-axis mid-bend Z — used when no port directions are known
+// (a free-drawn elbow, or a live endpoint drag).
+const simpleElbow = (s, e) => {
   const dx = e.x - s.x;
   const dy = e.y - s.y;
   if (Math.abs(dx) < 1 || Math.abs(dy) < 1)
@@ -83,11 +115,106 @@ export const elbowRoute = (s, e) => {
   ];
 };
 
+// Smart orthogonal route between two PORTS — a point plus the axis direction the
+// path must leave it by (the outward normal of the shape edge it's bound to). It
+// stubs out perpendicular to each edge, then connects the stubs with a clean
+// right-angled path, so the arrow leaves/enters each shape square-on (the
+// eraser.io/Excalidraw look) instead of cutting diagonally to a mid-point.
+const STUB = 22;
+const smartElbow = (s, ds, e, de) => {
+  const dist = Math.hypot(e.x - s.x, e.y - s.y);
+  const m = Math.min(STUB, Math.max(6, dist * 0.4));
+  const a = { x: s.x + ds.x * m, y: s.y + ds.y * m };
+  const b = { x: e.x + de.x * m, y: e.y + de.y * m };
+  const aH = ds.x !== 0;
+  const bH = de.x !== 0;
+  const mid = [];
+  if (aH && bH) {
+    const facing =
+      Math.sign(b.x - a.x) === ds.x && Math.sign(a.x - b.x) === de.x;
+    if (facing) {
+      const mx = (a.x + b.x) / 2;
+      mid.push({ x: mx, y: a.y }, { x: mx, y: b.y });
+    } else {
+      const my = (a.y + b.y) / 2;
+      mid.push({ x: a.x, y: my }, { x: b.x, y: my });
+    }
+  } else if (!aH && !bH) {
+    const facing =
+      Math.sign(b.y - a.y) === ds.y && Math.sign(a.y - b.y) === de.y;
+    if (facing) {
+      const my = (a.y + b.y) / 2;
+      mid.push({ x: a.x, y: my }, { x: b.x, y: my });
+    } else {
+      const mx = (a.x + b.x) / 2;
+      mid.push({ x: mx, y: a.y }, { x: mx, y: b.y });
+    }
+  } else if (aH) {
+    mid.push({ x: b.x, y: a.y }); // A horizontal, B vertical -> one corner
+  } else {
+    mid.push({ x: a.x, y: b.y }); // A vertical, B horizontal -> one corner
+  }
+  return cleanRoute([s, a, ...mid, b, e]);
+};
+
+// Orthogonal (elbow) route between two points. With port directions (ds/de — the
+// outward edge normals of bound shapes) it routes smartly with perpendicular
+// exits; without them it falls back to the plain dominant-axis mid-bend. A
+// missing single direction is derived from the geometry.
+export const elbowRoute = (s, e, ds, de) => {
+  if (!ds && !de) return simpleElbow(s, e);
+  return smartElbow(s, ds || axisToward(s, e), e, de || axisToward(e, s));
+};
+
+// Radius of the rounded corners on an elbow arrow (eraser.io/Excalidraw style).
+export const ELBOW_CORNER_RADIUS = 12;
+
+// Expand a sharp orthogonal route into one with ROUNDED corners: each interior
+// vertex becomes a short quadratic-bezier fillet (the corner is the control
+// point), approximated by a few points so the plain polyline renders as a smooth
+// rounded elbow. The FIRST and LAST points are left exactly on the endpoints, so
+// localEndpoints (which reads points[0]/points[last]) is unaffected. The fillet
+// radius is capped to half the shorter adjacent segment so short legs don't kink.
+const roundRoute = (route, radius) => {
+  if (route.length <= 2) return route.map((p) => ({ x: p.x, y: p.y }));
+  const out = [{ x: route[0].x, y: route[0].y }];
+  for (let i = 1; i < route.length - 1; i += 1) {
+    const a = route[i - 1];
+    const b = route[i];
+    const c = route[i + 1];
+    const v1 = { x: a.x - b.x, y: a.y - b.y };
+    const v2 = { x: c.x - b.x, y: c.y - b.y };
+    const l1 = Math.hypot(v1.x, v1.y) || 1;
+    const l2 = Math.hypot(v2.x, v2.y) || 1;
+    const r = Math.min(radius, l1 / 2, l2 / 2);
+    if (r < 0.5) {
+      out.push({ x: b.x, y: b.y });
+      continue;
+    }
+    const p1 = { x: b.x + (v1.x / l1) * r, y: b.y + (v1.y / l1) * r };
+    const p2 = { x: b.x + (v2.x / l2) * r, y: b.y + (v2.y / l2) * r };
+    const steps = 4;
+    out.push(p1);
+    for (let s = 1; s < steps; s += 1) {
+      const t = s / steps;
+      const mt = 1 - t;
+      out.push({
+        x: mt * mt * p1.x + 2 * mt * t * b.x + t * t * p2.x,
+        y: mt * mt * p1.y + 2 * mt * t * b.y + t * t * p2.y,
+      });
+    }
+    out.push(p2);
+  }
+  out.push({ x: route[route.length - 1].x, y: route[route.length - 1].y });
+  return out;
+};
+
 // Position an elbow polyline so its points render at their exact group-local
-// coords (fabric otherwise offsets a polyline by its pathOffset). Set the route,
-// recompute dimensions, then pin left/top to the new pathOffset.
+// coords (fabric otherwise offsets a polyline by its pathOffset). Round the
+// route's corners, set the points, recompute dimensions, then pin left/top to
+// the new pathOffset.
 export const layoutElbowPolyline = (poly, route) => {
-  poly.set({ points: route.map((p) => ({ x: p.x, y: p.y })) });
+  poly.set({ points: roundRoute(route, ELBOW_CORNER_RADIUS) });
   poly._setPositionDimensions({});
   poly.set({ left: poly.pathOffset.x, top: poly.pathOffset.y });
   poly.setCoords();
@@ -140,12 +267,20 @@ export const sceneEndpoints = (group) => {
 // label to a straight segment between `start` and `end`, both in GROUP-LOCAL
 // coords (relative to the group centre, which is left unchanged so children
 // keep rendering). All endpoint mutations funnel through here.
-const applyEndpointsLocal = (group, start, end) => {
+const applyEndpointsLocal = (group, start, end, presetRoute) => {
   const { line, heads, text } = getArrowParts(group);
   const elbow = line.type === "polyline";
 
-  // The route the head/label follow: a straight [start,end] or the elbow path.
-  const route = elbow ? elbowRoute(start, end) : [start, end];
+  // The route the head/label follow. A caller (binding's obstacle-aware router)
+  // may hand in a ready LOCAL route; otherwise a bound elbow uses its ports' exit
+  // directions (startDir/endDir) for a perpendicular mid-bend, and a straight
+  // arrow is just [start,end].
+  const route =
+    presetRoute && presetRoute.length >= 2
+      ? presetRoute
+      : elbow
+        ? elbowRoute(start, end, group.startDir, group.endDir)
+        : [start, end];
 
   // heads[0] sits at the tip, aimed along the LAST segment; a second head
   // (double-ended) sits at the tail, aimed along the FIRST segment (reversed).
@@ -216,11 +351,22 @@ export const reshapeArrow = (group, key, local) => {
 // translate each frame — leaving the geometry fighting the drag. Skipping the
 // refit re-positions only the children (keeping a bound end glued to its border
 // as the group translates); the bounds are re-fitted once on drop.
-export const setArrowEndpoints = (group, tailScene, tipScene, refit = true) => {
+// sceneRoute (optional) is a full pre-computed orthogonal path in SCENE coords
+// (from binding's obstacle-aware router); it's converted to local and used
+// verbatim for the connector instead of the built-in mid-bend.
+export const setArrowEndpoints = (
+  group,
+  tailScene,
+  tipScene,
+  refit = true,
+  sceneRoute = null,
+) => {
   const inv = fabric.util.invertTransform(group.calcTransformMatrix());
   const toLocal = (p) =>
     fabric.util.transformPoint(new fabric.Point(p.x, p.y), inv);
-  applyEndpointsLocal(group, toLocal(tailScene), toLocal(tipScene));
+  const localRoute =
+    sceneRoute && sceneRoute.length >= 2 ? sceneRoute.map(toLocal) : null;
+  applyEndpointsLocal(group, toLocal(tailScene), toLocal(tipScene), localRoute);
   if (refit) refitArrowBounds(group);
 };
 

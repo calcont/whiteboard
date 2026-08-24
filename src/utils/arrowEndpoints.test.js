@@ -35,6 +35,54 @@ describe("elbowRoute (orthogonal routing)", () => {
   });
 });
 
+describe("elbowRoute with port directions (smart perpendicular exits)", () => {
+  const axisAligned = (r) => {
+    for (let i = 1; i < r.length; i += 1)
+      expect(r[i].x === r[i - 1].x || r[i].y === r[i - 1].y).toBe(true);
+  };
+
+  test("right-edge port -> left-edge port: leaves +x, keeps the exact ends", () => {
+    // start exits +x, end exits -x (facing) -> H-V-H via a mid column
+    const r = elbowRoute(
+      { x: 0, y: 0 },
+      { x: 200, y: 80 },
+      { x: 1, y: 0 },
+      {
+        x: -1,
+        y: 0,
+      },
+    );
+    expect(r[0]).toEqual({ x: 0, y: 0 });
+    expect(r[r.length - 1]).toEqual({ x: 200, y: 80 });
+    // first move is a horizontal stub (perpendicular to the right edge)
+    expect(r[1].y).toBe(0);
+    expect(r[1].x).toBeGreaterThan(0);
+    axisAligned(r);
+  });
+
+  test("bottom-edge port -> left-edge port: leaves +y (vertical stub first)", () => {
+    const r = elbowRoute(
+      { x: 0, y: 0 },
+      { x: 120, y: 120 },
+      { x: 0, y: 1 },
+      {
+        x: -1,
+        y: 0,
+      },
+    );
+    expect(r[1].x).toBe(0); // vertical stub down from the bottom edge
+    expect(r[1].y).toBeGreaterThan(0);
+    axisAligned(r);
+  });
+
+  test("a single provided direction is enough to route smartly", () => {
+    const r = elbowRoute({ x: 0, y: 0 }, { x: 200, y: 60 }, { x: 1, y: 0 });
+    expect(r[0]).toEqual({ x: 0, y: 0 });
+    expect(r[r.length - 1]).toEqual({ x: 200, y: 60 });
+    axisAligned(r);
+  });
+});
+
 describe("headCenterFor (arrowhead sits ON the endpoint, not past it)", () => {
   test("backs the centre off the tip by the head half-length, along the segment", () => {
     // horizontal segment (0,0)->(100,0): centre pulled 10 left of the tip
@@ -73,6 +121,18 @@ describe("isElbowArrow", () => {
     expect(isElbowArrow(straight)).toBe(false);
     expect(isElbowArrow(elbow)).toBe(true);
     expect(isArrow(elbow)).toBe(true); // an elbow is still an arrow
+  });
+
+  test("the elbow connector has rounded corners (fillet points beyond the sharp route)", () => {
+    const elbow = buildArrowGroup(
+      { x: 0, y: 0 },
+      { x: 200, y: 120 },
+      { stroke: "#000", strokeWidth: 2, arrowType: "elbow" },
+    );
+    const { line } = getArrowParts(elbow);
+    expect(line.type).toBe("polyline");
+    // a sharp Z is 4 points; rounding each interior bend adds fillet points
+    expect(line.points.length).toBeGreaterThan(4);
   });
 });
 
