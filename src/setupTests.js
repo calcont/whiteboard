@@ -37,6 +37,12 @@ if (typeof HTMLCanvasElement !== "undefined") {
   };
 }
 
+// @dagrejs/dagre uses structuredClone (a modern-browser/Node-17+ global) which
+// jsdom lacks; a JSON deep-clone is enough for its plain-data graph.
+if (typeof globalThis.structuredClone === "undefined") {
+  globalThis.structuredClone = (v) => JSON.parse(JSON.stringify(v));
+}
+
 if (typeof window !== "undefined" && !window.matchMedia) {
   window.matchMedia = (query) => ({
     matches: false,
