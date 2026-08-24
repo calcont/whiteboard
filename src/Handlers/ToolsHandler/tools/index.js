@@ -2,7 +2,6 @@ export { Rectangle } from "./rectangle";
 export { Circle } from "./circle";
 export { Font } from "./font";
 export { Diamond } from "./diamond";
-export { Polygon } from "./polygon";
 export { Cylinder } from "./cylinder";
 export { Arrow } from "./arrow";
 export { Line } from "./line";
