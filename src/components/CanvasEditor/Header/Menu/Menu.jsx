@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Tooltip } from "@mui/material";
 import Divider from "@mui/material/Divider";
-import { Lock, Unlock, Trash2 } from "lucide-react";
+import { Lock, Unlock, Trash2, Network } from "lucide-react";
 import removeCursor from "../../../../assets/icons/circle.svg";
+import { arrangeDiagram } from "../../../../utils/autoLayout";
 import GenericDialog from "../../../Dialog/ConsentDialog";
 import BackgroundColor from "../../BackgroundColor";
 import IconLibrary from "../../IconLibrary/IconLibrary";
@@ -58,6 +59,11 @@ const Menu = () => {
     setIsDeleteDialogOpen(false);
   };
 
+  // Tidy the bound diagram into a clean layered flow (auto-layout).
+  const handleArrange = () => {
+    if (canvas) arrangeDiagram(canvas);
+  };
+
   const handleBackgroundClose = () => {
     setIsOpenBackground(false);
     setActiveTool(TOOL_CONSTANTS.CURSOR);
@@ -99,6 +105,13 @@ const Menu = () => {
             );
           })}
           <Divider orientation="vertical" flexItem />
+          <Tooltip title={"Arrange (auto-layout)"}>
+            <Network
+              className="menu-container__button"
+              size={ICON_SIZE}
+              onClick={handleArrange}
+            />
+          </Tooltip>
           <Tooltip title={"Delete entire canvas"}>
             <Trash2
               className="menu-container__button"
