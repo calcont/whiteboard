@@ -148,6 +148,33 @@ describe("shapeUnderPoint", () => {
   });
 });
 
+describe("rerouteArrow — elbow picks the facing side dynamically", () => {
+  test("exit sides flip when a bound shape moves to the other side", () => {
+    const c = makeCanvas();
+    const A = rect({ left: 100, top: 100, width: 100, height: 60 }); // centre 150,130
+    const B = rect({ left: 400, top: 100, width: 100, height: 60 }); // centre 450,130
+    c.add(A, B);
+    const el = buildArrowGroup(
+      { x: 180, y: 130 },
+      { x: 420, y: 130 },
+      { stroke: "#111", strokeWidth: 2, arrowType: "elbow" },
+    );
+    c.add(el);
+    bindEnd(el, "start", A, { x: 200, y: 130 });
+    bindEnd(el, "end", B, { x: 400, y: 130 });
+
+    rerouteArrow(c, el); // B is to the RIGHT of A
+    expect(el.startDir).toEqual({ x: 1, y: 0 }); // A exits right
+    expect(el.endDir).toEqual({ x: -1, y: 0 }); // B enters from its left
+
+    B.set({ left: 100, top: 400 }); // move B directly BELOW A
+    B.setCoords();
+    rerouteArrow(c, el);
+    expect(el.startDir).toEqual({ x: 0, y: 1 }); // A now exits DOWN (no wrap-around)
+    expect(el.endDir).toEqual({ x: 0, y: -1 }); // B now enters from its top
+  });
+});
+
 describe("boundArrows", () => {
   test("finds arrows bound to a shape by id on either end", () => {
     const c = makeCanvas();

@@ -1,5 +1,5 @@
 import { fabric } from "fabric";
-import { isArrow } from "./shapeLabel";
+import { isArrow, isElbowArrow } from "./shapeLabel";
 import { setArrowEndpoints, sceneEndpoints } from "./arrowEndpoints";
 
 // Arrow <-> shape binding (eraser.io style). An arrow endpoint can be "bound" to
@@ -177,18 +177,21 @@ const anchorTarget = (shape, anchor) => {
   };
 };
 
-// The outward edge normal at a border point, as an axis unit vector — which side
-// of the shape the arrow leaves by. Feeds the smart elbow router so the arrow
-// exits perpendicular to that edge (eraser.io/Excalidraw). Picks the dominant
-// axis of the point's position within the bbox.
-const exitDir = (shape, borderPt) => {
+// The axis unit vector pointing from `from` toward `to` (dominant axis) — which
+// side of a shape faces the other end.
+const facingDir = (from, to) => {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  return Math.abs(dx) >= Math.abs(dy)
+    ? { x: Math.sign(dx) || 1, y: 0 }
+    : { x: 0, y: Math.sign(dy) || 1 };
+};
+
+// The midpoint of the shape's edge on side `dir` — an axis-aligned ray from the
+// centre hits that edge at its middle (the natural elbow attach point).
+const edgeMidpoint = (shape, dir) => {
   const c = sceneCenter(shape);
-  const b = sceneBBox(shape);
-  const rx = (borderPt.x - c.x) / (b.width / 2 || 1);
-  const ry = (borderPt.y - c.y) / (b.height / 2 || 1);
-  return Math.abs(rx) >= Math.abs(ry)
-    ? { x: Math.sign(rx) || 1, y: 0 }
-    : { x: 0, y: Math.sign(ry) || 1 };
+  return borderPoint(shape, { x: c.x + dir.x * 1e4, y: c.y + dir.y * 1e4 });
 };
 
 // --- lookups --------------------------------------------------------------
@@ -225,9 +228,28 @@ export const rerouteArrow = (canvas, arrow, refit = true) => {
   if (!startShape && !endShape) return false;
 
   const ends = arrowEndpointsScene(arrow);
-  // Aim each bound end at its stored anchor point (so it keeps its attach
-  // side/corner). A near-centre anchor is ambiguous, so fall back to facing the
-  // other end — which snaps to a clean edge instead of burying it in the middle.
+
+  // Elbow arrows auto-pick the side of each shape that FACES the other end and
+  // attach at that edge's midpoint (eraser.io/Excalidraw). This is dynamic — it
+  // ignores where the arrow was first dropped — so moving a shape to the far
+  // side just flips the exit side instead of forcing an ugly wrap-around. Each
+  // end then exits perpendicular via the recorded startDir/endDir.
+  if (isElbowArrow(arrow)) {
+    const sc = startShape ? sceneCenter(startShape) : null;
+    const ec = endShape ? sceneCenter(endShape) : null;
+    const sDir = startShape ? facingDir(sc, ec || ends.tip) : undefined;
+    const eDir = endShape ? facingDir(ec, sc || ends.tail) : undefined;
+    const tail = startShape ? edgeMidpoint(startShape, sDir) : ends.tail;
+    const tip = endShape ? edgeMidpoint(endShape, eDir) : ends.tip;
+    arrow.startDir = sDir;
+    arrow.endDir = eDir;
+    setArrowEndpoints(arrow, tail, tip, refit);
+    return true;
+  }
+
+  // Straight arrows keep the attach point where they were dropped. Aim each bound
+  // end at its stored anchor; a near-centre anchor is ambiguous, so fall back to
+  // facing the other end (a clean edge instead of the middle).
   const meaningful = (a) =>
     a && (Math.abs(a.fx) > 0.05 || Math.abs(a.fy) > 0.05);
   const startAim = startShape
@@ -244,15 +266,10 @@ export const rerouteArrow = (canvas, arrow, refit = true) => {
         ? sceneCenter(startShape)
         : ends.tail
     : null;
-
   const tail = startShape ? borderPoint(startShape, startAim) : ends.tail;
   const tip = endShape ? borderPoint(endShape, endAim) : ends.tip;
-
-  // Record each bound end's exit direction so the elbow router leaves the shape
-  // square-on. An unbound end has none (the router derives it from geometry).
-  arrow.startDir = startShape ? exitDir(startShape, tail) : undefined;
-  arrow.endDir = endShape ? exitDir(endShape, tip) : undefined;
-
+  arrow.startDir = undefined;
+  arrow.endDir = undefined;
   setArrowEndpoints(arrow, tail, tip, refit);
   return true;
 };
