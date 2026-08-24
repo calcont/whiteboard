@@ -10,6 +10,7 @@ export const TOOL_CONSTANTS = {
   BACKGROUND_COLOR: "bgColors",
   DIAMOND: "diamond",
   POLYGON: "polygon",
+  CYLINDER: "cylinder",
   ERASER: "eraser",
   ICONS: "icons",
 };
@@ -56,6 +57,10 @@ export const TOOL_FUNCTIONS = {
     onMove: true,
   },
   [TOOL_CONSTANTS.POLYGON]: {
+    createOnClick: true,
+    onMove: true,
+  },
+  [TOOL_CONSTANTS.CYLINDER]: {
     createOnClick: true,
     onMove: true,
   },
