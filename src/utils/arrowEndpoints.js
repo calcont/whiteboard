@@ -230,29 +230,67 @@ const screenMatrix = (group) =>
     group.calcTransformMatrix(),
   );
 
-// Endpoint positions in group-local coordinates (relative to the group centre).
-// For an end that carries a head, the logical endpoint is the head's TIP vertex
-// (the visible point), NOT the connector's terminal — the connector is drawn
-// short of the tip so it doesn't poke through. heads[0] = tip end (e2),
-// heads[1] = tail end (e1) on a double-headed arrow.
-const localEndpoints = (group) => {
+// The persisted field holding an arrow's two logical endpoints in GROUP-LOCAL
+// coords: [tail, tip]. This is the SINGLE SOURCE OF TRUTH for where the arrow
+// starts and ends. The rendered children (connector, head(s), label) are
+// DERIVED from it on every layout and are NEVER read back into it.
+//
+// Why this matters: the old model answered "where does the arrow point?" by
+// reading the head's own left/top/angle (headTipOf below). That coupled the
+// logical geometry to the rendered head — so a stale head angle produced a wrong
+// endpoint, which produced a wronger head next re-route: a feedback loop that
+// showed up as "the head stops rotating" and "the binding drifts". Storing the
+// endpoints as plain data breaks the loop — a mis-rendered head can't corrupt
+// the truth; the next layout just re-derives it correctly.
+export const ARROW_GEOM_FIELD = "arrowPoints";
+
+// Reconstruct the endpoints from the rendered children. Used ONCE to migrate an
+// arrow drawn/saved before ARROW_GEOM_FIELD existed (old boards, undo snapshots),
+// after which getLocalGeom caches the result on the group.
+const reconstructEndpointsFromChildren = (group) => {
   const { line, heads } = getArrowParts(group);
   let e1;
   let e2;
   if (line.type === "polyline") {
-    // Elbow: points already live in group-local coords (see layoutElbowPolyline).
     const pts = line.points;
     e1 = { x: pts[0].x, y: pts[0].y };
     e2 = { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y };
   } else {
     const lp = line.calcLinePoints();
-    e1 = { x: line.left + lp.x1, y: line.top + lp.y1 }; // tail (line start)
-    e2 = { x: line.left + lp.x2, y: line.top + lp.y2 }; // tip (line end)
+    e1 = { x: line.left + lp.x1, y: line.top + lp.y1 };
+    e2 = { x: line.left + lp.x2, y: line.top + lp.y2 };
   }
   if (heads[0]) e2 = headTipOf(heads[0]);
   if (heads[1]) e1 = headTipOf(heads[1]);
   return { e1, e2 };
 };
+
+// Write the logical endpoints (group-local) as the arrow's stored geometry.
+export const setLocalGeom = (group, e1, e2) => {
+  group[ARROW_GEOM_FIELD] = [
+    { x: e1.x, y: e1.y },
+    { x: e2.x, y: e2.y },
+  ];
+};
+
+// Read the logical endpoints (group-local). Falls back to reconstructing them
+// from the children the first time (migration), then caches.
+const getLocalGeom = (group) => {
+  const pts = group[ARROW_GEOM_FIELD];
+  if (Array.isArray(pts) && pts.length === 2) {
+    return {
+      e1: { x: pts[0].x, y: pts[0].y },
+      e2: { x: pts[1].x, y: pts[1].y },
+    };
+  }
+  const ends = reconstructEndpointsFromChildren(group);
+  setLocalGeom(group, ends.e1, ends.e2);
+  return ends;
+};
+
+// Endpoint positions in group-local coordinates (relative to the group centre) —
+// read from the stored geometry, not the rendered head.
+const localEndpoints = (group) => getLocalGeom(group);
 
 // Arrow endpoints in absolute (scene) coords — handles line or elbow polyline.
 export const sceneEndpoints = (group) => {
@@ -270,6 +308,10 @@ export const sceneEndpoints = (group) => {
 const applyEndpointsLocal = (group, start, end, presetRoute) => {
   const { line, heads, text } = getArrowParts(group);
   const elbow = line.type === "polyline";
+
+  // Record the logical endpoints as the arrow's truth BEFORE deriving anything,
+  // so the connector/head(s) below are a pure projection of it (never the source).
+  setLocalGeom(group, start, end);
 
   // The route the head/label follow. A caller (binding's obstacle-aware router)
   // may hand in a ready LOCAL route; otherwise a bound elbow uses its ports' exit
@@ -377,11 +419,34 @@ export const setArrowEndpoints = (
 // group transform, then recompute the bounds and re-base the children. Skipping
 // the restore/reset (as a naive _calcBounds does) shifts everything.
 export const refitArrowBounds = (group) => {
+  // Re-fitting moves the group's origin, which re-bases the LOCAL coordinate
+  // frame. Fabric re-bases the children automatically; the stored endpoints are
+  // plain data and won't move themselves — so pin them in SCENE space across the
+  // refit, then convert back into the new local frame. Without this the geometry
+  // would silently shift by the bbox delta after every drop.
+  const before = getLocalGeom(group);
+  const mBefore = group.calcTransformMatrix();
+  const sceneE1 = fabric.util.transformPoint(
+    new fabric.Point(before.e1.x, before.e1.y),
+    mBefore,
+  );
+  const sceneE2 = fabric.util.transformPoint(
+    new fabric.Point(before.e2.x, before.e2.y),
+    mBefore,
+  );
+
   group._restoreObjectsState();
   fabric.util.resetObjectTransform(group);
   group._calcBounds();
   group._updateObjectsCoords();
   group.setCoords();
+
+  const inv = fabric.util.invertTransform(group.calcTransformMatrix());
+  setLocalGeom(
+    group,
+    fabric.util.transformPoint(sceneE1, inv),
+    fabric.util.transformPoint(sceneE2, inv),
+  );
   group.dirty = true;
 };
 

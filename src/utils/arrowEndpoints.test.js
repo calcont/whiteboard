@@ -3,11 +3,14 @@ import {
   reshapeArrow,
   refitArrowBounds,
   setArrowEndpoints,
+  sceneEndpoints,
   elbowRoute,
   headCenterFor,
   headTipOf,
+  ARROW_GEOM_FIELD,
 } from "./arrowEndpoints";
 import { getArrowParts, isArrow, isElbowArrow } from "./shapeLabel";
+import { enableBindingPersistence } from "./binding";
 import { buildArrowGroup } from "../Handlers/ToolsHandler/tools/arrow";
 
 describe("elbowRoute (orthogonal routing)", () => {
@@ -246,6 +249,70 @@ describe("refitArrowBounds", () => {
     expect(Math.round(tailAfter.x)).toBe(Math.round(tailBefore.x));
     expect(Math.round(tailAfter.y)).toBe(Math.round(tailBefore.y));
     expect(a.scaleX).toBe(1);
+  });
+});
+
+describe("logical endpoints are stored DATA, decoupled from the rendered head", () => {
+  const absEnds = (a) => {
+    const { tail, tip } = sceneEndpoints(a);
+    return { tail, tip };
+  };
+
+  test("setArrowEndpoints stores the two logical endpoints on the group", () => {
+    const c = new fabric.Canvas(document.createElement("canvas"));
+    const a = arrow();
+    c.add(a);
+    setArrowEndpoints(a, { x: 40, y: 40 }, { x: 240, y: 180 });
+    const geom = a[ARROW_GEOM_FIELD];
+    expect(Array.isArray(geom)).toBe(true);
+    expect(geom).toHaveLength(2);
+  });
+
+  test("corrupting the head does NOT move the logical endpoint (loop is broken)", () => {
+    const c = new fabric.Canvas(document.createElement("canvas"));
+    const a = arrow();
+    c.add(a);
+    setArrowEndpoints(a, { x: 40, y: 40 }, { x: 240, y: 180 });
+    const before = absEnds(a);
+
+    // Simulate a stale/garbled head — the old model read the endpoint back out
+    // of this, so it would have drifted. The data model must ignore it.
+    const { heads } = getArrowParts(a);
+    heads[0].set({ angle: 137, left: -999, top: 999 });
+    heads[0].setCoords();
+
+    const after = absEnds(a);
+    expect(Math.round(after.tip.x)).toBe(Math.round(before.tip.x));
+    expect(Math.round(after.tip.y)).toBe(Math.round(before.tip.y));
+    expect(Math.round(after.tail.x)).toBe(Math.round(before.tail.x));
+    expect(Math.round(after.tail.y)).toBe(Math.round(before.tail.y));
+  });
+
+  test("the stored geometry persists via toObject", () => {
+    enableBindingPersistence();
+    const c = new fabric.Canvas(document.createElement("canvas"));
+    const a = arrow();
+    c.add(a);
+    setArrowEndpoints(a, { x: 10, y: 20 }, { x: 210, y: 160 });
+    const obj = a.toObject();
+    expect(Array.isArray(obj[ARROW_GEOM_FIELD])).toBe(true);
+    expect(obj[ARROW_GEOM_FIELD]).toHaveLength(2);
+  });
+
+  test("an arrow with no stored geometry migrates from its children", () => {
+    const c = new fabric.Canvas(document.createElement("canvas"));
+    const a = arrow();
+    c.add(a);
+    setArrowEndpoints(a, { x: 40, y: 40 }, { x: 240, y: 180 });
+    const before = absEnds(a);
+
+    // Old board / undo snapshot: no arrowPoints field yet.
+    delete a[ARROW_GEOM_FIELD];
+    const after = absEnds(a); // first read reconstructs + caches
+
+    expect(Math.round(after.tip.x)).toBe(Math.round(before.tip.x));
+    expect(Math.round(after.tip.y)).toBe(Math.round(before.tip.y));
+    expect(Array.isArray(a[ARROW_GEOM_FIELD])).toBe(true); // now cached
   });
 });
 
