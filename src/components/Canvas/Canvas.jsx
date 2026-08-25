@@ -9,6 +9,7 @@ import {
   SelectionHandler,
   LabelHandler,
   LineEndpointHandler,
+  ArrowEndpointHandler,
   TextEventHandler,
   ZoomHandler,
   PersistenceHandler,
@@ -29,6 +30,7 @@ function Canvas() {
   // shape+text regroup happens before the generic empty-text cleanup.
   LabelHandler();
   LineEndpointHandler();
+  ArrowEndpointHandler();
   TextEventHandler();
   ZoomHandler();
   PersistenceHandler();
